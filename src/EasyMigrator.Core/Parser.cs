@@ -38,6 +38,7 @@ namespace EasyMigrator.Parsing
         public Conventions Conventions { get; set; }
 
         public Parser(Conventions conventions) { Conventions = conventions; }
+
         public Parser()
             : this(new Conventions {
                 TableName = c => Regex.Replace(c.TableType.Name, "Table$", ""),
@@ -47,9 +48,33 @@ namespace EasyMigrator.Parsing
                     IsIdentity = true,
                     IsPrimaryKey = true
                 },
-                TypeMap = null
-            })
-        { }
+                TypeMap = new TypeMap()
+                       .Add(new Dictionary<Type, DbType> {
+                           {typeof(sbyte), DbType.SByte},
+                           {typeof(byte), DbType.Byte},
+                           {typeof(short), DbType.Int16},
+                           {typeof(ushort), DbType.UInt16},
+                           {typeof(int), DbType.Int32},
+                           {typeof(uint), DbType.UInt32},
+                           {typeof(long), DbType.Int64},
+                           {typeof(ulong), DbType.UInt64},
+                           {typeof(bool), DbType.Boolean},
+                           {typeof(float), DbType.Single},
+                           {typeof(double), DbType.Double},
+                           {typeof(decimal), DbType.Currency},
+                           {typeof(DateTime), DbType.DateTime},
+                           {typeof(Guid), DbType.Guid},
+                           {typeof(byte[]), DbType.Binary},
+                           {typeof(XDocument), DbType.Xml},
+                           {typeof(XmlDocument), DbType.Xml}
+                       })
+                       .Add(typeof(string), 
+                               f => f.HasAttribute<AnsiAttribute>()
+                                   ? (f.HasAttribute<FixedLengthAttribute>() ? DbType.AnsiStringFixedLength : DbType.AnsiString)
+                                   : (f.HasAttribute<FixedLengthAttribute>() ? DbType.StringFixedLength : DbType.String)
+                       )
+            }) 
+        {}
 
 
         public Table ParseTable(Type type)
@@ -73,7 +98,8 @@ namespace EasyMigrator.Parsing
             }
 
             foreach (var field in fields) {
-                var col = new Column(field.Name, GetDbType(field), GetColumnProperties(field), GetDefaultValue(model, field));
+                var col = new Column(field.Name, Conventions.TypeMap[field], GetColumnProperties(field), GetDefaultValue(model, field));
+
                 if ((new[] { DbType.AnsiString, DbType.AnsiStringFixedLength, DbType.String, DbType.StringFixedLength, DbType.Binary }).Contains(col.Type)) {
                     var attr = field.GetAttribute<LengthAttribute>();
                     col.Size = attr == null ? 100 : attr.Length;
@@ -111,49 +137,6 @@ namespace EasyMigrator.Parsing
             }
 
             return table;
-        }
-
-        public static DbType GetDbType(FieldInfo field)
-        {
-            var type = Nullable.GetUnderlyingType(field.FieldType) ?? field.FieldType;
-            if (type == typeof(string))
-                return field.HasAttribute<AnsiAttribute>()
-                        ? (field.HasAttribute<FixedLengthAttribute>() ? DbType.AnsiStringFixedLength : DbType.AnsiString)
-                        : (field.HasAttribute<FixedLengthAttribute>() ? DbType.StringFixedLength : DbType.String);
-            else if (type == typeof(sbyte))
-                return DbType.SByte;
-            else if (type == typeof(byte))
-                return DbType.Byte;
-            else if (type == typeof(short))
-                return DbType.Int16;
-            else if (type == typeof(ushort))
-                return DbType.UInt16;
-            else if (type == typeof(int))
-                return DbType.Int32;
-            else if (type == typeof(uint))
-                return DbType.UInt32;
-            else if (type == typeof(long))
-                return DbType.Int64;
-            else if (type == typeof(ulong))
-                return DbType.UInt64;
-            else if (type == typeof(bool))
-                return DbType.Boolean;
-            else if (type == typeof(float))
-                return DbType.Single;
-            else if (type == typeof(double))
-                return DbType.Double;
-            else if (type == typeof(decimal))
-                return DbType.Currency;
-            else if (type == typeof(DateTime))
-                return DbType.DateTime;
-            else if (type == typeof(Guid))
-                return DbType.Guid;
-            else if (type == typeof(byte[]))
-                return DbType.Binary;
-            else if (type == typeof(XDocument) || type == typeof(XmlDocument))
-                return DbType.Xml;
-            else
-                throw new Exception("No DbType mapped to native type " + type.Name);
         }
 
         public static bool IsNullable(FieldInfo field)
