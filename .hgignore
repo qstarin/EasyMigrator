@@ -1,0 +1,15 @@
+syntax: glob
+packages\*
+obj\*
+[Bb]in\*
+TestResults\*
+_ReSharper*\*
+*.ReSharper.*
+*.ncb
+*.suo
+*.dbmdl
+*.user
+*.pubxml
+.sass-cache
+*.orig
+*.nupkg

@@ -1,0 +1,1 @@
+..\src\.nuget\nuget.exe pack ..\src\EasyMigrator\EasyMigrator.csproj -sym
