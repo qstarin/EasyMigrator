@@ -31,14 +31,14 @@ namespace EasyMigrator.Model
 
     public interface IAutoIncrement
     {
-        long? Seed { get; set; }
-        long? Step { get; set; }
+        int? Seed { get; set; }
+        int? Step { get; set; }
     }
 
     public interface IPrecision
     {
-        int? Scale { get; }
-        int? Precision { get; }
+        int Precision { get; }
+        int Scale { get; }
     }
 
     public interface IForeignKey

@@ -4,12 +4,12 @@ using System.Linq;
 
 
 
-namespace EasyMigrator
+namespace EasyMigrator.Extensions
 {
     /// <summary>
     /// Defines extension methods for the System.Object type.
     /// </summary>
-    internal static class ObjectExtensions
+    public static class ObjectExtensions
     {
         /// <summary>
         /// Tests whether the object is not null.  If not null, invokes the given delegate.

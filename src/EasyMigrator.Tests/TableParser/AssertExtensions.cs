@@ -35,8 +35,8 @@ namespace EasyMigrator.Tests.TableParser
                 if (e.Precision == null)
                     Assert.IsNull(a.Precision);
                 else {
-                    Assert.AreEqual(e.Precision.Scale, a.Precision.Scale);
                     Assert.AreEqual(e.Precision.Precision, a.Precision.Precision);
+                    Assert.AreEqual(e.Precision.Scale, a.Precision.Scale);
                 }
 
                 if (e.Index == null)

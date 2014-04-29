@@ -12,19 +12,23 @@ namespace EasyMigrator
 
     public class AutoIncAttribute : Attribute, Model.IAutoIncrement
     {
-        public long? Seed { get; set; }
-        public long? Step { get; set; }
+        public int? Seed { get; set; }
+        public int? Step { get; set; }
     }
 
     public class PrecisionAttribute : Attribute, Model.IPrecision
     {
-        public int? Scale { get; private set; }
-        public int? Precision { get; private set; }
+        internal Length? DefinedLength { get; private set; }
+        public int Precision { get; private set; }
+        public int Scale { get; private set; }
 
-        public PrecisionAttribute(int scale) { Scale = scale; }
-
-        public PrecisionAttribute(int scale, int precision)
+        public PrecisionAttribute(int precision, int scale)
             : this(scale) { Precision = precision; }
+
+        public PrecisionAttribute(Length precision, int scale)
+            : this(scale) { DefinedLength = precision; }
+
+        private PrecisionAttribute(int scale) { Scale = scale; }
     }
 
     public class FkAttribute : Attribute, Model.IForeignKey
@@ -60,7 +64,7 @@ namespace EasyMigrator
 
     public class LengthAttribute : Attribute
     {
-        public Length? DefinedLength { get; private set; }
+        internal Length? DefinedLength { get; private set; }
         public int Length { get; private set; }
 
         public LengthAttribute(int length) { Length = length; }
@@ -72,9 +76,9 @@ namespace EasyMigrator
     public class LongAttribute : LengthAttribute { public LongAttribute() : base(EasyMigrator.Length.Long) { } }
     public class MaxAttribute : LengthAttribute { public MaxAttribute() : base(EasyMigrator.Length.Max) { } }
 
-    public class FixedLengthAttribute : LengthAttribute
+    public class FixedAttribute : LengthAttribute
     {
-        public FixedLengthAttribute(int length) : base(length) { }
+        public FixedAttribute(int length) : base(length) { }
     }
 
     public class DefaultAttribute : Attribute

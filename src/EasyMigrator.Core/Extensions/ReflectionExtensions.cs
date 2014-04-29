@@ -4,9 +4,9 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace EasyMigrator
+namespace EasyMigrator.Extensions
 {
-    static internal class ReflectionExtensions
+    static public class ReflectionExtensions
     {
         public static TAttr GetAttribute<TAttr>(this MemberInfo member) where TAttr : Attribute
         {

@@ -5,6 +5,7 @@ using System.Data;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using EasyMigrator.Extensions;
 using EasyMigrator.Model;
 
 
@@ -53,7 +54,7 @@ namespace EasyMigrator.Parsing
                     IsPrimaryKey = field.HasAttribute<PkAttribute>(),
                     AutoIncrement = field.GetAttribute<AutoIncAttribute>(),
                     Length = GetLength(field, dbType, Conventions.StringLengths),
-                    Precision = field.GetAttribute<PrecisionAttribute>(),
+                    Precision = GetPrecision(context, field, dbType),
                     Index = field.GetAttribute<IndexAttribute>(),
                     ForeignKey = field.GetAttribute<FkAttribute>()
                 };
@@ -65,6 +66,22 @@ namespace EasyMigrator.Parsing
             }
 
             return table;
+        }
+
+        public static IPrecision GetPrecision(Context context, FieldInfo field, DbType dbType)
+        {
+            var typesWithPrecision = new[] { DbType.Decimal };
+            if (!typesWithPrecision.Contains(dbType))
+                return null;
+
+            var precisionAttr = field.GetAttribute<PrecisionAttribute>();
+            if (precisionAttr == null)
+                return context.Conventions.DefaultPrecision(context);
+
+            if (precisionAttr.DefinedLength.HasValue)
+                return new PrecisionAttribute(context.Conventions.PrecisionLengths[precisionAttr.DefinedLength.Value], precisionAttr.Scale);
+
+            return precisionAttr;
         }
 
         public static int? GetLength(FieldInfo field, DbType dbType, Lengths lengths)

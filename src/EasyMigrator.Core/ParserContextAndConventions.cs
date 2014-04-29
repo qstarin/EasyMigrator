@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
+using EasyMigrator.Extensions;
 using EasyMigrator.Model;
 
 
@@ -49,12 +50,13 @@ namespace EasyMigrator.Parsing
         public Func<Context, Column> PrimaryKey { get; set; }
         public ITypeMap TypeMap { get; set; }
         public Lengths StringLengths { get; set; }
+        public Lengths PrecisionLengths { get; set; }
+        public Func<Context, IPrecision> DefaultPrecision { get; set; }
         public bool IndexForeignKeys { get; set; }
 
         static public Conventions Default
         {
-            get
-            {
+            get {
                 return new Conventions {
                     TableName = c => Regex.Replace(c.TableType.Name, "Table$", ""),
                     IndexForeignKeys = true,
@@ -65,6 +67,14 @@ namespace EasyMigrator.Parsing
                         Long = 4000,
                         Max = int.MaxValue
                     },
+                    PrecisionLengths = new Lengths {
+                        Default = 19,
+                        Short = 9,
+                        Medium = 19,
+                        Long = 28,
+                        Max = 38
+                    },
+                    DefaultPrecision = c => new PrecisionAttribute(c.Conventions.PrecisionLengths.Default, 2),
                     PrimaryKey = c => new Column {
                         Name = "Id",
                         Type = DbType.Int32,
@@ -85,15 +95,18 @@ namespace EasyMigrator.Parsing
                             {typeof(double), DbType.Double},
                             {typeof(decimal), DbType.Decimal},
                             {typeof(DateTime), DbType.DateTime},
+                            {typeof(DateTimeOffset), DbType.DateTimeOffset},
+                            {typeof(TimeSpan), DbType.Time},
                             {typeof(Guid), DbType.Guid},
                             {typeof(byte[]), DbType.Binary},
+                            //{typeof(System.Data.Linq.Binary), DbType.Binary},
                             {typeof(XDocument), DbType.Xml},
                             {typeof(XmlDocument), DbType.Xml}
                         })
                         .Add(typeof(string),
                                 f => f.HasAttribute<AnsiAttribute>()
-                                    ? (f.HasAttribute<FixedLengthAttribute>() ? DbType.AnsiStringFixedLength : DbType.AnsiString)
-                                    : (f.HasAttribute<FixedLengthAttribute>() ? DbType.StringFixedLength : DbType.String)
+                                    ? (f.HasAttribute<FixedAttribute>() ? DbType.AnsiStringFixedLength : DbType.AnsiString)
+                                    : (f.HasAttribute<FixedAttribute>() ? DbType.StringFixedLength : DbType.String)
                         )
                 };
             }

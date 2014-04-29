@@ -24,10 +24,11 @@ namespace EasyMigrator.Tests.TableParser
             int Sequence;
             bool Accepted;
             [NotNull] string Name;
-            [FixedLength(8), Ansi, NotNull, Unique(Name = "idx_code")] string Code;
+            [Fixed(8), Ansi, NotNull, Unique(Name = "idx_code")] string Code;
             [Length(Length.Medium)] string Headline;
             [Max] string Description;
-            [Precision(2, 18)] decimal? Rate;
+            decimal? Rate;
+            [Precision(Length.Short, 3)] decimal Adjustment;
             [Fk("OtherTable")] int OtherTableId;
         }
 
@@ -75,7 +76,12 @@ namespace EasyMigrator.Tests.TableParser
                     Name = "Rate",
                     Type = DbType.Decimal,
                     IsNullable = true,
-                    Precision = new PrecisionAttribute(2, 18)
+                    Precision = new PrecisionAttribute(19, 2)
+                },
+                new Column {
+                    Name = "Adjustment",
+                    Type = DbType.Decimal,
+                    Precision = new PrecisionAttribute(9, 3)
                 },
                 new Column {
                     Name = "OtherTableId",
