@@ -44,6 +44,7 @@ namespace EasyMigrator.Parsing
 
             foreach (var field in fields) {
                 var dbType = Conventions.TypeMap[field];
+
                 var column = new Column {
                     Name = field.Name, 
                     Type = dbType,
@@ -56,10 +57,11 @@ namespace EasyMigrator.Parsing
                     Index = field.GetAttribute<IndexAttribute>(),
                     ForeignKey = field.GetAttribute<ForeignKeyAttribute>()
                 };
-                table.Columns.Add(column);
 
                 if (column.ForeignKey != null && column.Index == null && Conventions.IndexForeignKeys)
                     column.Index = new IndexAttribute();
+
+                table.Columns.Add(column);
             }
 
             return table;
@@ -67,12 +69,13 @@ namespace EasyMigrator.Parsing
 
         public static int? GetLength(FieldInfo field, DbType dbType, StringLengths lengths)
         {
+            // TODO: Possibly double lengths for ansi?
             var typesWithLength = new[] {
                 DbType.AnsiString,
                 DbType.AnsiStringFixedLength,
                 DbType.String,
                 DbType.StringFixedLength,
-                DbType.Binary
+                DbType.Binary // TODO: What about varbinary?
             };
 
             if (!typesWithLength.Contains(dbType))

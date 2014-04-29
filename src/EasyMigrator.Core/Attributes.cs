@@ -43,7 +43,7 @@ namespace EasyMigrator
         public ForeignKeyAttribute(string table)
         {
             Table = table;
-            Column = "Id";
+            Column = "Id"; // TODO: Need to account for different conventions
             Indexed = true;
         }
     }
@@ -86,10 +86,6 @@ namespace EasyMigrator
     public class DefaultAttribute : Attribute
     {
         public string Expression { get; private set; }
-
-        public DefaultAttribute(string expression)
-        {
-            this.Expression = expression;
-        }
+        public DefaultAttribute(string expression) { Expression = expression; }
     }
 }
