@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+
 namespace EasyMigrator
 {
-    public class PrimaryKeyAttribute : Attribute
-    {
-    }
+    public class PrimaryKeyAttribute : Attribute {}
 
     public class AutoIncrementAttribute : Attribute, Model.IAutoIncrement
     {
@@ -34,35 +33,31 @@ namespace EasyMigrator
         public NotNullableAttribute() : base(false) { }
     }
 
-    public class ForeignKeyAttribute : Attribute
+    public class ForeignKeyAttribute : Attribute, Model.IForeignKey
     {
+        public string Name { get; set; }
         public string Table { get; private set; }
-        public string Column { get; private set; }
-
-        /// <summary>
-        /// true by default
-        /// </summary>
+        public string Column { get; set; }
         public bool Indexed { get; set; }
 
         public ForeignKeyAttribute(string table)
         {
-            this.Table = table;
-            this.Column = table + "Id";
-            this.Indexed = true;
+            Table = table;
+            Column = "Id";
+            Indexed = true;
         }
     }
 
-    public class IndexedAttribute : Attribute
+    public class IndexAttribute : Attribute, Model.IIndex
     {
+        public string Name { get; set; }
         public bool Unique { get; set; }
+        public bool Clustered { get; set; }
     }
 
-    public class UniqueAttribute : IndexedAttribute
+    public class UniqueAttribute : IndexAttribute
     {
-        public UniqueAttribute()
-        {
-            this.Unique = true;
-        }
+        public UniqueAttribute() { Unique = true; }
     }
 
     public class AnsiAttribute : Attribute { }

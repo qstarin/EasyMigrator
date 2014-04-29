@@ -44,7 +44,8 @@
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="Attributes.cs" />
-    <Compile Include="Extensions.cs" />
+    <Compile Include="Extensions\Object.cs" />
+    <Compile Include="Extensions\Reflection.cs" />
     <Compile Include="Models.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="ParserContextAndConventions.cs" />

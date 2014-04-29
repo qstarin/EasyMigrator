@@ -6,7 +6,7 @@ using System.Text;
 
 namespace EasyMigrator
 {
-    static internal class Extensions
+    static internal class ReflectionExtensions
     {
         public static TAttr GetAttribute<TAttr>(this MemberInfo member) where TAttr : Attribute
         {

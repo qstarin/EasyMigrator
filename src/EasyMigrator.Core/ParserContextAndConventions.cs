@@ -45,10 +45,11 @@ namespace EasyMigrator.Parsing
 
     public class Conventions
     {
-        public StringLengths StringLengths { get; set; }
         public Func<Context, string> TableName { get; set; }
         public Func<Context, Column> PrimaryKey { get; set; }
         public ITypeMap TypeMap { get; set; }
+        public StringLengths StringLengths { get; set; }
+        public bool IndexForeignKeys { get; set; }
 
         static public Conventions Default
         {
@@ -56,6 +57,7 @@ namespace EasyMigrator.Parsing
             {
                 return new Conventions {
                     TableName = c => Regex.Replace(c.TableType.Name, "Table$", ""),
+                    IndexForeignKeys = true,
                     StringLengths = new StringLengths {
                         Default = 50,
                         Small = 50,

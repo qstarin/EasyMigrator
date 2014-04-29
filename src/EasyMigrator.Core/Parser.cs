@@ -35,54 +35,31 @@ namespace EasyMigrator.Parsing
 
             if (!fields.Any(f => f.HasAttribute<PrimaryKeyAttribute>()) && Conventions.PrimaryKey != null) {
                 var pk = Conventions.PrimaryKey(context);
+                pk.IsPrimaryKey = true;
                 if (fields.Any(f => string.Equals(f.Name, pk.Name, StringComparison.InvariantCultureIgnoreCase)))
                     throw new Exception("The column '" + pk.Name + "' conflicts with the automatically added primary key column name. " +
                                         "Remove the duplicate column definition or add the PrimaryKey attribute to resolve the conflict.");
-                table.PrimaryKey.Add(pk);
                 table.Columns.Add(pk);
             }
 
             foreach (var field in fields) {
                 var dbType = Conventions.TypeMap[field];
-                var col = new Column {
+                var column = new Column {
                     Name = field.Name, 
                     Type = dbType,
+                    DefaultValue = GetDefaultValue(context.Model, field),
+                    IsNullable = IsNullable(field),
+                    IsPrimaryKey = field.HasAttribute<PrimaryKeyAttribute>(),
+                    AutoIncrement = field.GetAttribute<AutoIncrementAttribute>(),
                     Length = GetLength(field, dbType, Conventions.StringLengths),
                     Precision = field.GetAttribute<PrecisionAttribute>(),
-                    AutoIncrement = field.GetAttribute<AutoIncrementAttribute>(),
-                    DefaultValue = GetDefaultValue(context.Model, field),
-                    IsNullable = IsNullable(field), 
+                    Index = field.GetAttribute<IndexAttribute>(),
+                    ForeignKey = field.GetAttribute<ForeignKeyAttribute>()
                 };
-                table.Columns.Add(col);
+                table.Columns.Add(column);
 
-                if (field.HasAttribute<ForeignKeyAttribute>()) {
-                    var fk = field.GetAttribute<ForeignKeyAttribute>();
-                    table.ForeignKeys.Add(new ForeignKey {
-                        FkTable = table.Name,
-                        FkColumn = field.Name,
-                        PkTable = fk.Table,
-                        PkColumn = fk.Column
-                    });
-
-                    if (fk.Indexed && !field.HasAttribute<IndexedAttribute>()) {
-                        table.Indexes.Add(new Index {
-                            Unique = false,
-                            Clustered = false,
-                            Table = table.Name,
-                            Columns = new[] { field.Name }
-                        });
-                    }
-                }
-                
-                if (field.HasAttribute<IndexedAttribute>()) {
-                    var idx = field.GetAttribute<IndexedAttribute>();
-                    table.Indexes.Add(new Index {
-                        Unique = idx.Unique,
-                        Clustered = idx.cl,
-                        Table = table.Name,
-                        Columns = new[] { field.Name }
-                    });
-                }
+                if (column.ForeignKey != null && column.Index == null && Conventions.IndexForeignKeys)
+                    column.Index = new IndexAttribute();
             }
 
             return table;
