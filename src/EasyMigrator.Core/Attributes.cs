@@ -6,9 +6,11 @@ using System.Text;
 
 namespace EasyMigrator
 {
-    public class PrimaryKeyAttribute : Attribute {}
+    public class NotNullAttribute : Attribute { }
 
-    public class AutoIncrementAttribute : Attribute, Model.IAutoIncrement
+    public class PkAttribute : Attribute { }
+
+    public class AutoIncAttribute : Attribute, Model.IAutoIncrement
     {
         public long? Seed { get; set; }
         public long? Step { get; set; }
@@ -16,31 +18,23 @@ namespace EasyMigrator
 
     public class PrecisionAttribute : Attribute, Model.IPrecision
     {
-        public byte? Scale { get; set; }
-        public byte? Precision { get; set; }
+        public int? Scale { get; private set; }
+        public int? Precision { get; private set; }
+
+        public PrecisionAttribute(int scale) { Scale = scale; }
+
+        public PrecisionAttribute(int scale, int precision)
+            : this(scale) { Precision = precision; }
     }
 
-    public class NullableAttribute : Attribute
-    {
-        public bool Nullable { get; set; }
-
-        public NullableAttribute() : this(true) { }
-        public NullableAttribute(bool nullable) { Nullable = nullable; }
-    }
-
-    public class NotNullableAttribute : NullableAttribute
-    {
-        public NotNullableAttribute() : base(false) { }
-    }
-
-    public class ForeignKeyAttribute : Attribute, Model.IForeignKey
+    public class FkAttribute : Attribute, Model.IForeignKey
     {
         public string Name { get; set; }
         public string Table { get; private set; }
         public string Column { get; set; }
         public bool Indexed { get; set; }
 
-        public ForeignKeyAttribute(string table)
+        public FkAttribute(string table)
         {
             Table = table;
             Column = "Id"; // TODO: Need to account for different conventions
@@ -62,21 +56,21 @@ namespace EasyMigrator
 
     public class AnsiAttribute : Attribute { }
 
-    public enum Lengths { Small, Medium, Large, Max }
+    public enum Length { Short, Medium, Long, Max }
 
     public class LengthAttribute : Attribute
     {
-        public Lengths? LengthEnum { get; private set; }
+        public Length? DefinedLength { get; private set; }
         public int Length { get; private set; }
 
         public LengthAttribute(int length) { Length = length; }
-        public LengthAttribute(Lengths length) { LengthEnum = length; }
+        public LengthAttribute(Length length) { DefinedLength = length; }
     }
 
-    public class MaxLengthAttribute : LengthAttribute
-    {
-        public MaxLengthAttribute() : base(Lengths.Max) { }
-    }
+    public class ShortAttribute : LengthAttribute { public ShortAttribute() : base(EasyMigrator.Length.Short) { } }
+    public class MediumAttribute : LengthAttribute { public MediumAttribute() : base(EasyMigrator.Length.Medium) { } }
+    public class LongAttribute : LengthAttribute { public LongAttribute() : base(EasyMigrator.Length.Long) { } }
+    public class MaxAttribute : LengthAttribute { public MaxAttribute() : base(EasyMigrator.Length.Max) { } }
 
     public class FixedLengthAttribute : LengthAttribute
     {

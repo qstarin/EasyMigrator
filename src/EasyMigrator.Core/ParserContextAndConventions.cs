@@ -21,22 +21,22 @@ namespace EasyMigrator.Parsing
         public object Model { get; set; }
     }
 
-    public class StringLengths
+    public class Lengths
     {
         public int Default { get; set; }
-        public int Small { get; set; }
+        public int Short { get; set; }
         public int Medium { get; set; }
-        public int Large { get; set; }
+        public int Long { get; set; }
         public int Max { get; set; }
 
-        public int this[Lengths length]
+        public int this[Length length]
         {
             get {
                 switch (length) {
-                    case Lengths.Small: return Small;
-                    case Lengths.Medium: return Medium;
-                    case Lengths.Large: return Large;
-                    case Lengths.Max: return Max;
+                    case Length.Short: return Short;
+                    case Length.Medium: return Medium;
+                    case Length.Long: return Long;
+                    case Length.Max: return Max;
                     default: return Default;
                 }
             }
@@ -48,7 +48,7 @@ namespace EasyMigrator.Parsing
         public Func<Context, string> TableName { get; set; }
         public Func<Context, Column> PrimaryKey { get; set; }
         public ITypeMap TypeMap { get; set; }
-        public StringLengths StringLengths { get; set; }
+        public Lengths StringLengths { get; set; }
         public bool IndexForeignKeys { get; set; }
 
         static public Conventions Default
@@ -58,17 +58,17 @@ namespace EasyMigrator.Parsing
                 return new Conventions {
                     TableName = c => Regex.Replace(c.TableType.Name, "Table$", ""),
                     IndexForeignKeys = true,
-                    StringLengths = new StringLengths {
+                    StringLengths = new Lengths {
                         Default = 50,
-                        Small = 50,
+                        Short = 50,
                         Medium = 255,
-                        Large = 4000,
+                        Long = 4000,
                         Max = int.MaxValue
                     },
                     PrimaryKey = c => new Column {
                         Name = "Id",
                         Type = DbType.Int32,
-                        AutoIncrement = new AutoIncrementAttribute()
+                        AutoIncrement = new AutoIncAttribute()
                     },
                     TypeMap = new TypeMap()
                         .Add(new Dictionary<Type, DbType> {
@@ -83,7 +83,7 @@ namespace EasyMigrator.Parsing
                             {typeof(bool), DbType.Boolean},
                             {typeof(float), DbType.Single},
                             {typeof(double), DbType.Double},
-                            {typeof(decimal), DbType.Currency},
+                            {typeof(decimal), DbType.Decimal},
                             {typeof(DateTime), DbType.DateTime},
                             {typeof(Guid), DbType.Guid},
                             {typeof(byte[]), DbType.Binary},

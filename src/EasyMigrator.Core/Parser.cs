@@ -33,7 +33,7 @@ namespace EasyMigrator.Parsing
                 Name = Conventions.TableName(context)
             };
 
-            if (!fields.Any(f => f.HasAttribute<PrimaryKeyAttribute>()) && Conventions.PrimaryKey != null) {
+            if (!fields.Any(f => f.HasAttribute<PkAttribute>()) && Conventions.PrimaryKey != null) {
                 var pk = Conventions.PrimaryKey(context);
                 pk.IsPrimaryKey = true;
                 if (fields.Any(f => string.Equals(f.Name, pk.Name, StringComparison.InvariantCultureIgnoreCase)))
@@ -50,12 +50,12 @@ namespace EasyMigrator.Parsing
                     Type = dbType,
                     DefaultValue = GetDefaultValue(context.Model, field),
                     IsNullable = IsNullable(field),
-                    IsPrimaryKey = field.HasAttribute<PrimaryKeyAttribute>(),
-                    AutoIncrement = field.GetAttribute<AutoIncrementAttribute>(),
+                    IsPrimaryKey = field.HasAttribute<PkAttribute>(),
+                    AutoIncrement = field.GetAttribute<AutoIncAttribute>(),
                     Length = GetLength(field, dbType, Conventions.StringLengths),
                     Precision = field.GetAttribute<PrecisionAttribute>(),
                     Index = field.GetAttribute<IndexAttribute>(),
-                    ForeignKey = field.GetAttribute<ForeignKeyAttribute>()
+                    ForeignKey = field.GetAttribute<FkAttribute>()
                 };
 
                 if (column.ForeignKey != null && column.Index == null && Conventions.IndexForeignKeys)
@@ -67,9 +67,9 @@ namespace EasyMigrator.Parsing
             return table;
         }
 
-        public static int? GetLength(FieldInfo field, DbType dbType, StringLengths lengths)
+        public static int? GetLength(FieldInfo field, DbType dbType, Lengths lengths)
         {
-            // TODO: Possibly double lengths for ansi?
+            // TODO: Possibly double lengths for ansi? -> do it by making Lengths key off of DbType?
             var typesWithLength = new[] {
                 DbType.AnsiString,
                 DbType.AnsiStringFixedLength,
@@ -85,18 +85,16 @@ namespace EasyMigrator.Parsing
             if (lengthAttr == null)
                 return lengths.Default;
 
-            if (lengthAttr.LengthEnum.HasValue)
-                return lengths[lengthAttr.LengthEnum.Value];
+            if (lengthAttr.DefinedLength.HasValue)
+                return lengths[lengthAttr.DefinedLength.Value];
 
             return lengthAttr.Length;
         }
 
         public static bool IsNullable(FieldInfo field)
         {
-            var nullableAttr = field.GetAttribute<NullableAttribute>();
-            return nullableAttr != null
-                       ? nullableAttr.Nullable
-                       : field.FieldType.IsNullableType() || !field.FieldType.IsValueType;
+            return (field.FieldType.IsNullableType() || !field.FieldType.IsValueType)
+                   && !field.HasAttribute<NotNullAttribute>();
         }
 
         private static string GetDefaultValue(object model, FieldInfo field)
@@ -105,10 +103,10 @@ namespace EasyMigrator.Parsing
                 return field.GetAttribute<DefaultAttribute>().Expression;
 
             var val = field.GetValue(model);
-            if (field.FieldType == typeof(bool))
-                return (bool)val ? "1" : "0"; // special case - always set a default for bools
             if (val == null || val.Equals(Activator.CreateInstance(field.FieldType)))
                 return null;
+            if (field.FieldType == typeof(bool))
+                return (bool)val ? "1" : "0"; // special case - always set a default for bools
             else if (field.FieldType.IsNumeric())
                 return val.ToString();
             else

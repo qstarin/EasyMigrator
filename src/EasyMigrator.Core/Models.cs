@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 
@@ -38,8 +37,8 @@ namespace EasyMigrator.Model
 
     public interface IPrecision
     {
-        byte? Scale { get; set; }
-        byte? Precision { get; set; }
+        int? Scale { get; }
+        int? Precision { get; }
     }
 
     public interface IForeignKey
