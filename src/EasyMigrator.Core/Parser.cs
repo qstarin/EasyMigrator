@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Linq;
 using System.Reflection;
@@ -35,18 +36,23 @@ namespace EasyMigrator.Parsing
             if (!fields.Any(f => f.HasAttribute<PrimaryKeyAttribute>()) && Conventions.PrimaryKey != null) {
                 var pk = Conventions.PrimaryKey(context);
                 if (fields.Any(f => string.Equals(f.Name, pk.Name, StringComparison.InvariantCultureIgnoreCase)))
-                    throw new Exception("The column '" + pk.Name + "' conflicts with the automatically added primary key column name. Remove the duplicate column definition or add the PrimaryKey attribute to resolve the conflict.");
+                    throw new Exception("The column '" + pk.Name + "' conflicts with the automatically added primary key column name. " +
+                                        "Remove the duplicate column definition or add the PrimaryKey attribute to resolve the conflict.");
                 table.PrimaryKey.Add(pk);
                 table.Columns.Add(pk);
             }
 
             foreach (var field in fields) {
-                var col = new Column(field.Name, Conventions.TypeMap[field], GetColumnProperties(field), GetDefaultValue(model, field));
-
-                if ((new[] { DbType.AnsiString, DbType.AnsiStringFixedLength, DbType.String, DbType.StringFixedLength, DbType.Binary }).Contains(col.Type)) {
-                    var attr = field.GetAttribute<LengthAttribute>();
-                    col.Size = attr == null ? 100 : attr.Length;
-                }
+                var dbType = Conventions.TypeMap[field];
+                var col = new Column {
+                    Name = field.Name, 
+                    Type = dbType,
+                    Length = GetLength(field, dbType, Conventions.StringLengths),
+                    Precision = field.GetAttribute<PrecisionAttribute>(),
+                    AutoIncrement = field.GetAttribute<AutoIncrementAttribute>(),
+                    DefaultValue = GetDefaultValue(context.Model, field),
+                    IsNullable = IsNullable(field), 
+                };
                 table.Columns.Add(col);
 
                 if (field.HasAttribute<ForeignKeyAttribute>()) {
@@ -67,8 +73,8 @@ namespace EasyMigrator.Parsing
                         });
                     }
                 }
-                // "else" because we already indexed the FK
-                else if (field.HasAttribute<IndexedAttribute>()) {
+                
+                if (field.HasAttribute<IndexedAttribute>()) {
                     var idx = field.GetAttribute<IndexedAttribute>();
                     table.Indexes.Add(new Index {
                         Unique = idx.Unique,
@@ -82,16 +88,35 @@ namespace EasyMigrator.Parsing
             return table;
         }
 
+        public static int? GetLength(FieldInfo field, DbType dbType, StringLengths lengths)
+        {
+            var typesWithLength = new[] {
+                DbType.AnsiString,
+                DbType.AnsiStringFixedLength,
+                DbType.String,
+                DbType.StringFixedLength,
+                DbType.Binary
+            };
+
+            if (!typesWithLength.Contains(dbType))
+                return null;
+
+            var lengthAttr = field.GetAttribute<LengthAttribute>();
+            if (lengthAttr == null)
+                return lengths.Default;
+
+            if (lengthAttr.LengthEnum.HasValue)
+                return lengths[lengthAttr.LengthEnum.Value];
+
+            return lengthAttr.Length;
+        }
+
         public static bool IsNullable(FieldInfo field)
         {
-            if (field.FieldType.IsNullableType())
-                return true;
-
             var nullableAttr = field.GetAttribute<NullableAttribute>();
-            if (nullableAttr == null)
-                return !field.FieldType.IsValueType;
-
-            return nullableAttr.Nullable;
+            return nullableAttr != null
+                       ? nullableAttr.Nullable
+                       : field.FieldType.IsNullableType() || !field.FieldType.IsValueType;
         }
 
         private static string GetDefaultValue(object model, FieldInfo field)

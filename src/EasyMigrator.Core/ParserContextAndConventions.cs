@@ -21,11 +21,33 @@ namespace EasyMigrator.Parsing
         public object Model { get; set; }
     }
 
+    public class StringLengths
+    {
+        public int Default { get; set; }
+        public int Small { get; set; }
+        public int Medium { get; set; }
+        public int Large { get; set; }
+        public int Max { get; set; }
+
+        public int this[Lengths length]
+        {
+            get {
+                switch (length) {
+                    case Lengths.Small: return Small;
+                    case Lengths.Medium: return Medium;
+                    case Lengths.Large: return Large;
+                    case Lengths.Max: return Max;
+                    default: return Default;
+                }
+            }
+        }
+    }
+
     public class Conventions
     {
+        public StringLengths StringLengths { get; set; }
         public Func<Context, string> TableName { get; set; }
         public Func<Context, Column> PrimaryKey { get; set; }
-        public Func<Context, string> PrimaryKeyName { get; set; }
         public ITypeMap TypeMap { get; set; }
 
         static public Conventions Default
@@ -34,11 +56,17 @@ namespace EasyMigrator.Parsing
             {
                 return new Conventions {
                     TableName = c => Regex.Replace(c.TableType.Name, "Table$", ""),
+                    StringLengths = new StringLengths {
+                        Default = 50,
+                        Small = 50,
+                        Medium = 255,
+                        Large = 4000,
+                        Max = int.MaxValue
+                    },
                     PrimaryKey = c => new Column {
                         Name = "Id",
                         Type = DbType.Int32,
-                        IsIdentity = true,
-                        IsPrimaryKey = true
+                        AutoIncrement = new AutoIncrementAttribute()
                     },
                     TypeMap = new TypeMap()
                         .Add(new Dictionary<Type, DbType> {

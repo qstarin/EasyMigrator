@@ -5,13 +5,21 @@ using System.Text;
 
 namespace EasyMigrator
 {
-    public class NameAttribute : Attribute
+    public class PrimaryKeyAttribute : Attribute
     {
-        public string Name { get; set; }
-        public NameAttribute(string name) { Name = name; }
     }
 
-    public class PrimaryKeyAttribute : Attribute { }
+    public class AutoIncrementAttribute : Attribute, Model.IAutoIncrement
+    {
+        public long? Seed { get; set; }
+        public long? Step { get; set; }
+    }
+
+    public class PrecisionAttribute : Attribute, Model.IPrecision
+    {
+        public byte? Scale { get; set; }
+        public byte? Precision { get; set; }
+    }
 
     public class NullableAttribute : Attribute
     {
@@ -24,7 +32,6 @@ namespace EasyMigrator
     public class NotNullableAttribute : NullableAttribute
     {
         public NotNullableAttribute() : base(false) { }
-        public NotNullableAttribute(bool nullable) : base(!nullable) { }
     }
 
     public class ForeignKeyAttribute : Attribute
@@ -60,25 +67,25 @@ namespace EasyMigrator
 
     public class AnsiAttribute : Attribute { }
 
+    public enum Lengths { Small, Medium, Large, Max }
+
     public class LengthAttribute : Attribute
     {
+        public Lengths? LengthEnum { get; private set; }
         public int Length { get; private set; }
 
-        public LengthAttribute(int length)
-        {
-            this.Length = length;
-        }
+        public LengthAttribute(int length) { Length = length; }
+        public LengthAttribute(Lengths length) { LengthEnum = length; }
+    }
+
+    public class MaxLengthAttribute : LengthAttribute
+    {
+        public MaxLengthAttribute() : base(Lengths.Max) { }
     }
 
     public class FixedLengthAttribute : LengthAttribute
     {
         public FixedLengthAttribute(int length) : base(length) { }
-    }
-
-    public class MaxLengthAttribute : LengthAttribute
-    {
-        public const int MaximumLength = int.MaxValue;
-        public MaxLengthAttribute() : base(MaximumLength) { }
     }
 
     public class DefaultAttribute : Attribute
