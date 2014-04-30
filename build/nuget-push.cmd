@@ -1,3 +1,12 @@
-call nuget-pack.cmd
-..\src\.nuget\nuget.exe push EasyMigrator.Core*.nupkg %1
-..\src\.nuget\nuget.exe push EasyMigrator.FluentMigrator*.nupkg %1
+@echo off
+setlocal EnableDelayedExpansion
+
+
+for %%f in (*.nupkg) do (
+	set "sf=%%f"
+	if "!sf!" == "!sf:symbols.nupkg=!" (
+		if "!sf!" == "!sf:EasyMigrator.MigratorDotNet=!" (
+			..\src\.nuget\nuget.exe push %%f %1
+		)
+	)
+)
