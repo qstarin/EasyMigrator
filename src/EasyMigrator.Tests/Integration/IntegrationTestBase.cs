@@ -7,6 +7,8 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Text;
+using DatabaseSchemaReader;
+using DatabaseSchemaReader.DataSchema;
 using EasyMigrator.Extensions;
 using EasyMigrator.Model;
 using EasyMigrator.Parsing;
@@ -21,7 +23,8 @@ namespace EasyMigrator.Tests.Integration
         protected virtual string DatabaseName { get { return GetType().Name + "Db"; } }
         protected string DatabaseFile { get {  return Path.Combine(Environment.CurrentDirectory, DatabaseName + ".mdf"); } }
         protected string LogFile { get { return Path.Combine(Environment.CurrentDirectory, DatabaseName + ".ldf"); } }
-        protected string ConnectionString { get { return ConfigurationManager.ConnectionStrings["Test-LocalDb"].ConnectionString; } }
+        protected ConnectionStringSettings ConnectionStringSettings { get {  return ConfigurationManager.ConnectionStrings["Test-LocalDb"]; } }
+        protected string ConnectionString { get { return ConnectionStringSettings.ConnectionString; } }
         protected string ConnectionStringWithDatabase { get { return ConnectionString + string.Format("AttachDbFileName={0};", DatabaseFile); } }
         protected IMigrator Migrator { get { return _getMigrator(ConnectionStringWithDatabase); } }
         private readonly Func<string, IMigrator> _getMigrator;
@@ -59,13 +62,40 @@ LOG ON (NAME={0}_log,FILENAME='{2}');"
             }
         }
 
-        //override public void TearDownFixture() {}
-
         protected Table GetTableModelFromDb(ITableTestData data)
         {
-            using (var conn = OpenConnection()) {
-                var columns = conn.GetSchema("Columns", new[] {null, null, data.Model.Name});
-            }
+            var table = new Table {Name = data.Model.Name};
+            var schema = new DatabaseReader(ConnectionStringWithDatabase, SqlType.SqlServer).ReadAll();
+            var st = schema.Tables.Single(t => t.Name == table.Name);
+            table.Columns = st.Columns.Select(c => {
+                var sqlDbType = (SqlDbType)c.DataType.ProviderDbType;
+                var param = new SqlParameter();
+                param.SqlDbType = sqlDbType;
+                var dbType = param.DbType;
+
+                return new Column {
+                    Name = c.Name,
+                    Type = dbType,//(DbType)Enum.Parse(typeof(DbType), c.DbDataType),
+                    IsPrimaryKey = c.IsPrimaryKey,
+                    IsNullable = c.Nullable,
+                    Length = c.Length.IfHasValue(l => l == -1 ? int.MaxValue : l, (int?)null),
+                    DefaultValue = c.DefaultValue,
+                    AutoIncrement = c.IsAutoNumber
+                        ? new AutoIncAttribute(c.IdentityDefinition.IdentitySeed, c.IdentityDefinition.IdentityIncrement)
+                        : null,
+                    Precision = dbType == DbType.Decimal && (c.Precision.HasValue || c.Scale.HasValue)
+                        ? new PrecisionAttribute(c.Precision.Value, c.Scale.Value) 
+                        : null,
+                    Index = c.IsIndexed && !c.IsPrimaryKey
+                        ? new IndexAttribute { Unique = c.IsUniqueKey }
+                        : null,
+                    ForeignKey = c.IsForeignKey
+                        ? new FkAttribute(c.ForeignKeyTableName) { Column = c.ForeignKeyTable.PrimaryKeyColumn.Name }
+                        : null
+                };
+            }).ToList();
+            
+            return table;
             return data.Model;
         }
     }

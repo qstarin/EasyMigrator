@@ -12,8 +12,12 @@ namespace EasyMigrator
 
     public class AutoIncAttribute : Attribute, Model.IAutoIncrement
     {
-        public int? Seed { get; set; }
-        public int? Step { get; set; }
+        public long Seed { get; private set; }
+        public long Step { get; private set; }
+
+        public AutoIncAttribute() : this(1) { }
+        public AutoIncAttribute(long seed) : this(seed, 1) { }
+        public AutoIncAttribute(long seed, long step) { Seed = seed; Step = step; }
     }
 
     public class PrecisionAttribute : Attribute, Model.IPrecision

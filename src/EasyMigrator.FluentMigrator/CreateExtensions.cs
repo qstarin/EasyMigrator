@@ -54,10 +54,7 @@ namespace EasyMigrator
                     createColumnOptionSyntax = createColumnOptionSyntax.WithDefaultValue(col.DefaultValue);
 
                 if (col.AutoIncrement != null) 
-                    createColumnOptionSyntax = 
-                        col.AutoIncrement.Seed.HasValue || col.AutoIncrement.Step.HasValue
-                            ? createColumnOptionSyntax.Identity(col.AutoIncrement.Seed ?? 1, col.AutoIncrement.Step ?? 1)
-                            : createColumnOptionSyntax.Identity();
+                    createColumnOptionSyntax = createColumnOptionSyntax.Identity((int)col.AutoIncrement.Seed, (int)col.AutoIncrement.Step);
 
                 if (col.Index != null) {
                     createColumnOptionSyntax = 

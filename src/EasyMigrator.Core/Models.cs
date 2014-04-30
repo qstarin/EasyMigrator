@@ -31,8 +31,8 @@ namespace EasyMigrator.Model
 
     public interface IAutoIncrement
     {
-        int? Seed { get; set; }
-        int? Step { get; set; }
+        long Seed { get; }
+        long Step { get; }
     }
 
     public interface IPrecision
@@ -41,6 +41,7 @@ namespace EasyMigrator.Model
         int Scale { get; }
     }
 
+    // TODO: Add cascade options
     public interface IForeignKey
     {
         string Name { get; set; }
