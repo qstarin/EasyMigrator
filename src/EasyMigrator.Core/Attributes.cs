@@ -60,7 +60,7 @@ namespace EasyMigrator
 
     public class AnsiAttribute : Attribute { }
 
-    public enum Length { Short, Medium, Long, Max }
+    public enum Length { Default, Short, Medium, Long, Max }
 
     public class LengthAttribute : Attribute
     {
