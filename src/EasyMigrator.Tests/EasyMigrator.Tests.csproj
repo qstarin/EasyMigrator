@@ -48,13 +48,15 @@
     <Compile Include="..\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="Integration\FluentMigrator\FluentMigratorTestBase.cs" />
-    <Compile Include="Integration\FluentMigrator\Table1.cs" />
+    <Compile Include="Data\Table1.cs" />
+    <Compile Include="TableTestData.cs" />
+    <Compile Include="Integration\FluentMigratorTests.cs" />
     <Compile Include="Integration\IntegrationTestBase.cs" />
-    <Compile Include="Integration\MigratorDotNet\MigratorDotNetTestBase.cs" />
+    <Compile Include="Integration\MigratorDotNetTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TableParser\AssertExtensions.cs" />
-    <Compile Include="TableParser\Table1.cs" />
+    <Compile Include="AssertEx.cs" />
+    <Compile Include="TableParserTests.cs" />
+    <Compile Include="TableTestBase.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

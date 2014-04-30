@@ -17,7 +17,7 @@ namespace EasyMigrator.Parsing
     {
         public Conventions Conventions { get; set; }
         public Table Table { get; set; }
-        public Type TableType { get; set; }
+        public Type ModelType { get; set; }
         public IEnumerable<FieldInfo> Fields { get; set; }
         public object Model { get; set; }
     }
@@ -58,7 +58,7 @@ namespace EasyMigrator.Parsing
         {
             get {
                 return new Conventions {
-                    TableName = c => Regex.Replace(c.TableType.Name, "Table$", ""),
+                    TableName = c => Regex.Replace(c.ModelType.Name, "Table$", ""),
                     IndexForeignKeys = true,
                     StringLengths = new Lengths {
                         Default = 50,

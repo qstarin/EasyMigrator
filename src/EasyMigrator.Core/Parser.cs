@@ -26,7 +26,7 @@ namespace EasyMigrator.Parsing
         {
             var context = new Context {
                 Conventions = Conventions,
-                TableType = type,
+                ModelType = type,
                 Model = Activator.CreateInstance(type)
             };
             var fields = context.Fields = type.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
@@ -78,8 +78,8 @@ namespace EasyMigrator.Parsing
             if (precisionAttr == null)
                 return context.Conventions.DefaultPrecision(context);
 
-            if (precisionAttr.DefinedLength.HasValue)
-                return new PrecisionAttribute(context.Conventions.PrecisionLengths[precisionAttr.DefinedLength.Value], precisionAttr.Scale);
+            if (precisionAttr.DefinedPrecision.HasValue)
+                return new PrecisionAttribute(context.Conventions.PrecisionLengths[precisionAttr.DefinedPrecision.Value], precisionAttr.Scale);
 
             return precisionAttr;
         }

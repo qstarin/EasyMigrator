@@ -4,22 +4,13 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using EasyMigrator.Model;
-using NUnit.Framework;
 
 
-namespace EasyMigrator.Tests.TableParser
+namespace EasyMigrator.Tests.Data
 {
-    [TestFixture]
-    public class Table1
+    public class Table1 : TableTestData
     {
-        [Test]
-        public void Parser()
-        {
-            var table = Parsing.Parser.Default.ParseTable(typeof(Table1Table));
-            AssertExtensions.AreEqual(_Table1, table);
-        }
-
-        public class Table1Table
+        class Poco
         {
             int Sequence;
             bool Accepted;
@@ -32,7 +23,7 @@ namespace EasyMigrator.Tests.TableParser
             [Fk("OtherTable")] int OtherTableId;
         }
 
-        private Table _Table1 = new Table {
+        Table Model = new Table {
             Name = "Table1",
             Columns = new[] {
                 new Column {

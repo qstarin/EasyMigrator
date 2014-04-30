@@ -46,5 +46,29 @@ namespace EasyMigrator.Extensions
                     return false;
             }
         }
+
+        public static bool InheritsFrom<T>(this Type type) { return typeof(T).IsAssignableFrom(type); }
+
+        /// <summary>
+        /// lets you do: type.InheritsFrom(typeof(Something&lt;&gt;))
+        /// </summary>
+        public static bool InheritsFrom(this Type type, Type superType)
+        {
+            if (!type.IsClass && !type.IsInterface)
+                return false;
+
+            if (!superType.IsGenericTypeDefinition)
+                return superType.IsAssignableFrom(type);
+
+            // http://stackoverflow.com/questions/457676/c-reflection-check-if-a-class-is-derived-from-a-generic-class
+            for (var t = type; t != null && t != typeof(object); t = t.BaseType) {
+                if (t.IsGenericType)
+                    t = t.GetGenericTypeDefinition();
+                if (t == superType)
+                    return true;
+            }
+
+            return false;
+        }
     }
 }

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace EasyMigrator.Tests.Integration.MigratorDotNet
 {
-    abstract public class MigratorDotNetTestBase : IntegrationTestBase
+    public class MigratorDotNetTests : IntegrationTestBase
     {
     }
 }

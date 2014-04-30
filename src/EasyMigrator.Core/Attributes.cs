@@ -18,7 +18,7 @@ namespace EasyMigrator
 
     public class PrecisionAttribute : Attribute, Model.IPrecision
     {
-        internal Length? DefinedLength { get; private set; }
+        internal Length? DefinedPrecision { get; private set; }
         public int Precision { get; private set; }
         public int Scale { get; private set; }
 
@@ -26,7 +26,7 @@ namespace EasyMigrator
             : this(scale) { Precision = precision; }
 
         public PrecisionAttribute(Length precision, int scale)
-            : this(scale) { DefinedLength = precision; }
+            : this(scale) { DefinedPrecision = precision; }
 
         private PrecisionAttribute(int scale) { Scale = scale; }
     }

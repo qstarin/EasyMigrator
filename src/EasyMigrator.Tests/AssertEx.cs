@@ -6,9 +6,9 @@ using EasyMigrator.Model;
 using NUnit.Framework;
 
 
-namespace EasyMigrator.Tests.TableParser
+namespace EasyMigrator.Tests
 {
-    static public class AssertExtensions
+    static public class AssertEx
     {
         static public void AreEqual(Table expected, Table actual)
         {
