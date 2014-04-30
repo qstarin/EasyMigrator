@@ -47,6 +47,9 @@
     <Reference Include="Migrator.Providers">
       <HintPath>..\packages\MigratorDotNet.0.9.1\lib\net35\Migrator.Providers.dll</HintPath>
     </Reference>
+    <Reference Include="NPoco">
+      <HintPath>..\packages\NPoco.2.2.49\lib\net40\NPoco.dll</HintPath>
+    </Reference>
     <Reference Include="nunit.framework">
       <HintPath>..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
     </Reference>
