@@ -6,6 +6,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using EasyMigrator.Extensions;
+using EasyMigrator.Model;
 using EasyMigrator.Parsing;
 using EasyMigrator.Tests.Data;
 using NUnit.Framework;
@@ -15,32 +16,45 @@ namespace EasyMigrator.Tests.Integration
 {
     abstract public class IntegrationTestBase : TableTestBase
     {
-        protected SqlConnection Connection { get; private set; }
-        protected string DatabaseName { get; private set; }
+        abstract protected IMigrator Migrator { get; }
+        protected virtual string DatabaseName { get { return GetType().Name + "Db"; } }
+        static public string ConnectionString { get { return ConfigurationManager.ConnectionStrings["Test-LocalDb"].ConnectionString; } }
+        protected IDbConnection GetConnection() { return new SqlConnection(ConnectionString); }
 
         override public void SetupFixture()
         {
             base.SetupFixture();
 
-            DatabaseName = this.GetType().Name + "Db";
-            var connString = ConfigurationManager.ConnectionStrings["Test-LocalDb"];
-            Connection = new SqlConnection(connString.ConnectionString);
-            Connection.Open();
-            ExecuteNonQuery(string.Format("IF EXISTS(select * from sys.databases where name='{0}') DROP DATABASE [{0}]", DatabaseName));
-            ExecuteNonQuery(string.Format("CREATE DATABASE {0}", DatabaseName));
-            ExecuteNonQuery(string.Format("USE {0}", DatabaseName));
+            using (var conn = GetConnection()) { 
+                conn.Open();
+                conn.ExecuteNonQuery(string.Format("IF EXISTS(select * from sys.databases where name='{0}') DROP DATABASE [{0}]", DatabaseName));
+                conn.ExecuteNonQuery(string.Format("CREATE DATABASE {0}", DatabaseName));
+                conn.ExecuteNonQuery(string.Format("USE {0}", DatabaseName));
+            }
         }
 
         override public void TearDownFixture()
         {
-            ExecuteNonQuery("USE master");
-            ExecuteNonQuery(string.Format("DROP DATABASE {0}", DatabaseName));
-            Connection.Close();
+            using (var conn = GetConnection()) {
+                conn.Open();
+                conn.ExecuteNonQuery("USE master");
+                conn.ExecuteNonQuery(string.Format("DROP DATABASE {0}", DatabaseName));
+            }
         }
 
-        protected void ExecuteNonQuery(string sql)
+        protected Table GetTableModelFromDb(ITableTestData data)
         {
-            var cmd = Connection.CreateCommand();
+            return data.Model;
+        }
+    }
+
+
+
+    internal static class ConnectionExtensions
+    {
+        static public void ExecuteNonQuery(this IDbConnection connection, string sql)
+        {
+            var cmd = connection.CreateCommand();
             cmd.CommandText = sql;
             cmd.CommandType = CommandType.Text;
             cmd.ExecuteNonQuery();

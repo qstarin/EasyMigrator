@@ -14,10 +14,12 @@ namespace EasyMigrator
 {
     static public class CreateExtensions
     {
-        static public void Table<T>(this ICreateExpressionRoot Create) { Create.Table<T>(Parsing.Parser.Default); }
-        static public void Table<T>(this ICreateExpressionRoot Create, Parsing.Parser parser)
+        static public void Table<T>(this ICreateExpressionRoot Create) { Create.Table(typeof(T)); }
+        static public void Table(this ICreateExpressionRoot Create, Type tableType) { Create.Table(tableType, Parsing.Parser.Default); }
+        public static void Table<T>(this ICreateExpressionRoot Create, Parsing.Parser parser) { Create.Table(typeof(T), parser); }
+        static public void Table(this ICreateExpressionRoot Create, Type tableType, Parsing.Parser parser)
         {
-            var table = parser.ParseTable(typeof(T));
+            var table = parser.ParseTable(tableType);
             var createTableSyntax = Create.Table(table.Name);
             foreach (var col in table.Columns) {
                 var createColumnOptionSyntax = createTableSyntax.WithColumn(col.Name).As(col);

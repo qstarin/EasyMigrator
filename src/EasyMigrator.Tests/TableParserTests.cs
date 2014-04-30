@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using EasyMigrator.Extensions;
 using EasyMigrator.Parsing;
-using EasyMigrator.Tests.Data;
 using NUnit.Framework;
 
 

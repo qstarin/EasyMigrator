@@ -32,6 +32,21 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FluentMigrator">
+      <HintPath>..\packages\FluentMigrator.1.1.2.1\lib\40\FluentMigrator.dll</HintPath>
+    </Reference>
+    <Reference Include="FluentMigrator.Runner">
+      <HintPath>..\packages\FluentMigrator.1.1.2.1\tools\FluentMigrator.Runner.dll</HintPath>
+    </Reference>
+    <Reference Include="Migrator">
+      <HintPath>..\packages\MigratorDotNet.0.9.1\lib\net35\Migrator.dll</HintPath>
+    </Reference>
+    <Reference Include="Migrator.Framework">
+      <HintPath>..\packages\MigratorDotNet.0.9.1\lib\net35\Migrator.Framework.dll</HintPath>
+    </Reference>
+    <Reference Include="Migrator.Providers">
+      <HintPath>..\packages\MigratorDotNet.0.9.1\lib\net35\Migrator.Providers.dll</HintPath>
+    </Reference>
     <Reference Include="nunit.framework">
       <HintPath>..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
     </Reference>
@@ -49,10 +64,12 @@
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="Data\Table1.cs" />
+    <Compile Include="Integration\IMigrator.cs" />
+    <Compile Include="Integration\IntegrationTests.cs" />
+    <Compile Include="Integration\Migrators\FluentMigrator.cs" />
+    <Compile Include="Integration\Migrators\MigratorDotNet.cs" />
     <Compile Include="TableTestData.cs" />
-    <Compile Include="Integration\FluentMigratorTests.cs" />
     <Compile Include="Integration\IntegrationTestBase.cs" />
-    <Compile Include="Integration\MigratorDotNetTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="AssertEx.cs" />
     <Compile Include="TableParserTests.cs" />
@@ -66,6 +83,14 @@
     <ProjectReference Include="..\EasyMigrator.Core\EasyMigrator.Core.csproj">
       <Project>{f2f56192-d287-4870-a902-cfb16425ce9e}</Project>
       <Name>EasyMigrator.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\EasyMigrator.FluentMigrator\EasyMigrator.FluentMigrator.csproj">
+      <Project>{fbaf094e-d2b0-4f01-a50d-ed1710c532e6}</Project>
+      <Name>EasyMigrator.FluentMigrator</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\EasyMigrator.MigratorDotNet\EasyMigrator.MigratorDotNet.csproj">
+      <Project>{77bf2540-6486-4f22-9aa3-2ae60a9fef74}</Project>
+      <Name>EasyMigrator.MigratorDotNet</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
