@@ -1,14 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-    <metadata>
-        <id>$id$</id>
-        <title>Easy Migrator for Migrator.Net</title>
-        <version>$version$</version>
-        <authors>$author$</authors>
-        <owners>$author$</owners>
-        <description>$description$</description>
-        <licenseUrl>http://opensource.org/licenses/MIT</licenseUrl>
-        <projectUrl>https://bitbucket.org/qes/easymigrator/wiki/Home</projectUrl>
-        <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    </metadata>
+  <metadata>
+      <id>$id$</id>
+      <title>Easy Migrator for Migrator.Net</title>
+      <version>$version$</version>
+      <authors>$author$</authors>
+      <owners>$author$</owners>
+      <description>$description$</description>
+      <licenseUrl>http://opensource.org/licenses/MIT</licenseUrl>
+      <projectUrl>https://bitbucket.org/qes/easymigrator/wiki/Home</projectUrl>
+      <requireLicenseAcceptance>false</requireLicenseAcceptance>
+      <dependencies>
+        <dependency id="EasyMigrator.Core" version="$version$" />
+      </dependencies>
+  </metadata>
 </package>

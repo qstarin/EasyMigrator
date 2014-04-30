@@ -96,7 +96,6 @@ LOG ON (NAME={0}_log,FILENAME='{2}');"
             }).ToList();
             
             return table;
-            return data.Model;
         }
     }
 }
