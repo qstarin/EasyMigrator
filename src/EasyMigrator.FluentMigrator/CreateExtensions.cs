@@ -21,6 +21,12 @@ namespace EasyMigrator
         static public void Table(this IDeleteExpressionRoot Delete, Type tableType, Parsing.Parser parser)
         {
             var table = parser.ParseTable(tableType);
+            table.Columns.ForEach(c => c.ForeignKey.IfNotNull(f => {
+                if (f.Name != null)
+                    Delete.ForeignKey(f.Name).OnTable(table.Name);
+                else 
+                    Delete.ForeignKey().FromTable(table.Name).ForeignColumn(c.Name).ToTable(f.Table).PrimaryColumn(f.Column);
+            }));
             Delete.Table(table.Name);
         }
 
