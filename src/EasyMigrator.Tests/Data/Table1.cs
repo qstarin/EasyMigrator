@@ -20,7 +20,6 @@ namespace EasyMigrator.Tests.Data
             [Max] string Description;
             decimal? Rate;
             [Precision(Length.Short, 3)] decimal Adjustment;
-            [Fk("OtherTable")] int OtherTableId;
         }
 
         Table Model = new Table {
@@ -73,12 +72,6 @@ namespace EasyMigrator.Tests.Data
                     Name = "Adjustment",
                     Type = DbType.Decimal,
                     Precision = new PrecisionAttribute(9, 3)
-                },
-                new Column {
-                    Name = "OtherTableId",
-                    Type = DbType.Int32,
-                    ForeignKey = new FkAttribute("OtherTable"),
-                    Index = new IndexAttribute()
                 },
             }
         };
