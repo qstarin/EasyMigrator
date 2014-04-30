@@ -67,6 +67,7 @@
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="Data\Table1.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="Integration\IMigrator.cs" />
     <Compile Include="Integration\IntegrationTests.cs" />
     <Compile Include="Integration\Migrators\FluentMigrator.cs" />

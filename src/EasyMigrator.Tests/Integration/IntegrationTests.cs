@@ -9,6 +9,8 @@ namespace EasyMigrator.Tests.Integration
 {
     abstract public class IntegrationTests : IntegrationTestBase
     {
+        protected IntegrationTests(Func<string, IMigrator> getMigrator) : base(getMigrator) {}
+
         [Test]
         public void ParseAll()
         {
@@ -25,12 +27,12 @@ namespace EasyMigrator.Tests.Integration
     [TestFixture]
     public class FluentMigratorIntegrationTests : IntegrationTests
     {
-        protected override IMigrator Migrator { get { return new Migrators.FluentMigrator(); } }
+       public FluentMigratorIntegrationTests() : base(s => new Migrators.FluentMigrator(s)) {}
     }
 
     [TestFixture]
     public class MigratorDotNetIntegrationTests : IntegrationTests
     {
-        protected override IMigrator Migrator { get { return new Migrators.MigratorDotNet(); } }
+        public MigratorDotNetIntegrationTests() : base(s => new Migrators.FluentMigrator(s)) { }
     }
 }

@@ -9,6 +9,9 @@ namespace EasyMigrator.Tests.Integration
 {
     public interface IMigrator
     {
+        void Up(Action<NPoco.Database> action);
+        void Down(Action<NPoco.Database> action);
         void Up(Type poco);
+        void Down(Type poco);
     }
 }

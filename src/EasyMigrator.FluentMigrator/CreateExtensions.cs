@@ -7,6 +7,7 @@ using EasyMigrator.Model;
 using EasyMigrator.Extensions;
 using FluentMigrator.Builders.Create;
 using FluentMigrator.Builders.Create.Table;
+using FluentMigrator.Builders.Delete;
 using FluentMigrator.Runner.Extensions;
 
 
@@ -14,6 +15,15 @@ namespace EasyMigrator
 {
     static public class CreateExtensions
     {
+        static public void Table<T>(this IDeleteExpressionRoot Delete) { Delete.Table(typeof(T)); }
+        static public void Table(this IDeleteExpressionRoot Delete, Type tableType) { Delete.Table(tableType, Parsing.Parser.Default); }
+        public static void Table<T>(this IDeleteExpressionRoot Delete, Parsing.Parser parser) { Delete.Table(typeof(T), parser); }
+        static public void Table(this IDeleteExpressionRoot Delete, Type tableType, Parsing.Parser parser)
+        {
+            var table = parser.ParseTable(tableType);
+            Delete.Table(table.Name);
+        }
+
         static public void Table<T>(this ICreateExpressionRoot Create) { Create.Table(typeof(T)); }
         static public void Table(this ICreateExpressionRoot Create, Type tableType) { Create.Table(tableType, Parsing.Parser.Default); }
         public static void Table<T>(this ICreateExpressionRoot Create, Parsing.Parser parser) { Create.Table(typeof(T), parser); }
