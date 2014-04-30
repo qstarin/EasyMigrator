@@ -21,6 +21,7 @@ namespace EasyMigrator.Tests.Integration
         {
             Migrator.Up(data.Poco);
             AssertEx.AreEqual(data.Model, GetTableModelFromDb(data));
+            Migrator.Down(data.Poco);
         }
     }
 
