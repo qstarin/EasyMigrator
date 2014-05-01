@@ -36,7 +36,7 @@ namespace EasyMigrator
         public static void Columns(this ICreateExpressionRoot Create, Type tableType, Parsing.Parser parser)
         {
             var table = parser.ParseTable(tableType);
-            foreach (var col in table.Columns)
+            foreach (var col in table.Columns.DefinedInPoco())
                 Create.Column(col.Name).OnTable(table.Name)
                                  .BuildColumn<ICreateColumnAsTypeOrInSchemaSyntax,
                                               ICreateColumnOptionSyntax,
