@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>$id$</id>
-        <title>Easy Migrator</title>
+        <title>Easy Migrator Core</title>
         <version>$version$</version>
         <authors>$author$</authors>
         <owners>$author$</owners>
@@ -10,5 +10,6 @@
         <licenseUrl>http://opensource.org/licenses/MIT</licenseUrl>
         <projectUrl>https://bitbucket.org/qes/easymigrator/wiki/Home</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <summary>This is the core library for EasyMigrator. If you want to use EasyMigrator with your migration framework, you probably want one of the integration packages like EasyMigrator.FluentMigrator.</summary>
     </metadata>
 </package>
