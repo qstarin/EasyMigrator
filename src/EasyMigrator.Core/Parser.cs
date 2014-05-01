@@ -37,6 +37,7 @@ namespace EasyMigrator.Parsing
             if (!fields.Any(f => f.HasAttribute<PkAttribute>()) && Conventions.PrimaryKey != null) {
                 var pk = Conventions.PrimaryKey(context);
                 pk.IsPrimaryKey = true;
+                pk.DefinedInPoco = false;
                 if (fields.Any(f => string.Equals(f.Name, pk.Name, StringComparison.InvariantCultureIgnoreCase)))
                     throw new Exception("The column '" + pk.Name + "' conflicts with the automatically added primary key column name. " +
                                         "Remove the duplicate column definition or add the PrimaryKey attribute to resolve the conflict.");
@@ -56,7 +57,8 @@ namespace EasyMigrator.Parsing
                     Length = GetLength(field, dbType, Conventions.StringLengths),
                     Precision = GetPrecision(context, field, dbType),
                     Index = field.GetAttribute<IndexAttribute>(),
-                    ForeignKey = field.GetAttribute<FkAttribute>()
+                    ForeignKey = field.GetAttribute<FkAttribute>(),
+                    DefinedInPoco = true
                 };
 
                 if (column.ForeignKey != null && column.Index == null && Conventions.IndexForeignKeys)
