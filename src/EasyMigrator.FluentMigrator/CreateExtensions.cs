@@ -5,9 +5,12 @@ using System.Linq;
 using System.Text;
 using EasyMigrator.Model;
 using EasyMigrator.Extensions;
+using FluentMigrator.Builders;
 using FluentMigrator.Builders.Create;
+using FluentMigrator.Builders.Create.Column;
 using FluentMigrator.Builders.Create.Table;
 using FluentMigrator.Builders.Delete;
+using FluentMigrator.Infrastructure;
 using FluentMigrator.Runner.Extensions;
 
 
@@ -21,14 +24,29 @@ namespace EasyMigrator
         static public void Table(this IDeleteExpressionRoot Delete, Type tableType, Parsing.Parser parser)
         {
             var table = parser.ParseTable(tableType);
+            Delete.Columns(table);
+            Delete.Table(table.Name);
+        }
+
+        static public void Columns<T>(this IDeleteExpressionRoot Delete) { Delete.Columns(typeof(T)); }
+        static public void Columns(this IDeleteExpressionRoot Delete, Type tableType) { Delete.Columns(tableType, Parsing.Parser.Default); }
+        public static void Columns<T>(this IDeleteExpressionRoot Delete, Parsing.Parser parser) { Delete.Columns(typeof(T), parser); }
+        static public void Columns(this IDeleteExpressionRoot Delete, Type tableType, Parsing.Parser parser)
+        {
+            var table = parser.ParseTable(tableType);
+            Delete.Columns(table);
+        }
+
+        static private void Columns(this IDeleteExpressionRoot Delete, Table table)
+        {
             table.Columns.ForEach(c => c.ForeignKey.IfNotNull(f => {
                 if (f.Name != null)
                     Delete.ForeignKey(f.Name).OnTable(table.Name);
-                else 
+                else
                     Delete.ForeignKey().FromTable(table.Name).ForeignColumn(c.Name).ToTable(f.Table).PrimaryColumn(f.Column);
             }));
-            Delete.Table(table.Name);
         }
+
 
         static public void Table<T>(this ICreateExpressionRoot Create) { Create.Table(typeof(T)); }
         static public void Table(this ICreateExpressionRoot Create, Type tableType) { Create.Table(tableType, Parsing.Parser.Default); }
@@ -37,36 +55,61 @@ namespace EasyMigrator
         {
             var table = parser.ParseTable(tableType);
             var createTableSyntax = Create.Table(table.Name);
-            foreach (var col in table.Columns) {
-                var createColumnOptionSyntax = createTableSyntax.WithColumn(col.Name).As(col);
+            foreach (var col in table.Columns)
+                createTableSyntax.WithColumn(col.Name)
+                                 .BuildColumn<ICreateTableColumnAsTypeSyntax, 
+                                              ICreateTableColumnOptionOrWithColumnSyntax,
+                                              ICreateTableColumnOptionOrForeignKeyCascadeOrWithColumnSyntax>(col);
+        }
 
-                createColumnOptionSyntax = col.IsNullable
-                                               ? createColumnOptionSyntax.Nullable()
-                                               : createColumnOptionSyntax.NotNullable();
+        static public void Columns<T>(this ICreateExpressionRoot Create) { Create.Columns(typeof(T)); }
+        static public void Columns(this ICreateExpressionRoot Create, Type tableType) { Create.Columns(tableType, Parsing.Parser.Default); }
+        public static void Columns<T>(this ICreateExpressionRoot Create, Parsing.Parser parser) { Create.Columns(typeof(T), parser); }
+        public static void Columns(this ICreateExpressionRoot Create, Type tableType, Parsing.Parser parser)
+        {
+            var table = parser.ParseTable(tableType);
+            foreach (var col in table.Columns)
+                Create.Column(col.Name).OnTable(table.Name)
+                                 .BuildColumn<ICreateColumnAsTypeOrInSchemaSyntax,
+                                              ICreateColumnOptionSyntax,
+                                              ICreateColumnOptionOrForeignKeyCascadeSyntax>(col);
+        }
 
-                if (col.IsPrimaryKey)
-                    createColumnOptionSyntax = createColumnOptionSyntax.PrimaryKey();
+        private static void BuildColumn<TSyntax, TNext, TNextFk>(this TSyntax s, Column col)
+            where TSyntax : IColumnTypeSyntax<TNext>
+            where TNext : IColumnOptionSyntax<TNext, TNextFk>
+            where TNextFk : IColumnOptionSyntax<TNext, TNextFk>, TNext
+        {
+            var createColumnOptionSyntax = s.As<TSyntax, TNext, TNextFk>(col);
 
-                if (col.ForeignKey != null)
-                    createColumnOptionSyntax = createColumnOptionSyntax.ForeignKey(col.ForeignKey.Table, col.ForeignKey.Column);
+            createColumnOptionSyntax = col.IsNullable
+                                           ? createColumnOptionSyntax.Nullable()
+                                           : createColumnOptionSyntax.NotNullable();
 
-                if (col.DefaultValue != null)
-                    createColumnOptionSyntax = createColumnOptionSyntax.WithDefaultValue(col.DefaultValue);
+            if (col.IsPrimaryKey)
+                createColumnOptionSyntax = createColumnOptionSyntax.PrimaryKey();
 
-                if (col.AutoIncrement != null) 
-                    createColumnOptionSyntax = createColumnOptionSyntax.Identity((int)col.AutoIncrement.Seed, (int)col.AutoIncrement.Step);
+            if (col.ForeignKey != null)
+                createColumnOptionSyntax = createColumnOptionSyntax.ForeignKey(col.ForeignKey.Table, col.ForeignKey.Column);
 
-                if (col.Index != null) {
-                    createColumnOptionSyntax = 
-                        col.Index.Unique
-                            ? string.IsNullOrEmpty(col.Index.Name) ? createColumnOptionSyntax.Unique() : createColumnOptionSyntax.Unique(col.Index.Name)
-                            : string.IsNullOrEmpty(col.Index.Name) ? createColumnOptionSyntax.Indexed() : createColumnOptionSyntax.Indexed(col.Index.Name);
-                }
+            if (col.DefaultValue != null)
+                createColumnOptionSyntax = createColumnOptionSyntax.WithDefaultValue(col.DefaultValue);
+
+            if (col.AutoIncrement != null)
+                createColumnOptionSyntax = createColumnOptionSyntax.Identity((int)col.AutoIncrement.Seed, (int)col.AutoIncrement.Step);
+
+            if (col.Index != null) {
+                createColumnOptionSyntax =
+                    col.Index.Unique
+                        ? string.IsNullOrEmpty(col.Index.Name) ? createColumnOptionSyntax.Unique() : createColumnOptionSyntax.Unique(col.Index.Name)
+                        : string.IsNullOrEmpty(col.Index.Name) ? createColumnOptionSyntax.Indexed() : createColumnOptionSyntax.Indexed(col.Index.Name);
             }
         }
 
-        
-        static private ICreateTableColumnOptionOrWithColumnSyntax As(this ICreateTableColumnAsTypeSyntax s, Column col)
+        static private TNext As<TSyntax, TNext, TNextFk>(this TSyntax s, Column col)
+            where TSyntax : IColumnTypeSyntax<TNext>
+            where TNext : IColumnOptionSyntax<TNext, TNextFk>
+            where TNextFk : IColumnOptionSyntax<TNext, TNextFk>, TNext
         {
             switch (col.Type) {
                 case DbType.AnsiString: return col.Length.IfHasValue(s.AsAnsiString, s.AsAnsiString);
