@@ -8,7 +8,7 @@ using EasyMigrator.Model;
 
 namespace EasyMigrator.Tests.Data
 {
-    public class Table1 : TableTestData
+    public class Table1 : TableTestCase
     {
         class Poco
         {

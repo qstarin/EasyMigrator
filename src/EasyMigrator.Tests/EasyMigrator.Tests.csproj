@@ -72,14 +72,15 @@
     <Compile Include="Data\Table1.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Integration\IMigrator.cs" />
-    <Compile Include="Integration\IntegrationTests.cs" />
+    <Compile Include="Tests\RoundTrip.cs" />
     <Compile Include="Integration\Migrators\FluentMigrator.cs" />
+    <Compile Include="Integration\Migrators\MigratorBase.cs" />
     <Compile Include="Integration\Migrators\MigratorDotNet.cs" />
     <Compile Include="TableTestData.cs" />
     <Compile Include="Integration\IntegrationTestBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="AssertEx.cs" />
-    <Compile Include="TableParserTests.cs" />
+    <Compile Include="Tests\Parse.cs" />
     <Compile Include="TableTestBase.cs" />
   </ItemGroup>
   <ItemGroup>

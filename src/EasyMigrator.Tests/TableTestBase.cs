@@ -11,28 +11,15 @@ namespace EasyMigrator.Tests
 {
     abstract public class TableTestBase
     {
-        protected IEnumerable<Type> GetAllTableDataTypes()
-        {
-            return
-                GetType().Assembly.GetTypes()
-                         .Where(t => t.InheritsFrom<TableTestData>() &&
-                                     t != typeof(TableTestData) &&
-                                     !t.IsGenericTypeDefinition &&
-                                     !t.IsAbstract);
-        }
-
-        protected void RunTest(Action<ITableTestData> test, IEnumerable<Type> dataTypes)
-        {
-            foreach (var t in dataTypes)
-                test(new TableTestData(t));
-        }
+        protected void Test<TCase>() { Test(new TableTestCase<TCase>()); }
+        protected abstract void Test(ITableTestCase testCase);
 
         [TestFixtureSetUp]
         public virtual void SetupFixture()
         {
             var tableNameFn = Parser.Default.Conventions.TableName;
             Parser.Default.Conventions.TableName = c => {
-                if (c.ModelType.Name == "Poco" && c.ModelType.IsNested && c.ModelType.DeclaringType.InheritsFrom<ITableTestData>()) {
+                if (c.ModelType.Name == "Poco" && c.ModelType.IsNested /*&& c.ModelType.DeclaringType.InheritsFrom<ITableTestData>()*/) {
                     var modelType = c.ModelType;
                     c.ModelType = modelType.DeclaringType;
                     var tableName = tableNameFn(c);

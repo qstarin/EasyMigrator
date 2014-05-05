@@ -10,31 +10,37 @@ using FluentMigrator.Runner.Announcers;
 using FluentMigrator.Runner.Initialization;
 using FluentMigrator.Runner.Processors;
 using FluentMigrator.Runner.Processors.SqlServer;
+using NPoco;
 
 
 namespace EasyMigrator.Tests.Integration.Migrators
 {
-    public class FluentMigrator : IMigrator
+    public class FluentMigrator : MigratorBase<Migration>
     {
         public MigrationRunner Runner { get; set; }
-
         public FluentMigrator(string connectionString) { Runner = GetRunner(connectionString); }
 
-        private Action<Migration> GetDbMigrationAction(Action<NPoco.Database> action)
+        override protected Action<Migration> GetDbActionMigration(Action<Database> action)
         {
             return m => m.Execute.WithConnection((c, t) => {
-                var db = new NPoco.Database(c);
+                var db = new Database(c);
                 db.SetTransaction(t);
                 action(db);
             });
         }
 
-        public void Up(Action<NPoco.Database> action) { Up(GetDbMigrationAction(action)); }
-        public void Down(Action<NPoco.Database> action) { Down(GetDbMigrationAction(action)); }
-        public void Up(Type poco) { Up(m => m.Create.Table(poco)); }
-        public void Down(Type poco) { Down(m => m.Delete.Table(poco)); }
-        public void Up(Action<Migration> migration) { Runner.Up(new ActionMigration(migration)); }
-        public void Down(Action<Migration> migration) { Runner.Down(new ActionMigration(migration)); }
+        protected override Action<Migration> GetPocoMigration(Type poco, MigrationDirection direction)
+        {
+            if (direction == MigrationDirection.Up)
+                return m => m.Create.Table(poco);
+            else if (direction == MigrationDirection.Down)
+                return m => m.Delete.Table(poco);
+            else 
+                return null;
+        }
+
+        override protected void Up(IEnumerable<Action<Migration>> actions) { Runner.Up(new ActionMigration(actions)); }
+        override protected void Down(IEnumerable<Action<Migration>> actions) { Runner.Down(new ActionMigration(actions)); }
 
         private MigrationRunner GetRunner(string connectionString)
         {
@@ -50,12 +56,14 @@ namespace EasyMigrator.Tests.Integration.Migrators
 
         public class ActionMigration : Migration
         {
-            private readonly Action<Migration> _up;
-            private readonly Action<Migration> _down;
+            private readonly IEnumerable<Action<Migration>> _up;
+            private readonly IEnumerable<Action<Migration>> _down;
             public ActionMigration(Action<Migration> migration) : this(migration, migration) { }
-            public ActionMigration(Action<Migration> up, Action<Migration> down) { _up = up; _down = down; }
-            public override void Down() { _down.IfNotNull(m => m(this)); }
-            public override void Up() { _up.IfNotNull(m => m(this)); }
+            public ActionMigration(Action<Migration> up, Action<Migration> down) : this(new[] {up}, new[] {down}) { }
+            public ActionMigration(IEnumerable<Action<Migration>> actions) : this(actions, actions) { }
+            public ActionMigration(IEnumerable<Action<Migration>> up, IEnumerable<Action<Migration>> down) { _up = up; _down = down; }
+            public override void Down() { _down.IfNotNull(ms => ms.ForEach(m => m(this))); }
+            public override void Up() { _up.IfNotNull(ms => ms.ForEach(m => m(this))); }
         }
     }
 }

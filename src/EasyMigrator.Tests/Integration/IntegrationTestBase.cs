@@ -11,9 +11,6 @@ using DatabaseSchemaReader;
 using DatabaseSchemaReader.DataSchema;
 using EasyMigrator.Extensions;
 using EasyMigrator.Model;
-using EasyMigrator.Parsing;
-using EasyMigrator.Tests.Data;
-using NUnit.Framework;
 
 
 namespace EasyMigrator.Tests.Integration
@@ -26,11 +23,6 @@ namespace EasyMigrator.Tests.Integration
         protected ConnectionStringSettings ConnectionStringSettings { get {  return ConfigurationManager.ConnectionStrings["Test-LocalDb"]; } }
         protected string ConnectionString { get { return ConnectionStringSettings.ConnectionString; } }
         protected string ConnectionStringWithDatabase { get { return ConnectionString + string.Format("AttachDbFileName={0};", DatabaseFile); } }
-        protected IMigrator Migrator { get { return _getMigrator(ConnectionStringWithDatabase); } }
-        private readonly Func<string, IMigrator> _getMigrator;
-
-        protected IntegrationTestBase(Func<string, IMigrator> getMigrator) { _getMigrator = getMigrator; }
-
         protected DbConnection OpenConnection() { return OpenConnection(ConnectionString); }
         protected DbConnection OpenDatabaseConnection() { return OpenConnection(ConnectionStringWithDatabase); }
         protected DbConnection OpenConnection(string connectionString)
@@ -39,6 +31,12 @@ namespace EasyMigrator.Tests.Integration
             conn.Open();
             return conn;
         }
+
+        protected IMigrator Migrator { get { return _getMigrator(ConnectionStringWithDatabase); } }
+        private readonly Func<string, IMigrator> _getMigrator;
+
+        protected IntegrationTestBase(Func<string, IMigrator> getMigrator) { _getMigrator = getMigrator; }
+
 
         override public void SetupFixture()
         {
@@ -62,9 +60,9 @@ LOG ON (NAME={0}_log,FILENAME='{2}');"
             }
         }
 
-        protected Table GetTableModelFromDb(ITableTestData data)
+        protected Table GetTableModelFromDb(string tableName)
         {
-            var table = new Table {Name = data.Model.Name};
+            var table = new Table {Name = tableName};
             var schema = new DatabaseReader(ConnectionStringWithDatabase, SqlType.SqlServer).ReadAll();
             var st = schema.Tables.Single(t => t.Name == table.Name);
             table.Columns = st.Columns.Select(c => {
