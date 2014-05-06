@@ -69,6 +69,7 @@
     <Compile Include="..\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="Data\Fk1.cs" />
     <Compile Include="Data\Table1.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Integration\IMigrator.cs" />
