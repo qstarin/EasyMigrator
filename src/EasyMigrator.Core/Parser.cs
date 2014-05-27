@@ -122,7 +122,7 @@ namespace EasyMigrator.Parsing
                 return field.GetAttribute<DefaultAttribute>().Expression;
 
             var val = field.GetValue(model);
-            if (val == null || val.Equals(Activator.CreateInstance(field.FieldType)))
+            if (val == null || (field.FieldType.IsValueType && val.Equals(Activator.CreateInstance(field.FieldType))))
                 return null;
             if (field.FieldType == typeof(bool))
                 return (bool)val ? "1" : "0"; // special case - always set a default for bools
