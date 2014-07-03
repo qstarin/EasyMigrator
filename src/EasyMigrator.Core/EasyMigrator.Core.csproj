@@ -56,7 +56,9 @@
     <Compile Include="TypeMap.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="EasyMigrator.Core.nuspec" />
+    <None Include="EasyMigrator.Core.nuspec">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
