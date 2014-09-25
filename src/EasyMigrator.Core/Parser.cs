@@ -122,14 +122,12 @@ namespace EasyMigrator.Parsing
                 return field.GetAttribute<DefaultAttribute>().Expression;
 
             var val = field.GetValue(model);
-            if (val == null || (field.FieldType.IsValueType && val.Equals(Activator.CreateInstance(field.FieldType))))
-                return null;
             if (field.FieldType == typeof(bool))
-                return (bool)val ? "1" : "0"; // special case - always set a default for bools
-            else if (field.FieldType.IsNumeric())
-                return val.ToString();
+                return val != null && (bool)val ? "1" : "0"; // special case - always set a default for bools
+            else if (val == null || (field.FieldType.IsValueType && val.Equals(Activator.CreateInstance(field.FieldType))))
+                return null;
             else
-                return "'" + val.ToString().Replace("'", "''") + "'";
+                return val.ToString();
         }
     }
 }
