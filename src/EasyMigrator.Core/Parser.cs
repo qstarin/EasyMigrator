@@ -29,7 +29,7 @@ namespace EasyMigrator.Parsing
                 ModelType = type,
                 Model = Activator.CreateInstance(type)
             };
-            var fields = context.Fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            var fields = context.Fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             var table = context.Table = new Table {
                 Name = Conventions.TableName(context)
             };
