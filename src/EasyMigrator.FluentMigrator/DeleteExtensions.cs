@@ -18,6 +18,7 @@ namespace EasyMigrator
         {
             var table = parser.ParseTable(tableType);
             Delete.ForeignKeys(table);
+            Delete.Indexes(table);
             Delete.Table(table.Name);
         }
 
@@ -28,6 +29,7 @@ namespace EasyMigrator
         {
             var table = parser.ParseTable(tableType);
             Delete.ForeignKeys(table);
+            Delete.Indexes(table);
             Delete.Columns(table);
         }
 
@@ -52,6 +54,22 @@ namespace EasyMigrator
                           .ForeignColumn(c.Name)
                           .ToTable(f.Table)
                           .PrimaryColumn(f.Column);
+            }
+        }
+
+        static private void Indexes(this IDeleteExpressionRoot Delete, Table table)
+        {
+            foreach (var c in table.Columns.DefinedInPoco()) {
+                var i = c.Index;
+                if (i == null)
+                    continue;
+
+                if (i.Name != null)
+                    Delete.Index(i.Name).OnTable(table.Name);
+                else
+                    Delete.Index()
+                          .OnTable(table.Name)
+                          .OnColumn(c.Name);
             }
         }
     }

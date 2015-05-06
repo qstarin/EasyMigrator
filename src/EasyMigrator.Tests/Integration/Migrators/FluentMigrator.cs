@@ -39,6 +39,8 @@ namespace EasyMigrator.Tests.Integration.Migrators
                 return null;
         }
 
+        public void Up(Action<Migration> action) { Runner.Up(new ActionMigration(action)); }
+        public void Down(Action<Migration> action) { Runner.Down(new ActionMigration(action)); }
         override protected void Up(IEnumerable<Action<Migration>> actions) { Runner.Up(new ActionMigration(actions)); }
         override protected void Down(IEnumerable<Action<Migration>> actions) { Runner.Down(new ActionMigration(actions)); }
 

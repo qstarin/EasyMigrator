@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using EasyMigrator.Tests.Integration;
 using NUnit.Framework;
+using Migration = FluentMigrator.Migration;
 
 
 namespace EasyMigrator.Tests
@@ -37,6 +38,35 @@ namespace EasyMigrator.Tests.FluentMigrator
     public class RoundTrip : Tests.RoundTrip
     {
         public RoundTrip() : base(s => new Integration.Migrators.FluentMigrator(s)) { }
+
+        [Test]
+        public void RemoveFkCol()
+        {
+            (Migrator as Integration.Migrators.FluentMigrator).Up((Action<Migration>)(m => {
+                m.Create.Table<FkStuff>();
+                m.Create.Table<FkCol>();
+                m.Create.Columns<FkColTable>();
+            }));
+
+            (Migrator as Integration.Migrators.FluentMigrator).Down((Action<Migration>)(m => {
+                m.Delete.Columns<FkColTable>();
+            }));
+        }
+
+        public class FkStuff
+        {
+            string Desc;
+        }
+
+        public class FkCol
+        {
+            string Name;
+        }
+
+        public class FkColTable
+        {
+            [Fk("FkStuff")] int StuffId;
+        }
     }
 }
 
