@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -23,8 +24,8 @@ namespace EasyMigrator.Tests.Integration.Migrators
         override protected Action<Migration> GetDbActionMigration(Action<Database> action)
         {
             return m => m.Execute.WithConnection((c, t) => {
-                var db = new Database(c);
-                db.SetTransaction(t);
+                var db = new Database(c as DbConnection);
+                db.SetTransaction(t as DbTransaction);
                 action(db);
             });
         }
