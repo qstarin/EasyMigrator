@@ -8,7 +8,7 @@
         <owners>$author$</owners>
         <description>$description$</description>
         <licenseUrl>http://opensource.org/licenses/MIT</licenseUrl>
-        <projectUrl>https://bitbucket.org/qes/easymigrator/wiki/Home</projectUrl>
+        <projectUrl>https://bitbucket.org/quentin-starin/easymigrator/wiki/Home</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <summary>This is the core library for EasyMigrator. If you want to use EasyMigrator with your migration framework, you probably want one of the integration packages like EasyMigrator.FluentMigrator.</summary>
     </metadata>

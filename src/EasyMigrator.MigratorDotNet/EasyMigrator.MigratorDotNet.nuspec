@@ -8,7 +8,7 @@
       <owners>$author$</owners>
       <description>$description$</description>
       <licenseUrl>http://opensource.org/licenses/MIT</licenseUrl>
-      <projectUrl>https://bitbucket.org/qes/easymigrator/wiki/Home</projectUrl>
+      <projectUrl>https://bitbucket.org/quentin-starin/easymigrator/wiki/Home</projectUrl>
       <requireLicenseAcceptance>false</requireLicenseAcceptance>
       <dependencies>
         <dependency id="EasyMigrator.Core" version="$version$" />
