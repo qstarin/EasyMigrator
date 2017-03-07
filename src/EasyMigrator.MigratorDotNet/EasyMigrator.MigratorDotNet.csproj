@@ -55,6 +55,7 @@
     </Compile>
     <Compile Include="CreateExtensions.cs" />
     <Compile Include="DeleteExtensions.cs" />
+    <Compile Include="Helpers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
-using EasyMigrator.Model;
+using EasyMigrator.Parsing.Model;
 using EasyMigrator.Extensions;
 using FluentMigrator.Builders;
 using FluentMigrator.Builders.Create;
@@ -21,7 +21,7 @@ namespace EasyMigrator
         public static void Table<T>(this ICreateExpressionRoot Create, Parsing.Parser parser) { Create.Table(typeof(T), parser); }
         static public void Table(this ICreateExpressionRoot Create, Type tableType, Parsing.Parser parser)
         {
-            var table = parser.ParseTable(tableType);
+            var table = parser.ParseTableType(tableType);
             var createTableSyntax = Create.Table(table.Name);
             foreach (var col in table.Columns)
                 createTableSyntax.WithColumn(col.Name)
@@ -35,8 +35,8 @@ namespace EasyMigrator
         public static void Columns<T>(this ICreateExpressionRoot Create, Parsing.Parser parser) { Create.Columns(typeof(T), parser); }
         public static void Columns(this ICreateExpressionRoot Create, Type tableType, Parsing.Parser parser)
         {
-            var table = parser.ParseTable(tableType);
-            foreach (var col in table.Columns.DefinedInPoco())
+            var table = parser.ParseTableType(tableType);
+            foreach (var col in table.Columns.DefinedInPoco()) // avoids trying to add the default primary key column
                 Create.Column(col.Name).OnTable(table.Name)
                                  .BuildColumn<ICreateColumnAsTypeOrInSchemaSyntax,
                                               ICreateColumnOptionSyntax,
@@ -67,6 +67,9 @@ namespace EasyMigrator
                 createColumnOptionSyntax = createColumnOptionSyntax.Identity((int)col.AutoIncrement.Seed, (int)col.AutoIncrement.Step);
 
             if (col.Index != null) {
+                if (col.Index.Clustered)
+                    throw new NotImplementedException("Clustered indexes are not supported for FluentMigrator.");
+
                 createColumnOptionSyntax =
                     col.Index.Unique
                         ? string.IsNullOrEmpty(col.Index.Name) ? createColumnOptionSyntax.Unique() : createColumnOptionSyntax.Unique(col.Index.Name)

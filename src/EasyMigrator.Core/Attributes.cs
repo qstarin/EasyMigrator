@@ -6,11 +6,12 @@ using System.Text;
 
 namespace EasyMigrator
 {
+    // TODO: Add Null attribute to better support people migrating from other legacy codebases that used a similar technique...
     public class NotNullAttribute : Attribute { }
 
     public class PkAttribute : Attribute { }
 
-    public class AutoIncAttribute : Attribute, Model.IAutoIncrement
+    public class AutoIncAttribute : Attribute, Parsing.Model.IAutoIncrement
     {
         public long Seed { get; private set; }
         public long Step { get; private set; }
@@ -20,7 +21,7 @@ namespace EasyMigrator
         public AutoIncAttribute(long seed, long step) { Seed = seed; Step = step; }
     }
 
-    public class PrecisionAttribute : Attribute, Model.IPrecision
+    public class PrecisionAttribute : Attribute, Parsing.Model.IPrecision
     {
         internal Length? DefinedPrecision { get; private set; }
         public int Precision { get; private set; }
@@ -35,7 +36,7 @@ namespace EasyMigrator
         private PrecisionAttribute(int scale) { Scale = scale; }
     }
 
-    public class FkAttribute : Attribute, Model.IForeignKey
+    public class FkAttribute : Attribute, Parsing.Model.IForeignKey
     {
         public string Name { get; set; }
         public string Table { get; private set; }
@@ -50,7 +51,7 @@ namespace EasyMigrator
         }
     }
 
-    public class IndexAttribute : Attribute, Model.IIndex
+    public class IndexAttribute : Attribute, Parsing.Model.IIndex
     {
         public string Name { get; set; }
         public bool Unique { get; set; }

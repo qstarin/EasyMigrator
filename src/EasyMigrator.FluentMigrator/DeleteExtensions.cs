@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using EasyMigrator.Extensions;
-using EasyMigrator.Model;
+using EasyMigrator.Parsing.Model;
 using FluentMigrator.Builders.Delete;
 
 
@@ -16,7 +16,7 @@ namespace EasyMigrator
         public static void Table<T>(this IDeleteExpressionRoot Delete, Parsing.Parser parser) { Delete.Table(typeof(T), parser); }
         static public void Table(this IDeleteExpressionRoot Delete, Type tableType, Parsing.Parser parser)
         {
-            var table = parser.ParseTable(tableType);
+            var table = parser.ParseTableType(tableType);
             Delete.ForeignKeys(table);
             Delete.Indexes(table);
             Delete.Table(table.Name);
@@ -27,7 +27,7 @@ namespace EasyMigrator
         public static void Columns<T>(this IDeleteExpressionRoot Delete, Parsing.Parser parser) { Delete.Columns(typeof(T), parser); }
         static public void Columns(this IDeleteExpressionRoot Delete, Type tableType, Parsing.Parser parser)
         {
-            var table = parser.ParseTable(tableType);
+            var table = parser.ParseTableType(tableType);
             Delete.ForeignKeys(table);
             Delete.Indexes(table);
             Delete.Columns(table);

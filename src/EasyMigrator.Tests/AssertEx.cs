@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using EasyMigrator.Model;
+using EasyMigrator.Parsing.Model;
 using NUnit.Framework;
 
 

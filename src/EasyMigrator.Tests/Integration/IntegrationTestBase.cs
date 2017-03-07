@@ -10,7 +10,7 @@ using System.Text;
 using DatabaseSchemaReader;
 using DatabaseSchemaReader.DataSchema;
 using EasyMigrator.Extensions;
-using EasyMigrator.Model;
+using EasyMigrator.Parsing.Model;
 
 
 namespace EasyMigrator.Tests.Integration

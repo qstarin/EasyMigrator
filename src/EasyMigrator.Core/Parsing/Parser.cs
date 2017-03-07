@@ -1,38 +1,42 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using EasyMigrator.Extensions;
-using EasyMigrator.Model;
+using EasyMigrator.Parsing.Model;
 
 
 namespace EasyMigrator.Parsing
 {
     public class Parser
     {
-        public static Parser Default { get { return _default.Value; } set { _default = new Lazy<Parser>(() => value); } }
-        private static Lazy<Parser> _default = new Lazy<Parser>();
-
+        static public Parser Default { get; set; } = new Parser();
         public Conventions Conventions { get; set; }
 
         public Parser() : this(Conventions.Default) { }
         public Parser(Conventions conventions) { Conventions = conventions; }
 
-
-        public Table ParseTable(Type type)
+        protected virtual Context CreateContext(Type type)
         {
             var context = new Context {
                 Conventions = Conventions,
+                Fields = GetColumnFields(type),
                 ModelType = type,
-                Model = Activator.CreateInstance(type)
+                Model = Activator.CreateInstance(type),
             };
-            var fields = context.Fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            var table = context.Table = new Table {
-                Name = Conventions.TableName(context)
-            };
+            context.Table = new Table { Name = Conventions.TableName(context) };
+
+            return context;
+        }
+
+        public Table ParseTableType(Type type) => ParseTable(CreateContext(type));
+
+        protected virtual Table ParseTable(Context context)
+        {
+            var fields = context.Fields;
+            var table = context.Table;
 
             if (!fields.Any(f => f.HasAttribute<PkAttribute>()) && Conventions.PrimaryKey != null) {
                 var pk = Conventions.PrimaryKey(context);
@@ -70,23 +74,24 @@ namespace EasyMigrator.Parsing
             return table;
         }
 
-        public static IPrecision GetPrecision(Context context, FieldInfo field, DbType dbType)
+        protected virtual IEnumerable<FieldInfo> GetColumnFields(Type type)
+            => type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
+        protected virtual string GetDefaultValue(object model, FieldInfo field)
         {
-            var typesWithPrecision = new[] { DbType.Decimal };
-            if (!typesWithPrecision.Contains(dbType))
+            if (field.HasAttribute<DefaultAttribute>())
+                return field.GetAttribute<DefaultAttribute>().Expression;
+
+            var val = field.GetValue(model);
+            if (field.FieldType == typeof(bool))
+                return val != null && (bool)val ? "1" : "0"; // special case - always set a default for bools
+            else if (val == null || (field.FieldType.IsValueType && val.Equals(Activator.CreateInstance(field.FieldType))))
                 return null;
-
-            var precisionAttr = field.GetAttribute<PrecisionAttribute>();
-            if (precisionAttr == null)
-                return context.Conventions.DefaultPrecision(context);
-
-            if (precisionAttr.DefinedPrecision.HasValue)
-                return new PrecisionAttribute(context.Conventions.PrecisionLengths[precisionAttr.DefinedPrecision.Value], precisionAttr.Scale);
-
-            return precisionAttr;
+            else
+                return val.ToString();
         }
 
-        public static int? GetLength(FieldInfo field, DbType dbType, Lengths lengths)
+        protected virtual int? GetLength(FieldInfo field, DbType dbType, Lengths lengths)
         {
             // TODO: Possibly double lengths for ansi? -> do it by making Lengths key off of DbType?
             var typesWithLength = new[] {
@@ -110,24 +115,23 @@ namespace EasyMigrator.Parsing
             return lengthAttr.Length;
         }
 
-        public static bool IsNullable(FieldInfo field)
+        protected virtual IPrecision GetPrecision(Context context, FieldInfo field, DbType dbType)
         {
-            return (field.FieldType.IsNullableType() || !field.FieldType.IsValueType)
-                   && !field.HasAttribute<NotNullAttribute>();
-        }
-
-        private static string GetDefaultValue(object model, FieldInfo field)
-        {
-            if (field.HasAttribute<DefaultAttribute>())
-                return field.GetAttribute<DefaultAttribute>().Expression;
-
-            var val = field.GetValue(model);
-            if (field.FieldType == typeof(bool))
-                return val != null && (bool)val ? "1" : "0"; // special case - always set a default for bools
-            else if (val == null || (field.FieldType.IsValueType && val.Equals(Activator.CreateInstance(field.FieldType))))
+            var typesWithPrecision = new[] { DbType.Decimal };
+            if (!typesWithPrecision.Contains(dbType))
                 return null;
-            else
-                return val.ToString();
+
+            var precisionAttr = field.GetAttribute<PrecisionAttribute>();
+            if (precisionAttr == null)
+                return Conventions.DefaultPrecision(context);
+
+            if (precisionAttr.DefinedPrecision.HasValue)
+                return new PrecisionAttribute(Conventions.PrecisionLengths[precisionAttr.DefinedPrecision.Value], precisionAttr.Scale);
+
+            return precisionAttr;
         }
+
+        protected virtual bool IsNullable(FieldInfo field)
+            => (field.FieldType.IsNullableType() || !field.FieldType.IsValueType) && !field.HasAttribute<NotNullAttribute>();
     }
 }

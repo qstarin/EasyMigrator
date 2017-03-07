@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
-using EasyMigrator.Model;
+using EasyMigrator.Parsing.Model;
 
 
 namespace EasyMigrator.Tests.Data
