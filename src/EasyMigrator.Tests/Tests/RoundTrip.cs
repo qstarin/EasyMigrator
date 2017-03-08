@@ -72,9 +72,9 @@ namespace EasyMigrator.Tests.FluentMigrator
 
 namespace EasyMigrator.Tests.MigratorDotNet
 {
-    //[TestFixture]
-    //public class RoundTrip : Tests.RoundTrip
-    //{
-    //    public RoundTrip() : base(s => new Integration.Migrators.MigratorDotNet(s)) { }
-    //}
+    [TestFixture]
+    public class RoundTrip : Tests.RoundTrip
+    {
+        public RoundTrip() : base(s => new Integration.Migrators.MigratorDotNet(s)) { }
+    }
 }
