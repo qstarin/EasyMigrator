@@ -22,6 +22,5 @@ namespace EasyMigrator.Tests.Integration.Migrators
         abstract protected void Down(IEnumerable<Action<TMigrationBase>> actions);
         abstract protected Action<TMigrationBase> GetDbActionMigration(Action<Database> action);
         abstract protected Action<TMigrationBase> GetPocoMigration(Type poco, MigrationDirection direction);
-        protected enum MigrationDirection { Up, Down }
     }
 }

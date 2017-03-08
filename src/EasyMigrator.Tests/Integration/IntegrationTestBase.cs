@@ -15,6 +15,8 @@ using EasyMigrator.Parsing.Model;
 
 namespace EasyMigrator.Tests.Integration
 {
+    public enum MigrationDirection { Up, Down }
+
     abstract public class IntegrationTestBase : TableTestBase
     {
         protected virtual string DatabaseName { get { return GetType().Name + "Db"; } }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.IO;
@@ -50,12 +51,27 @@ namespace EasyMigrator.Tests.Integration.Migrators
         private Migrator.Migrator BuildRunner(string connectionString, IEnumerable<Action<Migration>> actions)
             => new Migrator.Migrator("SqlServer", connectionString, BuildMigrationAssembly(actions));
 
+        static private readonly ConcurrentDictionary<string, Tuple<Action<Migration>, Action<Migration>>> _migrationActions = new ConcurrentDictionary<string, Tuple<Action<Migration>, Action<Migration>>>();
+        static public Action<Migration> GetMigrationAction(string assemblyName, MigrationDirection migrationDirection)
+        {
+            if (!_migrationActions.ContainsKey(assemblyName))
+                return null;
+
+            var assemblyActions = _migrationActions[assemblyName];
+            if (migrationDirection == MigrationDirection.Up)
+                return assemblyActions.Item1;
+            if (migrationDirection == MigrationDirection.Down)
+                return assemblyActions.Item2;
+
+            return null;
+        }
+
         private Assembly BuildMigrationAssembly(IEnumerable<Action<Migration>> actions)
         {
             var assemblyName = $"mdn_test_{Guid.NewGuid()}";
             var assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(assemblyName), AssemblyBuilderAccess.RunAndSave);
             var moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyBuilder.GetName().Name, assemblyName + ".dll");
-            BuildDirectMigrationClass(moduleBuilder, 1, actions);
+            BuildDirectMigrationClass(assemblyName, moduleBuilder, 1, actions);
 
             var baseDir = AppDomain.CurrentDomain.BaseDirectory;
             var dynamicDir = AppDomain.CurrentDomain.DynamicDirectory;
@@ -65,10 +81,14 @@ namespace EasyMigrator.Tests.Integration.Migrators
 
             assemblyBuilder.Save($@"{assemblyName}.dll");
             var assembly = Assembly.LoadFile(Path.Combine(Environment.CurrentDirectory, $@"{assemblyName}.dll"));
+
+            Action<Migration> combinedAction = m => { foreach (var a in actions) a(m); };
+            _migrationActions.TryAdd(assemblyName, new Tuple<Action<Migration>, Action<Migration>>(combinedAction, combinedAction));
+
             return assembly;
         }
 
-        private void BuildDirectMigrationClass(ModuleBuilder moduleBuilder, long version, IEnumerable<Action<Migration>> actions)
+        private void BuildDirectMigrationClass(string assemblyName, ModuleBuilder moduleBuilder, long version, IEnumerable<Action<Migration>> actions)
         {
             var baseType = typeof(Migration);
             var typeBuilder = moduleBuilder.DefineType($"Migration{version}",
@@ -86,6 +106,8 @@ namespace EasyMigrator.Tests.Integration.Migrators
             var downBase = baseType.GetMethod("Down");
 
             var getMethodFromHandle = typeof(MethodBase).GetMethod("GetMethodFromHandle", new[] { typeof(RuntimeMethodHandle) });
+            var getActionMethod = typeof(MigratorDotNet).GetMethod("GetMigrationAction");
+            var invokeMethod = typeof(Action<Migration>).GetMethod("Invoke");
 
             var up = typeBuilder.DefineMethod(
                 upBase.Name, 
@@ -96,11 +118,13 @@ namespace EasyMigrator.Tests.Integration.Migrators
             Action<Migration> combinedAction = m => { foreach (var a in actions) a(m); };
             
             var upIl = up.GetILGenerator();
+            upIl.Emit(OpCodes.Nop);
+            upIl.Emit(OpCodes.Ldstr, assemblyName);
+            upIl.Emit(OpCodes.Ldc_I4_0);
+            upIl.Emit(OpCodes.Call, getActionMethod);
             upIl.Emit(OpCodes.Ldarg_0);
-            upIl.Emit(OpCodes.Ldftn, combinedAction.Method);
-            //upIl.Emit(OpCodes.Ldtoken, combinedAction.Method);
-            //upIl.Emit(OpCodes.Call, getMethodFromHandle);
-            //upIl.Emit(OpCodes.Castclass, typeof(MethodInfo));
+            upIl.Emit(OpCodes.Callvirt, invokeMethod);
+            upIl.Emit(OpCodes.Nop);
             upIl.Emit(OpCodes.Ret);
 
             typeBuilder.DefineMethodOverride(up, upBase);
@@ -114,37 +138,18 @@ namespace EasyMigrator.Tests.Integration.Migrators
 
 
             var downIl = down.GetILGenerator();
+            downIl.Emit(OpCodes.Nop);
+            downIl.Emit(OpCodes.Ldstr, moduleBuilder.Name);
+            downIl.Emit(OpCodes.Ldc_I4_1);
+            downIl.Emit(OpCodes.Call, getActionMethod);
             downIl.Emit(OpCodes.Ldarg_0);
-            downIl.Emit(OpCodes.Ldftn, combinedAction.Method);
+            downIl.Emit(OpCodes.Callvirt, invokeMethod);
+            downIl.Emit(OpCodes.Nop);
             downIl.Emit(OpCodes.Ret);
 
             typeBuilder.DefineMethodOverride(down, downBase);
 
             typeBuilder.CreateType();
-        }
-
-        private void BuildMigrationClass(ModuleBuilder moduleBuilder, long version, IEnumerable<Action<Migration>> actions)
-        {
-            var baseType = typeof(ActionMigration);
-            var typeBuilder = moduleBuilder.DefineType($"Migration{version}",
-                TypeAttributes.Public | TypeAttributes.Class |
-                TypeAttributes.AutoClass | TypeAttributes.AnsiClass |
-                TypeAttributes.BeforeFieldInit | TypeAttributes.AutoLayout,
-                baseType);
-
-            var migAttrType = typeof(MigrationAttribute);
-            var migAttrCtor = migAttrType.GetConstructor(new[] { typeof(long) });
-            typeBuilder.SetCustomAttribute(migAttrCtor, BitConverter.GetBytes(version));
-
-            var baseCtor = baseType.GetConstructor(new[] { typeof(IEnumerable<Action<Migration>>) });
-            var ctor = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, null);
-            var ilg = ctor.GetILGenerator();
-            ilg.Emit(OpCodes.Ldarg_0);
-            //ilg.Emit(OpCodes.);
-            ilg.Emit(OpCodes.Call, baseCtor);
-            ilg.Emit(OpCodes.Nop);
-            ilg.Emit(OpCodes.Nop);
-            ilg.Emit(OpCodes.Ret);
         }
 
         public class ActionMigration : Migration
