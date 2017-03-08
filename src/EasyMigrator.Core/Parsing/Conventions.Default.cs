@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
@@ -17,28 +18,34 @@ namespace EasyMigrator.Parsing
         static public Conventions Default
             => new Conventions {
                 TableName = c => Regex.Replace(c.ModelType.Name, "Table$", ""),
-                IndexForeignKeys = true,
-                StringLengths = new Lengths {
+                ColumnName = (c, f) => f.Name,
+                PrimaryKey = c => new[] {
+                    new Column {
+                        Name = "Id",
+                        Type = DbType.Int32,
+                        AutoIncrement = new AutoIncAttribute()
+                    }},
+                PrimaryKeyName = c => $"PK_{c.Table.Name}",
+                PrimaryKeyColumnName = t => "Id",
+                ForeignKeyName = (c, col) => $"FK_{col.ForeignKey.Table}_{col.ForeignKey.Column}",
+                IndexName = (c, cols) => $"IX_{c.Table.Name}_{string.Join("_", cols.Select(col => col.Name))}",
+                IndexForeignKeys = c => true,
+                StringLengths = c => new Lengths {
                     Default = 50,
                     Short = 50,
                     Medium = 255,
                     Long = 4000,
                     Max = int.MaxValue
                 },
-                PrecisionLengths = new Lengths {
+                PrecisionLengths = c => new Lengths {
                     Default = 19,
                     Short = 9,
                     Medium = 19,
                     Long = 28,
                     Max = 38
                 },
-                DefaultPrecision = c => new PrecisionAttribute(c.Conventions.PrecisionLengths.Default, 2),
-                PrimaryKey = c => new Column {
-                    Name = "Id",
-                    Type = DbType.Int32,
-                    AutoIncrement = new AutoIncAttribute()
-                },
-                TypeMap = new TypeMap()
+                DefaultPrecision = c => new PrecisionAttribute(c.Conventions.PrecisionLengths(c).Default, 2),
+                TypeMap = c => new TypeMap()
                     .Add(new Dictionary<Type, DbType> {
                         {typeof(sbyte), DbType.SByte},
                         {typeof(byte), DbType.Byte},

@@ -4,7 +4,6 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using EasyMigrator.Extensions;
-using EasyMigrator.MigratorDotNet;
 using Migrator.Framework;
 using EColumn = EasyMigrator.Parsing.Model.Column;
 
@@ -28,16 +27,16 @@ namespace EasyMigrator
             }
 
             db.AddTable(table.Name, columns.ToArray());
-            db.AddPrimaryKey($"PK_{table.Name}", table.Name, table.Columns.Where(c => c.IsPrimaryKey).Select(c => c.Name).ToArray());
+            db.AddPrimaryKey(table.PrimaryKeyName, table.Name, table.PrimaryKeyColumns.Select(c => c.Name).ToArray());
 
             foreach (var col in pocoColumns.Where(c => c.ForeignKey != null)) {
                 var fk = col.ForeignKey;
-                db.AddForeignKey(fk.Name ?? Helpers.BuildForeignKeyName(fk.Table, fk.Column), fk.Table, fk.Column, table.Name, col.Name);
+                db.AddForeignKey(fk.Name, fk.Table, fk.Column, table.Name, col.Name);
             }
             
             foreach (var col in pocoColumns.Where(c => c.Index != null)) {
                 var idx = col.Index;
-                db.CreateIndex(idx.Unique, idx.Clustered, idx.Name ?? Helpers.BuildIndexName(table.Name, col.Name), table.Name, col.Name);
+                db.CreateIndex(idx.Unique, idx.Clustered, idx.Name, table.Name, col.Name);
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -31,45 +32,103 @@ namespace EasyMigrator.Parsing
             return context;
         }
 
-        public Table ParseTableType(Type type) => ParseTable(CreateContext(type));
+        private readonly ConcurrentDictionary<Type, Table> _parsedTables = new ConcurrentDictionary<Type, Table>();
+
+        public Table ParseTableType(Type type)
+        {
+            var context = CreateContext(type);
+            context.Table = _parsedTables.GetOrAdd(type, t => ParseTable(context));
+            PostParseTable(context);
+            return context.Table;
+        }
+
+        protected virtual void PostParseTable(Context context)
+        {
+            foreach (var col in context.Table.Columns.Where(c => {
+                                                               var f = c.ForeignKey as FkAttribute;
+                                                               return f != null && f.Column == null && f.TableType != null;
+                                                           }))
+            {
+                var fk = col.ForeignKey as FkAttribute;
+                var fkTable = ParseTableType(fk.TableType);
+                if (fkTable.PrimaryKeyColumns.Count() != 1)
+                    throw new Exception($"Cannot create a foreign key from table {context.Table.Name} to table {fkTable.Name} with {(fkTable.HasPrimaryKey ? "composite" : "no")} primary key.");
+
+                var fkCol = fkTable.PrimaryKeyColumns.Single();
+                fk.Column = fkCol.Name;
+                if (fk.Name == null)
+                    fk.Name = Conventions.ForeignKeyName(context, col);
+            }
+        }
 
         protected virtual Table ParseTable(Context context)
         {
             var fields = context.Fields;
             var table = context.Table;
-
-            if (!fields.Any(f => f.HasAttribute<PkAttribute>()) && Conventions.PrimaryKey != null) {
-                var pk = Conventions.PrimaryKey(context);
-                pk.IsPrimaryKey = true;
-                pk.DefinedInPoco = false;
-                if (fields.Any(f => string.Equals(f.Name, pk.Name, StringComparison.InvariantCultureIgnoreCase)))
-                    throw new Exception("The column '" + pk.Name + "' conflicts with the automatically added primary key column name. " +
-                                        "Remove the duplicate column definition or add the PrimaryKey attribute to resolve the conflict.");
-                table.Columns.Add(pk);
-            }
+            var typemap = Conventions.TypeMap(context);
+            table.PrimaryKeyName = context.ModelType.GetAttribute<PkAttribute>()?.Name;
 
             foreach (var field in fields) {
-                var dbType = Conventions.TypeMap[field];
+                var dbType = typemap[field];
+                var pk = field.GetAttribute<PkAttribute>();
+                var fk = field.GetAttribute<FkAttribute>();
 
                 var column = new Column {
-                    Name = field.Name, 
+                    Name = Conventions.ColumnName(context, field), 
                     Type = dbType,
                     DefaultValue = GetDefaultValue(context.Model, field),
                     IsNullable = IsNullable(field),
-                    IsPrimaryKey = field.HasAttribute<PkAttribute>(),
+                    IsPrimaryKey = pk != null,
                     AutoIncrement = field.GetAttribute<AutoIncAttribute>(),
-                    Length = GetLength(field, dbType, Conventions.StringLengths),
+                    Length = GetLength(field, dbType, Conventions.StringLengths(context)),
                     Precision = GetPrecision(context, field, dbType),
                     Index = field.GetAttribute<IndexAttribute>(),
-                    ForeignKey = field.GetAttribute<FkAttribute>(),
+                    ForeignKey = fk,
                     DefinedInPoco = true
                 };
 
-                if (column.ForeignKey != null && column.Index == null && Conventions.IndexForeignKeys)
-                    column.Index = new IndexAttribute();
+                if (pk != null) {
+                    if (table.PrimaryKeyName == null)
+                        table.PrimaryKeyName = pk.Name;
+                    else {
+                        if (table.PrimaryKeyName != pk.Name)
+                            throw new Exception($"Conflicting primary key names '{table.PrimaryKeyName}' on table {context.Table.Name}, '{pk.Name}' on column {column.Name}");
+                    }
+                }
+
+                if (column.Index != null && column.Index.Name == null)
+                    column.Index.Name = Conventions.IndexName(context, new[] { column });
+
+                if (column.ForeignKey != null) {
+                    if (column.ForeignKey.Column == null && fk.Table != null)
+                        column.ForeignKey.Column = Conventions.PrimaryKeyColumnName(fk.Table);
+
+                    if (column.ForeignKey.Name == null && column.ForeignKey.Column != null)
+                        column.ForeignKey.Name = Conventions.ForeignKeyName(context, column);
+
+                    if (column.Index == null && (fk.Indexed == true || Conventions.IndexForeignKeys(context)))
+                        column.Index = new IndexAttribute { Name = Conventions.IndexName(context, new[] { column }) };
+                }
+
+                if (table.Columns.Any(c => c.Name == column.Name))
+                    throw new Exception($"Duplicate column name {column.Name} on table {table.Name}");
 
                 table.Columns.Add(column);
             }
+
+            if (!table.HasPrimaryKey && !context.ModelType.HasAttribute<NoPkAttribute>()) {
+                foreach (var pk in Conventions.PrimaryKey(context).Reverse()) { // Reverse so Insert(0.. puts everything in the right order
+                    pk.IsPrimaryKey = true;
+                    pk.DefinedInPoco = false;
+                    if (table.Columns.Any(c => c.Name == pk.Name))
+                        throw new Exception($"The column {pk.Name} conflicts with the automatically added primary key column name on table {table.Name}. " +
+                                            "Remove the duplicate column definition or add the PrimaryKey attribute to resolve the conflict.");
+                    table.Columns.Insert(0, pk);
+                }
+            }
+
+            if (table.PrimaryKeyName == null)
+                table.PrimaryKeyName = Conventions.PrimaryKeyName(context);
 
             return table;
         }
@@ -126,12 +185,14 @@ namespace EasyMigrator.Parsing
                 return Conventions.DefaultPrecision(context);
 
             if (precisionAttr.DefinedPrecision.HasValue)
-                return new PrecisionAttribute(Conventions.PrecisionLengths[precisionAttr.DefinedPrecision.Value], precisionAttr.Scale);
+                return new PrecisionAttribute(Conventions.PrecisionLengths(context)[precisionAttr.DefinedPrecision.Value], precisionAttr.Scale);
 
             return precisionAttr;
         }
 
         protected virtual bool IsNullable(FieldInfo field)
-            => (field.FieldType.IsNullableType() || !field.FieldType.IsValueType) && !field.HasAttribute<NotNullAttribute>();
+#pragma warning disable 618
+            => (field.FieldType.IsNullableType() || !field.FieldType.IsValueType || field.HasAttribute<NullAttribute>()) && !field.HasAttribute<NotNullAttribute>();
+#pragma warning restore 618
     }
 }

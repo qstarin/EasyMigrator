@@ -8,6 +8,9 @@ namespace EasyMigrator.Parsing.Model
     public class Table
     {
         public string Name { get; set; }
-        public ICollection<Column> Columns { get; set; } = new List<Column>();
+        public bool HasPrimaryKey => PrimaryKeyColumns.Any();
+        public string PrimaryKeyName { get; set; }
+        public IList<Column> Columns { get; set; } = new List<Column>();
+        public IEnumerable<Column> PrimaryKeyColumns => Columns.Where(c => c.IsPrimaryKey);
     }
 }

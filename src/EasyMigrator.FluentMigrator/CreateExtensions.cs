@@ -18,7 +18,7 @@ namespace EasyMigrator
     {
         static public void Table<T>(this ICreateExpressionRoot Create) { Create.Table(typeof(T)); }
         static public void Table(this ICreateExpressionRoot Create, Type tableType) { Create.Table(tableType, Parsing.Parser.Default); }
-        public static void Table<T>(this ICreateExpressionRoot Create, Parsing.Parser parser) { Create.Table(typeof(T), parser); }
+        static public void Table<T>(this ICreateExpressionRoot Create, Parsing.Parser parser) { Create.Table(typeof(T), parser); }
         static public void Table(this ICreateExpressionRoot Create, Type tableType, Parsing.Parser parser)
         {
             var table = parser.ParseTableType(tableType);
@@ -27,38 +27,39 @@ namespace EasyMigrator
                 createTableSyntax.WithColumn(col.Name)
                                  .BuildColumn<ICreateTableColumnAsTypeSyntax, 
                                               ICreateTableColumnOptionOrWithColumnSyntax,
-                                              ICreateTableColumnOptionOrForeignKeyCascadeOrWithColumnSyntax>(col);
+                                              ICreateTableColumnOptionOrForeignKeyCascadeOrWithColumnSyntax>(table, col);
         }
 
         static public void Columns<T>(this ICreateExpressionRoot Create) { Create.Columns(typeof(T)); }
         static public void Columns(this ICreateExpressionRoot Create, Type tableType) { Create.Columns(tableType, Parsing.Parser.Default); }
-        public static void Columns<T>(this ICreateExpressionRoot Create, Parsing.Parser parser) { Create.Columns(typeof(T), parser); }
-        public static void Columns(this ICreateExpressionRoot Create, Type tableType, Parsing.Parser parser)
+        static public void Columns<T>(this ICreateExpressionRoot Create, Parsing.Parser parser) { Create.Columns(typeof(T), parser); }
+        static public void Columns(this ICreateExpressionRoot Create, Type tableType, Parsing.Parser parser)
         {
             var table = parser.ParseTableType(tableType);
             foreach (var col in table.Columns.DefinedInPoco()) // avoids trying to add the default primary key column
                 Create.Column(col.Name).OnTable(table.Name)
                                  .BuildColumn<ICreateColumnAsTypeOrInSchemaSyntax,
                                               ICreateColumnOptionSyntax,
-                                              ICreateColumnOptionOrForeignKeyCascadeSyntax>(col);
+                                              ICreateColumnOptionOrForeignKeyCascadeSyntax>(table, col);
         }
 
-        private static void BuildColumn<TSyntax, TNext, TNextFk>(this TSyntax s, Column col)
+        static private void BuildColumn<TSyntax, TNext, TNextFk>(this TSyntax s, Table table, Column col)
             where TSyntax : IColumnTypeSyntax<TNext>
             where TNext : IColumnOptionSyntax<TNext, TNextFk>
             where TNextFk : IColumnOptionSyntax<TNext, TNextFk>, TNext
         {
             var createColumnOptionSyntax = s.As<TSyntax, TNext, TNextFk>(col);
 
-            createColumnOptionSyntax = col.IsNullable
-                                           ? createColumnOptionSyntax.Nullable()
-                                           : createColumnOptionSyntax.NotNullable();
+            createColumnOptionSyntax = 
+                col.IsNullable
+                    ? createColumnOptionSyntax.Nullable()
+                    : createColumnOptionSyntax.NotNullable();
 
             if (col.IsPrimaryKey)
-                createColumnOptionSyntax = createColumnOptionSyntax.PrimaryKey();
+                createColumnOptionSyntax = createColumnOptionSyntax.PrimaryKey(table.PrimaryKeyName);
 
             if (col.ForeignKey != null)
-                createColumnOptionSyntax = createColumnOptionSyntax.ForeignKey(col.ForeignKey.Table, col.ForeignKey.Column);
+                createColumnOptionSyntax = createColumnOptionSyntax.ForeignKey(col.ForeignKey.Name, col.ForeignKey.Table, col.ForeignKey.Column);
 
             if (col.DefaultValue != null)
                 createColumnOptionSyntax = createColumnOptionSyntax.WithDefaultValue(col.DefaultValue);
@@ -72,8 +73,8 @@ namespace EasyMigrator
 
                 createColumnOptionSyntax =
                     col.Index.Unique
-                        ? string.IsNullOrEmpty(col.Index.Name) ? createColumnOptionSyntax.Unique() : createColumnOptionSyntax.Unique(col.Index.Name)
-                        : string.IsNullOrEmpty(col.Index.Name) ? createColumnOptionSyntax.Indexed() : createColumnOptionSyntax.Indexed(col.Index.Name);
+                        ? createColumnOptionSyntax.Unique(col.Index.Name)
+                        : createColumnOptionSyntax.Indexed(col.Index.Name);
             }
         }
 

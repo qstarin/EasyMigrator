@@ -6,15 +6,23 @@ using System.Text;
 
 namespace EasyMigrator
 {
-    // TODO: Add Null attribute to better support people migrating from other legacy codebases that used a similar technique...
+    [Obsolete("This attribute is for legacy code that is migrating. Use object types or nullable value types for a nullable field, and use NotNullAttribute to override object types for a non-nullable field")]
+    public class NullAttribute : Attribute { }
     public class NotNullAttribute : Attribute { }
 
-    public class PkAttribute : Attribute { }
+    public class NoPkAttribute : Attribute { }
+
+    public class PkAttribute : Attribute
+    {
+        public string Name { get; }
+        public PkAttribute() { }
+        public PkAttribute(string name) { Name = name; }
+    }
 
     public class AutoIncAttribute : Attribute, Parsing.Model.IAutoIncrement
     {
-        public long Seed { get; private set; }
-        public long Step { get; private set; }
+        public long Seed { get; }
+        public long Step { get; }
 
         public AutoIncAttribute() : this(1) { }
         public AutoIncAttribute(long seed) : this(seed, 1) { }
@@ -23,9 +31,9 @@ namespace EasyMigrator
 
     public class PrecisionAttribute : Attribute, Parsing.Model.IPrecision
     {
-        internal Length? DefinedPrecision { get; private set; }
-        public int Precision { get; private set; }
-        public int Scale { get; private set; }
+        internal Length? DefinedPrecision { get; }
+        public int Precision { get; }
+        public int Scale { get; }
 
         public PrecisionAttribute(int precision, int scale)
             : this(scale) { Precision = precision; }
@@ -39,16 +47,13 @@ namespace EasyMigrator
     public class FkAttribute : Attribute, Parsing.Model.IForeignKey
     {
         public string Name { get; set; }
-        public string Table { get; private set; }
+        public string Table { get; }
+        public Type TableType { get; }
         public string Column { get; set; }
-        public bool Indexed { get; set; }
+        public bool? Indexed { get; set; }
 
-        public FkAttribute(string table)
-        {
-            Table = table;
-            Column = "Id"; // TODO: Need to account for different conventions
-            Indexed = true;
-        }
+        public FkAttribute(string table) { Table = table; }
+        public FkAttribute(Type tableType) { TableType = tableType; }
     }
 
     public class IndexAttribute : Attribute, Parsing.Model.IIndex
@@ -69,8 +74,8 @@ namespace EasyMigrator
 
     public class LengthAttribute : Attribute
     {
-        internal Length? DefinedLength { get; private set; }
-        public int Length { get; private set; }
+        internal Length? DefinedLength { get; }
+        public int Length { get; }
 
         public LengthAttribute(int length) { Length = length; }
         public LengthAttribute(Length length) { DefinedLength = length; }
@@ -88,7 +93,7 @@ namespace EasyMigrator
 
     public class DefaultAttribute : Attribute
     {
-        public string Expression { get; private set; }
+        public string Expression { get; }
         public DefaultAttribute(string expression) { Expression = expression; }
     }
 }
