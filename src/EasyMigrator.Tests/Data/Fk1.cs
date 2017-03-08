@@ -14,7 +14,7 @@ namespace EasyMigrator.Tests.Data
         {
             class Poco
             {
-                [Medium] string Desc;
+                [Medium] string Description;
             }
 
             Table Model = new Table {
@@ -27,7 +27,7 @@ namespace EasyMigrator.Tests.Data
                         AutoIncrement = new AutoIncAttribute()
                     },
                     new Column {
-                        Name = "Desc",
+                        Name = "Description",
                         Type = DbType.String,
                         IsNullable = true,
                         Length = 255
