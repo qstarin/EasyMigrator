@@ -18,10 +18,10 @@ namespace EasyMigrator.Tests.Integration.Migrators
 {
     public class FluentMigrator : MigratorBase<Migration>
     {
-        public MigrationRunner Runner { get; set; }
+        private MigrationRunner Runner { get; }
         public FluentMigrator(string connectionString) { Runner = GetRunner(connectionString); }
 
-        override protected Action<Migration> GetDbActionMigration(Action<Database> action)
+        protected override Action<Migration> GetDbActionMigration(Action<Database> action)
         {
             return m => m.Execute.WithConnection((c, t) => {
                 var db = new Database(c as DbConnection);
@@ -42,8 +42,8 @@ namespace EasyMigrator.Tests.Integration.Migrators
 
         public void Up(Action<Migration> action) { Runner.Up(new ActionMigration(action)); }
         public void Down(Action<Migration> action) { Runner.Down(new ActionMigration(action)); }
-        override protected void Up(IEnumerable<Action<Migration>> actions) { Runner.Up(new ActionMigration(actions)); }
-        override protected void Down(IEnumerable<Action<Migration>> actions) { Runner.Down(new ActionMigration(actions)); }
+        protected override void Up(IEnumerable<Action<Migration>> actions) { Runner.Up(new ActionMigration(actions)); }
+        protected override void Down(IEnumerable<Action<Migration>> actions) { Runner.Down(new ActionMigration(actions)); }
 
         private MigrationRunner GetRunner(string connectionString)
         {

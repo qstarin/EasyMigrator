@@ -18,10 +18,10 @@ namespace EasyMigrator.Tests.Integration.Migrators
         public void Down(Action<Database> action) { Down(new[] { action }); }
         public void Down(IEnumerable<Action<Database>> actions) { Down(actions.Select(GetDbActionMigration)); }
 
-        protected abstract void Up(IEnumerable<Action<TMigrationBase>> actions);
-        protected abstract void Down(IEnumerable<Action<TMigrationBase>> actions);
-        protected abstract Action<TMigrationBase> GetDbActionMigration(Action<Database> action);
-        protected abstract Action<TMigrationBase> GetPocoMigration(Type poco, MigrationDirection direction);
+        abstract protected void Up(IEnumerable<Action<TMigrationBase>> actions);
+        abstract protected void Down(IEnumerable<Action<TMigrationBase>> actions);
+        abstract protected Action<TMigrationBase> GetDbActionMigration(Action<Database> action);
+        abstract protected Action<TMigrationBase> GetPocoMigration(Type poco, MigrationDirection direction);
         protected enum MigrationDirection { Up, Down }
     }
 }
