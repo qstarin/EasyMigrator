@@ -97,7 +97,7 @@ namespace EasyMigrator.Parsing
                 }
 
                 if (column.Index != null && column.Index.Name == null)
-                    column.Index.Name = Conventions.IndexName(context, new[] { column });
+                    column.Index.Name = Conventions.IndexNameByColumns(context, new[] { column });
 
                 if (column.ForeignKey != null) {
                     if (column.ForeignKey.Column == null && fk.Table != null)
@@ -107,7 +107,7 @@ namespace EasyMigrator.Parsing
                         column.ForeignKey.Name = Conventions.ForeignKeyName(context, column);
 
                     if (column.Index == null && (fk.Indexed == true || Conventions.IndexForeignKeys(context)))
-                        column.Index = new IndexAttribute { Name = Conventions.IndexName(context, new[] { column }) };
+                        column.Index = new IndexAttribute { Name = Conventions.IndexNameByColumns(context, new[] { column }) };
                 }
 
                 if (table.Columns.Any(c => c.Name == column.Name))
