@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.Common;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 using EasyMigrator.Extensions;
 using FluentMigrator;
 using FluentMigrator.Runner;
@@ -14,12 +12,12 @@ using FluentMigrator.Runner.Processors.SqlServer;
 using NPoco;
 
 
-namespace EasyMigrator.Tests.Integration.Migrators
+namespace EasyMigrator.Tests.Integration.FluentMigrator
 {
-    public class FluentMigrator : MigratorBase<Migration>
+    public class Migrator : MigratorBase<Migration>
     {
         private MigrationRunner Runner { get; }
-        public FluentMigrator(string connectionString) { Runner = GetRunner(connectionString); }
+        public Migrator(string connectionString) { Runner = GetRunner(connectionString); }
 
         protected override Action<Migration> GetDbActionMigration(Action<Database> action)
         {

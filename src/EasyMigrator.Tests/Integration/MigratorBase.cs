@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using NPoco;
 
 
-namespace EasyMigrator.Tests.Integration.Migrators
+namespace EasyMigrator.Tests.Integration
 {
     abstract public class MigratorBase<TMigrationBase> : IMigrator
     {

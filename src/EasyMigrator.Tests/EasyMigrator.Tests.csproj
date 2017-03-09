@@ -82,10 +82,11 @@
     <Compile Include="Data\Table1.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Integration\IMigrator.cs" />
+    <Compile Include="Integration\MigrationActions.cs" />
     <Compile Include="Tests\RoundTrip.cs" />
-    <Compile Include="Integration\Migrators\FluentMigrator.cs" />
-    <Compile Include="Integration\Migrators\MigratorBase.cs" />
-    <Compile Include="Integration\Migrators\MigratorDotNet.cs" />
+    <Compile Include="Integration\Migrator.FluentMigrator.cs" />
+    <Compile Include="Integration\MigratorBase.cs" />
+    <Compile Include="Integration\Migrator.MigratorDotNet.cs" />
     <Compile Include="TableTestData.cs" />
     <Compile Include="Integration\IntegrationTestBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -111,6 +112,7 @@
       <Name>EasyMigrator.MigratorDotNet</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

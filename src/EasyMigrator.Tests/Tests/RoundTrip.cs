@@ -37,18 +37,18 @@ namespace EasyMigrator.Tests.FluentMigrator
     [TestFixture]
     public class RoundTrip : Tests.RoundTrip
     {
-        public RoundTrip() : base(s => new Integration.Migrators.FluentMigrator(s)) { }
+        public RoundTrip() : base(s => new Integration.FluentMigrator.Migrator(s)) { }
 
         [Test]
         public void RemoveFkCol()
         {
-            (Migrator as Integration.Migrators.FluentMigrator).Up((Action<Migration>)(m => {
+            (Migrator as Integration.FluentMigrator.Migrator).Up((Action<Migration>)(m => {
                 m.Create.Table<FkStuff>();
                 m.Create.Table<FkCol>();
                 m.Create.Columns<FkColTable>();
             }));
 
-            (Migrator as Integration.Migrators.FluentMigrator).Down((Action<Migration>)(m => {
+            (Migrator as Integration.FluentMigrator.Migrator).Down((Action<Migration>)(m => {
                 m.Delete.Columns<FkColTable>();
             }));
         }
@@ -75,6 +75,6 @@ namespace EasyMigrator.Tests.MigratorDotNet
     [TestFixture]
     public class RoundTrip : Tests.RoundTrip
     {
-        public RoundTrip() : base(s => new Integration.Migrators.MigratorDotNet(s)) { }
+        public RoundTrip() : base(s => new Integration.MigratorDotNet.Migrator(s)) { }
     }
 }
