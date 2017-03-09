@@ -78,21 +78,24 @@
     <Compile Include="..\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="Data\Fk1.cs" />
-    <Compile Include="Data\Table1.cs" />
-    <Compile Include="Extensions.cs" />
+    <Compile Include="Schemas\Fk1.cs" />
+    <Compile Include="Schemas\Table1.cs" />
+    <Compile Include="Extensions\DbConnectionExtensions.cs" />
     <Compile Include="Integration\IMigrator.cs" />
     <Compile Include="Integration\MigrationActions.cs" />
-    <Compile Include="Tests\RoundTrip.cs" />
+    <Compile Include="RoundTrip.cs" />
     <Compile Include="Integration\Migrator.FluentMigrator.cs" />
     <Compile Include="Integration\MigratorBase.cs" />
     <Compile Include="Integration\Migrator.MigratorDotNet.cs" />
-    <Compile Include="TableTestData.cs" />
+    <Compile Include="TableTest\MigrationOrderAttribute.cs" />
+    <Compile Include="TableTest\TableTestCase.cs" />
+    <Compile Include="TableTest\TableTestData.cs" />
     <Compile Include="Integration\IntegrationTestBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="AssertEx.cs" />
-    <Compile Include="Tests\Parse.cs" />
-    <Compile Include="TableTestBase.cs" />
+    <Compile Include="Extensions\AssertEx.cs" />
+    <Compile Include="Parse.cs" />
+    <Compile Include="TableTest\TableTestBase.cs" />
+    <Compile Include="TableTest\TableTestDatum.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

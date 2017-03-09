@@ -9,7 +9,7 @@ namespace EasyMigrator.Extensions
     /// <summary>
     /// Defines extension methods for the System.Object type.
     /// </summary>
-    public static class ObjectExtensions
+    static public class ObjectExtensions
     {
         /// <summary>
         /// Tests whether the object is not null.  If not null, invokes the given delegate.
@@ -20,7 +20,7 @@ namespace EasyMigrator.Extensions
         /// <typeparam name="T">Type of the extension target object.</typeparam>
         /// <param name="obj">Extension target object.</param>
         /// <param name="then">Delegate to invoke if the object is not null.</param>
-        public static void IfNotNull<T>(this T obj, Action<T> then)
+        static public void IfNotNull<T>(this T obj, Action<T> then)
             where T : class
         {
             if (obj != null) { then(obj); }
@@ -34,7 +34,7 @@ namespace EasyMigrator.Extensions
         /// <param name="obj">Extension target object.</param>
         /// <param name="then">Delegate to invoke if the object is not null.</param>
         /// <returns>If the object is not null, the value returned by the given delegate; otherwise, null.</returns>
-        public static TResult IfNotNull<T, TResult>(this T obj, Func<T, TResult> then)
+        static public TResult IfNotNull<T, TResult>(this T obj, Func<T, TResult> then)
             where T : class
             where TResult : class
         {
@@ -50,7 +50,7 @@ namespace EasyMigrator.Extensions
         /// <param name="then">Delegate to invoke if the object is not null.</param>
         /// <param name="otherwise">Value to return if the object is null.</param>
         /// <returns>If the object is not null, the value returned by the given delegate; otherwise, the given value.</returns>
-        public static TResult IfNotNull<T, TResult>(this T obj, Func<T, TResult> then, TResult otherwise)
+        static public TResult IfNotNull<T, TResult>(this T obj, Func<T, TResult> then, TResult otherwise)
             where T : class
         {
             return obj != null ? then(obj) : otherwise;
@@ -65,7 +65,7 @@ namespace EasyMigrator.Extensions
         /// <param name="then">Delegate to invoke if the object is not null.</param>
         /// <param name="otherwise">Delegate to invoke if the object is null.</param>
         /// <returns>If the object is not null, the value returned by the first delegate; otherwise, the value returned by the second delegate.</returns>
-        public static TResult IfNotNull<T, TResult>(this T obj, Func<T, TResult> then, Func<TResult> otherwise)
+        static public TResult IfNotNull<T, TResult>(this T obj, Func<T, TResult> then, Func<TResult> otherwise)
             where T : class
         {
             return obj != null ? then(obj) : otherwise();
@@ -80,7 +80,7 @@ namespace EasyMigrator.Extensions
         /// <param name="then">Value to return if the object is null.</param>
         /// <param name="otherwise">Delegate to invoke if the object is not null.</param>
         /// <returns>If the object is null, the given value; otherwise, the value returned by the given delegate.</returns>
-        public static TResult IfNull<T, TResult>(this T obj, TResult then, Func<T, TResult> otherwise)
+        static public TResult IfNull<T, TResult>(this T obj, TResult then, Func<T, TResult> otherwise)
             where T : class
         {
             return obj == null ? then : otherwise(obj);
@@ -95,7 +95,7 @@ namespace EasyMigrator.Extensions
         /// <param name="then">Delegate to invoke if the object is null.</param>
         /// <param name="otherwise">Delegate to invoke if the object is not null.</param>
         /// <returns>If the object is null, the value returned by the first given delegate; otherwise, the value returned by the second given delegate.</returns>
-        public static TResult IfNull<T, TResult>(this T obj, Func<TResult> then, Func<T, TResult> otherwise)
+        static public TResult IfNull<T, TResult>(this T obj, Func<TResult> then, Func<T, TResult> otherwise)
             where T : class
         {
             return obj == null ? then() : otherwise(obj);

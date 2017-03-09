@@ -1,20 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using EasyMigrator.Extensions;
-using EasyMigrator.Parsing;
+﻿using EasyMigrator.Parsing;
 using NUnit.Framework;
 
 
-namespace EasyMigrator.Tests
+namespace EasyMigrator.Tests.TableTest
 {
     abstract public class TableTestBase
     {
         protected void Test<TCase>() { Test(new TableTestCase<TCase>()); }
-        protected abstract void Test(ITableTestCase testCase);
+        abstract protected void Test(ITableTestCase testCase);
 
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public virtual void SetupFixture()
         {
             var tableNameFn = Parser.Default.Conventions.TableName;
@@ -31,7 +26,7 @@ namespace EasyMigrator.Tests
             };
         }
 
-        [TestFixtureTearDown]
+        [OneTimeTearDown]
         public virtual void TearDownFixture() { }
     }
 }

@@ -7,7 +7,7 @@ using System.Text;
 
 namespace EasyMigrator.Tests
 {
-    internal static class Extensions
+    static internal class DbConnectionExtensions
     {
         static public void ExecuteNonQuery(this DbConnection connection, string sql)
         {
@@ -16,6 +16,7 @@ namespace EasyMigrator.Tests
             cmd.CommandType = CommandType.Text;
             cmd.ExecuteNonQuery();
         }
+
         static public T ExecuteScalar<T>(this DbConnection connection, string sql)
         {
             var cmd = connection.CreateCommand();

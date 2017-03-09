@@ -45,7 +45,6 @@
     </Compile>
     <Compile Include="Attributes.cs" />
     <Compile Include="Parsing\Conventions.cs" />
-    <Compile Include="Extensions\EnumerableExtensions.cs" />
     <Compile Include="Extensions\ModelExtensions.cs" />
     <Compile Include="Extensions\NullableExtensions.cs" />
     <Compile Include="Extensions\ObjectExtensions.cs" />

@@ -8,23 +8,23 @@ namespace EasyMigrator.Extensions
 {
     static public class ReflectionExtensions
     {
-        public static TAttr GetAttribute<TAttr>(this MemberInfo member) where TAttr : Attribute
+        static public TAttr GetAttribute<TAttr>(this MemberInfo member) where TAttr : Attribute
         {
             return member.GetCustomAttributes(typeof(TAttr), false).Cast<TAttr>().FirstOrDefault();
         }
 
-        public static bool HasAttribute<TAttr>(this MemberInfo member) where TAttr : Attribute
+        static public bool HasAttribute<TAttr>(this MemberInfo member) where TAttr : Attribute
         {
             return member.GetCustomAttributes(typeof(TAttr), false).Length > 0;
         }
 
-        public static bool IsNullableType(this Type type)
+        static public bool IsNullableType(this Type type)
         {
             // http://msdn.microsoft.com/en-us/library/ms366789.aspx
             return (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>));
         }
 
-        public static bool IsNumeric(this Type type)
+        static public bool IsNumeric(this Type type)
         {
             if (type.IsNullableType())
                 type = type.GetGenericArguments()[0];
@@ -47,12 +47,12 @@ namespace EasyMigrator.Extensions
             }
         }
 
-        public static bool InheritsFrom<T>(this Type type) { return typeof(T).IsAssignableFrom(type); }
+        static public bool InheritsFrom<T>(this Type type) { return typeof(T).IsAssignableFrom(type); }
 
         /// <summary>
         /// lets you do: type.InheritsFrom(typeof(Something&lt;&gt;))
         /// </summary>
-        public static bool InheritsFrom(this Type type, Type superType)
+        static public bool InheritsFrom(this Type type, Type superType)
         {
             if (!type.IsClass && !type.IsInterface)
                 return false;

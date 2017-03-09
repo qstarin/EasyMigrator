@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Linq;
 using System.Reflection;
-using EasyMigrator.Extensions;
 using FluentMigrator;
 using FluentMigrator.Runner;
 using FluentMigrator.Runner.Announcers;
@@ -63,8 +63,18 @@ namespace EasyMigrator.Tests.Integration.FluentMigrator
             public ActionMigration(Action<Migration> up, Action<Migration> down) : this(new[] {up}, new[] {down}) { }
             public ActionMigration(IEnumerable<Action<Migration>> actions) : this(actions, actions) { }
             public ActionMigration(IEnumerable<Action<Migration>> up, IEnumerable<Action<Migration>> down) { _up = up; _down = down; }
-            public override void Down() { _down.IfNotNull(ms => ms.ForEach(m => m(this))); }
-            public override void Up() { _up.IfNotNull(ms => ms.ForEach(m => m(this))); }
+
+            public override void Down()
+            {
+                foreach (var a in _down ?? Enumerable.Empty<Action<Migration>>())
+                    a(this);
+            }
+
+            public override void Up()
+            {
+                foreach (var a in _up ?? Enumerable.Empty<Action<Migration>>())
+                    a(this);
+            }
         }
     }
 }

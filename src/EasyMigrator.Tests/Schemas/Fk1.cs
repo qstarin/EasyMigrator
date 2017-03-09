@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
+﻿using System.Data;
 using EasyMigrator.Parsing.Model;
+using EasyMigrator.Tests.TableTest;
 
 
-namespace EasyMigrator.Tests.Data
+namespace EasyMigrator.Tests.Schemas
 {
     public class Fk1 : TableTestCase
     {

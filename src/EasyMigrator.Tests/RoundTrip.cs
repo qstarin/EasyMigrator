@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using EasyMigrator.Tests.Integration;
+using EasyMigrator.Tests.Schemas;
+using EasyMigrator.Tests.TableTest;
 using NUnit.Framework;
 using Migration = FluentMigrator.Migration;
 
@@ -13,8 +15,8 @@ namespace EasyMigrator.Tests
     {
         protected RoundTrip(Func<string, IMigrator> getMigrator) : base(getMigrator) { }
 
-        [Test] public void Table1() { Test<Data.Table1>(); }
-        [Test] public void Fk1() { Test<Data.Fk1>(); }
+        [Test] public void Table1() { Test<Table1>(); }
+        [Test] public void Fk1() { Test<Fk1>(); }
 
         override protected void Test(ITableTestCase testCase)
         {

@@ -11,6 +11,7 @@ using DatabaseSchemaReader;
 using DatabaseSchemaReader.DataSchema;
 using EasyMigrator.Extensions;
 using EasyMigrator.Parsing.Model;
+using EasyMigrator.Tests.TableTest;
 
 
 namespace EasyMigrator.Tests.Integration
