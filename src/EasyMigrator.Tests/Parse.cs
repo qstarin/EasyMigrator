@@ -13,7 +13,7 @@ namespace EasyMigrator.Tests
     [TestFixture]
     public class Parse : TableTestBase
     {
-        [Test] public void Table1() { Test<Table1>(); }
+        [Test] public void Table1() => Test<Table1>();
 
 
         protected override void Test(ITableTestCase testCase)

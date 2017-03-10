@@ -43,6 +43,8 @@ namespace EasyMigrator.Tests.Integration.FluentMigrator
         protected override void Up(IEnumerable<Action<Migration>> actions) { Runner.Up(new ActionMigration(actions)); }
         protected override void Down(IEnumerable<Action<Migration>> actions) { Runner.Down(new ActionMigration(actions)); }
 
+        public override IMigrationSet CreateMigrationSet() => new MigrationSet();
+
         private MigrationRunner GetRunner(string connectionString)
         {
             // http://stackoverflow.com/a/10508299/224087

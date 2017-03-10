@@ -15,10 +15,10 @@ namespace EasyMigrator.Tests
     {
         protected RoundTrip(Func<string, IMigrator> getMigrator) : base(getMigrator) { }
 
-        [Test] public void Table1() { Test<Table1>(); }
-        [Test] public void Fk1() { Test<Fk1>(); }
+        [Test] public void Table1() => Test<Table1>();
+        [Test] public void Fk1() => Test<Fk1>();
 
-        override protected void Test(ITableTestCase testCase)
+        protected override void Test(ITableTestCase testCase)
         {
             foreach (var data in testCase.Datum)
                 Migrator.Up(data.Poco);

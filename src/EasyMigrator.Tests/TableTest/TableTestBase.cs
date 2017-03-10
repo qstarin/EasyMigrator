@@ -6,7 +6,7 @@ namespace EasyMigrator.Tests.TableTest
 {
     abstract public class TableTestBase
     {
-        protected void Test<TCase>() { Test(new TableTestCase<TCase>()); }
+        protected void Test<TCase>() => Test(new TableTestCase<TCase>());
         abstract protected void Test(ITableTestCase testCase);
 
         [OneTimeSetUp]

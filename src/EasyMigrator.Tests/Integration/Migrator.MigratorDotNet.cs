@@ -45,6 +45,8 @@ namespace EasyMigrator.Tests.Integration.MigratorDotNet
         protected override void Down(IEnumerable<Action<Migration>> actions)
             => BuildRunner(_connectionString, actions).MigrateTo(0);
 
+        public override IMigrationSet CreateMigrationSet() => new MigrationSet();
+
         private global::Migrator.Migrator BuildRunner(string connectionString, IEnumerable<Action<Migration>> actions)
             => new global::Migrator.Migrator("SqlServer", connectionString, BuildMigrationAssembly(new List<MigrationActions> {
                 new MigrationActions(m => { foreach (var a in actions) a(m); })

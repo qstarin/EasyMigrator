@@ -17,5 +17,10 @@ namespace EasyMigrator.Tests.Integration
         void Down(IEnumerable<Type> pocos);
         void Down(Action<NPoco.Database> action);
         void Down(IEnumerable<Action<NPoco.Database>> actions);
+
+        IMigrationSet CreateMigrationSet();
+        ICompiledMigrations CompileMigrations(IMigrationSet migrations);
+        void Up(ICompiledMigrations migrations);
+        void Down(ICompiledMigrations migrations);
     }
 }
