@@ -3,22 +3,19 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Text;
+using EasyMigrator.Tests.TableTest;
 
 
 namespace EasyMigrator.Tests.Integration
 {
     public interface IMigrationSet
     {
+        IMigrationSet AddMigrationForTableTestCase(ITableTestCase tableTestCase);
         IMigrationSet AddMigrationForTableType(Type tableType);
         IMigrationSet AddMigrationForTableTypes(IEnumerable<Type> tableTypes);
         IMigrationSet AddMigrationForPocoDb(Action<NPoco.Database> up, Action<NPoco.Database> down);
         IMigrationSet AddMigrationForFluentMigrator(Action<global::FluentMigrator.Migration> up, Action<global::FluentMigrator.Migration> down);
         IMigrationSet AddMigrationForMigratorDotNet(Action<global::Migrator.Framework.Migration> up, Action<global::Migrator.Framework.Migration> down);
-    }
-
-    public interface ICompiledMigrations
-    {
-        
     }
 }
 
@@ -26,7 +23,11 @@ namespace EasyMigrator.Tests.Integration.FluentMigrator
 {
     public class MigrationSet : IMigrationSet
     {
-        private IList<MigrationActions> _migrationActions = new List<MigrationActions>();
+        private readonly IList<MigrationActions> _migrationActions = new List<MigrationActions>();
+        public IEnumerable<MigrationActions> MigrationActions => _migrationActions;
+
+        public IMigrationSet AddMigrationForTableTestCase(ITableTestCase tableTestCase)
+            => AddMigrationForTableTypes(tableTestCase.Datum.Select(d => d.Poco));
 
         public IMigrationSet AddMigrationForTableType(Type tableType)
             => AddMigrationForFluentMigrator(
@@ -67,7 +68,11 @@ namespace EasyMigrator.Tests.Integration.MigratorDotNet
 {
     public class MigrationSet : IMigrationSet
     {
-        private IList<MigrationActions> _migrationActions = new List<MigrationActions>();
+        private readonly IList<MigrationActions> _migrationActions = new List<MigrationActions>();
+        public IEnumerable<MigrationActions> MigrationActions => _migrationActions;
+
+        public IMigrationSet AddMigrationForTableTestCase(ITableTestCase tableTestCase)
+            => AddMigrationForTableTypes(tableTestCase.Datum.Select(d => d.Poco));
 
         public IMigrationSet AddMigrationForTableType(Type tableType)
             => AddMigrationForMigratorDotNet(

@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using Migrator.Framework;
@@ -45,7 +46,32 @@ namespace EasyMigrator.Tests.Integration.MigratorDotNet
         protected override void Down(IEnumerable<Action<Migration>> actions)
             => BuildRunner(_connectionString, actions).MigrateTo(0);
 
+
         public override IMigrationSet CreateMigrationSet() => new MigrationSet();
+
+        public override ICompiledMigrations CompileMigrations(IMigrationSet migrations)
+        {
+            var set = migrations as MigrationSet;
+            if (set == null)
+                throw new InvalidOperationException("Migration set is not a MigratorDotNet migration set.");
+
+            return new CompiledMigrations(BuildMigrationAssembly(set.MigrationActions.ToList()));
+        }
+
+        public override void Up(ICompiledMigrations migrations)
+            => BuildRunner(migrations).MigrateToLastVersion();
+
+        public override void Down(ICompiledMigrations migrations)
+            => BuildRunner(migrations).MigrateTo(0); // verify this is ok
+
+        private global::Migrator.Migrator BuildRunner(ICompiledMigrations migrations)
+        {
+            var mig = migrations as CompiledMigrations;
+            if (mig == null)
+                throw new InvalidOperationException("Compiled migrations are not for MigratorDotNet.");
+
+            return new global::Migrator.Migrator("SqlServer", _connectionString, mig.MigrationsAssembly);
+        }
 
         private global::Migrator.Migrator BuildRunner(string connectionString, IEnumerable<Action<Migration>> actions)
             => new global::Migrator.Migrator("SqlServer", connectionString, BuildMigrationAssembly(new List<MigrationActions> {
