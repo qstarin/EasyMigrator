@@ -69,7 +69,7 @@ namespace EasyMigrator.Parsing
             table.PrimaryKeyName = context.ModelType.GetAttribute<PkAttribute>()?.Name;
 
             foreach (var field in fields) {
-                var dbType = typemap[field];
+                var dbType = field.GetAttribute<DbTypeAttribute>()?.DbType ?? typemap[field];
                 var pk = field.GetAttribute<PkAttribute>();
                 var fk = field.GetAttribute<FkAttribute>();
 

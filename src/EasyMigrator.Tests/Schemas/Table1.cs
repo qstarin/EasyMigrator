@@ -15,7 +15,7 @@ namespace EasyMigrator.Tests.Schemas
             [Fixed(8), Ansi, NotNull, Unique(Name = "idx_code")] string Code;
             [Length(Length.Medium)] string Headline;
             [Max, Name("[Desc]")] string Desc;
-            decimal? Rate;
+            [DbType(DbType.Currency)] decimal? Rate;
             [Precision(Length.Short, 3)] decimal Adjustment;
         }
 
@@ -62,9 +62,9 @@ namespace EasyMigrator.Tests.Schemas
                 },
                 new Column {
                     Name = "Rate",
-                    Type = DbType.Decimal,
+                    Type = DbType.Currency,
                     IsNullable = true,
-                    Precision = new PrecisionAttribute(19, 2)
+                    //Precision = new PrecisionAttribute(19, 2)
                 },
                 new Column {
                     Name = "Adjustment",

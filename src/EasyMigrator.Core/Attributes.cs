@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 
@@ -15,6 +16,12 @@ namespace EasyMigrator
     {
         public string Name { get; }
         public NameAttribute(string name) { Name = name; }
+    }
+
+    public class DbTypeAttribute : Attribute
+    {
+        public DbType DbType { get; }
+        public DbTypeAttribute(DbType dbType) { DbType = dbType; }
     }
 
     public class NoPkAttribute : Attribute { }
