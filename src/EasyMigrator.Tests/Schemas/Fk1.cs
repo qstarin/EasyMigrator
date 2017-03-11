@@ -14,7 +14,7 @@ namespace EasyMigrator.Tests.Schemas
                 [Medium] string Description;
             }
 
-            Table Model = new Table {
+            static Table Model = new Table {
                 Name = "Stuff",
                 Columns = new[] {
                     new Column {
@@ -41,7 +41,7 @@ namespace EasyMigrator.Tests.Schemas
                 [Fk("Stuff")] int AltStuffId;
             }
 
-            Table Model = new Table {
+            static Table Model = new Table {
                 Name = "Assoc",
                 Columns = new[] {
                     new Column {

@@ -38,7 +38,7 @@ namespace EasyMigrator.Tests.TableTest
                 datum.ConditionallyAdd(t);
 
             if (datum.Count == 0)
-                datum.ConditionallyAdd(GetType());
+                datum.ConditionallyAdd(type);
         }
 
         static private IEnumerable<ITableTestCase> All

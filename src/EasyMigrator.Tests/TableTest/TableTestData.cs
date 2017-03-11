@@ -29,12 +29,7 @@ namespace EasyMigrator.Tests.TableTest
 
         private void Initialize(Type type)
         {
-            Model = type.GetField("Model",
-                                  BindingFlags.NonPublic | BindingFlags.Public |
-                                  BindingFlags.Instance | BindingFlags.Static)
-                        .IfNotNull(t => t.GetValue(type == GetType()
-                                                       ? this
-                                                       : Activator.CreateInstance(type)) as Table);
+            Model = type.GetField("Model", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static)?.GetValue(null) as Table;
             Poco = type.GetNestedType("Poco", BindingFlags.NonPublic | BindingFlags.Public);
         }
     }

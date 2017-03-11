@@ -19,7 +19,7 @@ namespace EasyMigrator.Tests.Schemas
             [Precision(Length.Short, 3)] decimal Adjustment;
         }
 
-        Table Model = new Table {
+        static Table Model = new Table {
             Name = "Table1",
             Columns = new[] {
                 new Column {
@@ -35,6 +35,7 @@ namespace EasyMigrator.Tests.Schemas
                 new Column {
                     Name = "Accepted",
                     Type = DbType.Boolean,
+                    DefaultValue = "0",
                 },
                 new Column {
                     Name = "Name",
