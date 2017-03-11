@@ -14,6 +14,7 @@ namespace EasyMigrator.Tests
     public class Parse : TableTestBase
     {
         [Test] public void Table1() => Test<Table1>();
+        [Test] public void Fk1() => Test<Fk1>();
 
 
         protected override void Test(ITableTestCase testCase)
