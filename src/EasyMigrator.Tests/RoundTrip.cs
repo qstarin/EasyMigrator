@@ -84,8 +84,7 @@ namespace EasyMigrator.Tests.FluentMigrator
 
             set.AddMigrationForFluentMigrator(
                 m => {
-                    m.Create.Columns<FkStuffTable>(() => m.Update.Table(nameof(FkStuff)).Set(new { Quantity = 2 }).AllRows());
-                    m.Alter.PostPopulate<FkStuffTable>();
+                    m.Create.Columns<FkStuffTable>(m.Alter, () => m.Update.Table(nameof(FkStuff)).Set(new { Quantity = 2 }).AllRows());
                 },
                 m => {
                     m.Delete.Columns<FkStuffTable>();

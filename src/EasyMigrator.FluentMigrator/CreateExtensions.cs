@@ -32,10 +32,14 @@ namespace EasyMigrator
                                               ICreateTableColumnOptionOrForeignKeyCascadeOrWithColumnSyntax>(table, col);
         }
 
-        static public void Columns<T>(this ICreateExpressionRoot Create, Action populate = null) =>Create.Columns(typeof(T), populate);
-        static public void Columns(this ICreateExpressionRoot Create, Type tableType, Action populate = null) => Create.Columns(tableType, Parsing.Parser.Default, populate);
-        static public void Columns<T>(this ICreateExpressionRoot Create, Parsing.Parser parser, Action populate = null) => Create.Columns(typeof(T), parser, populate);
-        static public void Columns(this ICreateExpressionRoot Create, Type tableType, Parsing.Parser parser, Action populate = null)
+        static public void Columns<T>(this ICreateExpressionRoot Create) => Create.Columns(typeof(T));
+        static public void Columns<T>(this ICreateExpressionRoot Create, IAlterExpressionRoot alter, Action populate = null) => Create.Columns(typeof(T), alter, populate);
+        static public void Columns(this ICreateExpressionRoot Create, Type tableType) => Create.Columns(tableType, Parsing.Parser.Default);
+        static public void Columns(this ICreateExpressionRoot Create, Type tableType, IAlterExpressionRoot alter, Action populate = null) => Create.Columns(tableType, Parsing.Parser.Default, alter, populate);
+        static public void Columns<T>(this ICreateExpressionRoot Create, Parsing.Parser parser) => Create.Columns(typeof(T), parser);
+        static public void Columns<T>(this ICreateExpressionRoot Create, Parsing.Parser parser, IAlterExpressionRoot alter, Action populate = null) => Create.Columns(typeof(T), parser, alter, populate);
+        static public void Columns(this ICreateExpressionRoot Create, Type tableType, Parsing.Parser parser) => Create.Columns(tableType, parser, null, null);
+        static public void Columns(this ICreateExpressionRoot Create, Type tableType, Parsing.Parser parser, IAlterExpressionRoot alter, Action populate = null)
         {
             var table = parser.ParseTableType(tableType);
             var nonNullables = new List<Column>();
@@ -49,27 +53,18 @@ namespace EasyMigrator
                                  .BuildColumn<ICreateColumnAsTypeOrInSchemaSyntax,
                                               ICreateColumnOptionSyntax,
                                               ICreateColumnOptionOrForeignKeyCascadeSyntax>(table, col);
-
-                if (nonNullables.Contains(col))
-                    col.IsNullable = false;
             }
 
-            if (populate != null)
+            if (populate != null) {
                 populate();
-        }
-
-        static public void PostPopulate<T>(this IAlterExpressionRoot Alter) => Alter.PostPopulate(typeof(T));
-        static public void PostPopulate(this IAlterExpressionRoot Alter, Type tableType) => Alter.PostPopulate(tableType, Parsing.Parser.Default);
-        static public void PostPopulate<T>(this IAlterExpressionRoot Alter, Parsing.Parser parser) => Alter.PostPopulate(typeof(T), parser);
-        static public void PostPopulate(this IAlterExpressionRoot Alter, Type tableType, Parsing.Parser parser)
-        {
-            var table = parser.ParseTableType(tableType);
-            var nonNullables = table.Columns.DefinedInPoco().Where(col => !col.IsNullable && col.DefaultValue == null);
-            foreach (var col in nonNullables)
-                Alter.Column(col.Name).OnTable(table.Name)
-                                 .BuildColumn<IAlterColumnAsTypeOrInSchemaSyntax,
-                                              IAlterColumnOptionSyntax,
-                                              IAlterColumnOptionOrForeignKeyCascadeSyntax>(table, col);
+                foreach (var col in nonNullables) {
+                    col.IsNullable = false;
+                    alter.Column(col.Name).OnTable(table.Name)
+                                     .BuildColumn<IAlterColumnAsTypeOrInSchemaSyntax,
+                                                  IAlterColumnOptionSyntax,
+                                                  IAlterColumnOptionOrForeignKeyCascadeSyntax>(table, col);
+                }
+            }
         }
 
         static private void BuildColumn<TSyntax, TNext, TNextFk>(this TSyntax s, Table table, Column col)
