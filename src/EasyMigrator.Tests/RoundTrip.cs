@@ -6,7 +6,6 @@ using EasyMigrator.Tests.Integration;
 using EasyMigrator.Tests.Schemas;
 using EasyMigrator.Tests.TableTest;
 using NUnit.Framework;
-using Migration = FluentMigrator.Migration;
 
 
 namespace EasyMigrator.Tests
@@ -20,39 +19,15 @@ namespace EasyMigrator.Tests
 
         protected override void Test(ITableTestCase testCase)
         {
-            foreach (var data in testCase.Datum)
-                Migrator.Up(data.Poco);
+            var set = Migrator.CreateMigrationSet();
+            set.AddMigrationForTableTestCase(testCase);
+            var mig = Migrator.CompileMigrations(set);
+            Migrator.Up(mig);
 
             foreach (var data in testCase.Datum)
                 AssertEx.AreEqual(data.Model, GetTableModelFromDb(data.Model.Name));
 
-            foreach (var data in testCase.Datum.Reverse())
-                Migrator.Down(data.Poco);
-        }
-    }
-}
-
-
-namespace EasyMigrator.Tests.FluentMigrator
-{
-
-    [TestFixture]
-    public class RoundTrip : Tests.RoundTrip
-    {
-        public RoundTrip() : base(s => new Integration.FluentMigrator.Migrator(s)) { }
-
-        [Test]
-        public void RemoveFkCol()
-        {
-            (Migrator as Integration.FluentMigrator.Migrator).Up((Action<Migration>)(m => {
-                m.Create.Table<FkStuff>();
-                m.Create.Table<FkCol>();
-                m.Create.Columns<FkColTable>();
-            }));
-
-            (Migrator as Integration.FluentMigrator.Migrator).Down((Action<Migration>)(m => {
-                m.Delete.Columns<FkColTable>();
-            }));
+            Migrator.Down(mig);
         }
 
         public class FkStuff
@@ -72,11 +47,60 @@ namespace EasyMigrator.Tests.FluentMigrator
     }
 }
 
+
+namespace EasyMigrator.Tests.FluentMigrator
+{
+
+    [TestFixture]
+    public class RoundTrip : Tests.RoundTrip
+    {
+        public RoundTrip() : base(s => new Integration.FluentMigrator.Migrator(s)) { }
+
+        [Test]
+        public void RemoveFkCol()
+        {
+            var set = Migrator.CreateMigrationSet();
+            set.AddMigrationForFluentMigrator(
+                m => {
+                    m.Create.Table<FkStuff>();
+                    m.Create.Table<FkCol>();
+                    m.Create.Columns<FkColTable>();
+                },
+                m => {
+                    m.Delete.Columns<FkColTable>();
+                });
+
+            var mig = Migrator.CompileMigrations(set);
+            Migrator.Up(mig);
+            Migrator.Down(mig);
+        }
+    }
+}
+
 namespace EasyMigrator.Tests.MigratorDotNet
 {
     [TestFixture]
     public class RoundTrip : Tests.RoundTrip
     {
         public RoundTrip() : base(s => new Integration.MigratorDotNet.Migrator(s)) { }
+
+        [Test]
+        public void RemoveFkCol()
+        {
+            var set = Migrator.CreateMigrationSet();
+            set.AddMigrationForMigratorDotNet(
+                m => {
+                    m.Database.AddTable<FkStuff>();
+                    m.Database.AddTable<FkCol>();
+                    m.Database.AddColumns<FkColTable>();
+                },
+                m => {
+                    m.Database.RemoveColumns<FkColTable>();
+                });
+
+            var mig = Migrator.CompileMigrations(set);
+            Migrator.Up(mig);
+            Migrator.Down(mig);
+        }
     }
 }

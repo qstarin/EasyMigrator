@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Linq;
 using System.Reflection;
 using FluentMigrator;
@@ -9,43 +8,49 @@ using FluentMigrator.Runner.Announcers;
 using FluentMigrator.Runner.Initialization;
 using FluentMigrator.Runner.Processors;
 using FluentMigrator.Runner.Processors.SqlServer;
-using NPoco;
 
 
 namespace EasyMigrator.Tests.Integration.FluentMigrator
 {
-    public class Migrator : MigratorBase<Migration>
+    public class Migrator : IMigrator
     {
-        private MigrationRunner Runner { get; }
-        public Migrator(string connectionString) { Runner = GetRunner(connectionString); }
+        private readonly MigrationRunner Runner;
+        public Migrator(string connectionString) { Runner = BuildRunner(connectionString); }
 
-        protected override Action<Migration> GetDbActionMigration(Action<Database> action)
+
+        public IMigrationSet CreateMigrationSet() => new MigrationSet();
+
+        public ICompiledMigrations CompileMigrations(IMigrationSet migrations)
         {
-            return m => m.Execute.WithConnection((c, t) => {
-                var db = new Database(c as DbConnection);
-                db.SetTransaction(t as DbTransaction);
-                action(db);
-            });
+            var set = migrations as MigrationSet;
+            if (set == null)
+                throw new InvalidOperationException("Migration set is not a FluentMigrator migration set.");
+
+            return new CompiledMigrations(new List<Migration>(set.MigrationActions.Select(a => new ActionMigration(a))));
         }
 
-        protected override Action<Migration> GetPocoMigration(Type poco, MigrationDirection direction)
+        public void Up(ICompiledMigrations migrations)
         {
-            if (direction == MigrationDirection.Up)
-                return m => m.Create.Table(poco);
-            else if (direction == MigrationDirection.Down)
-                return m => m.Delete.Table(poco);
-            else 
-                return null;
+            foreach (var m in GetMigrations(migrations))
+                Runner.Up(m);
         }
 
-        public void Up(Action<Migration> action) { Runner.Up(new ActionMigration(action)); }
-        public void Down(Action<Migration> action) { Runner.Down(new ActionMigration(action)); }
-        protected override void Up(IEnumerable<Action<Migration>> actions) { Runner.Up(new ActionMigration(actions)); }
-        protected override void Down(IEnumerable<Action<Migration>> actions) { Runner.Down(new ActionMigration(actions)); }
+        public void Down(ICompiledMigrations migrations)
+        {
+            foreach (var m in GetMigrations(migrations).Reverse())
+                Runner.Down(m);
+        }
 
-        public override IMigrationSet CreateMigrationSet() => new MigrationSet();
+        private IList<Migration> GetMigrations(ICompiledMigrations migrations)
+        {
+            var mig = migrations as CompiledMigrations;
+            if (mig == null)
+                throw new InvalidOperationException("Compiled migrations are not for FluentMigrator.");
 
-        private MigrationRunner GetRunner(string connectionString)
+            return mig.Migrations;
+        }
+
+        private MigrationRunner BuildRunner(string connectionString)
         {
             // http://stackoverflow.com/a/10508299/224087
             var announcer = new TextWriterAnnouncer(s => System.Diagnostics.Debug.WriteLine(s));
@@ -57,26 +62,13 @@ namespace EasyMigrator.Tests.Integration.FluentMigrator
             return new MigrationRunner(assembly, migrationContext, processor);
         }
 
-        public class ActionMigration : Migration
+        private class ActionMigration : Migration
         {
-            private readonly IEnumerable<Action<Migration>> _up;
-            private readonly IEnumerable<Action<Migration>> _down;
-            public ActionMigration(Action<Migration> migration) : this(migration, migration) { }
-            public ActionMigration(Action<Migration> up, Action<Migration> down) : this(new[] {up}, new[] {down}) { }
-            public ActionMigration(IEnumerable<Action<Migration>> actions) : this(actions, actions) { }
-            public ActionMigration(IEnumerable<Action<Migration>> up, IEnumerable<Action<Migration>> down) { _up = up; _down = down; }
+            private readonly MigrationActions _actions;
+            public ActionMigration(MigrationActions actions) { _actions = actions; }
 
-            public override void Down()
-            {
-                foreach (var a in _down ?? Enumerable.Empty<Action<Migration>>())
-                    a(this);
-            }
-
-            public override void Up()
-            {
-                foreach (var a in _up ?? Enumerable.Empty<Action<Migration>>())
-                    a(this);
-            }
+            public override void Up() => _actions.Up(this);
+            public override void Down() => _actions.Down(this);
         }
     }
 }

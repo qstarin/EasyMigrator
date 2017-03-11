@@ -1,55 +1,23 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using Migrator.Framework;
-using NPoco;
 
 
 namespace EasyMigrator.Tests.Integration.MigratorDotNet
 {
-    public class Migrator : MigratorBase<Migration>
+    public class Migrator : IMigrator
     {
         private readonly string _connectionString;
         public Migrator(string connectionString) { _connectionString = connectionString; }
 
-        protected override Action<Migration> GetDbActionMigration(Action<Database> action)
-        {
-            return m => {
-                var cmd = m.Database.GetCommand();
-                var db = new Database(cmd.Connection as DbConnection);
-                db.SetTransaction(cmd.Transaction as DbTransaction);
-                action(db);
-            };
-        }
 
-        protected override Action<Migration> GetPocoMigration(Type poco, MigrationDirection direction)
-        {
-            if (direction == MigrationDirection.Up)
-                return m => m.Database.AddTable(poco);
-            else if (direction == MigrationDirection.Down)
-                return m => m.Database.RemoveTable(poco);
-            else
-                return null;
-        }
+        public IMigrationSet CreateMigrationSet() => new MigrationSet();
 
-        public void Up(Action<Migration> action) => Up(new[] { action });
-        public void Down(Action<Migration> action) => Down(new[] { action });
-
-        protected override void Up(IEnumerable<Action<Migration>> actions)
-            => BuildRunner(_connectionString, actions).MigrateToLastVersion();
-
-        protected override void Down(IEnumerable<Action<Migration>> actions)
-            => BuildRunner(_connectionString, actions).MigrateTo(0);
-
-
-        public override IMigrationSet CreateMigrationSet() => new MigrationSet();
-
-        public override ICompiledMigrations CompileMigrations(IMigrationSet migrations)
+        public ICompiledMigrations CompileMigrations(IMigrationSet migrations)
         {
             var set = migrations as MigrationSet;
             if (set == null)
@@ -58,10 +26,10 @@ namespace EasyMigrator.Tests.Integration.MigratorDotNet
             return new CompiledMigrations(BuildMigrationAssembly(set.MigrationActions.ToList()));
         }
 
-        public override void Up(ICompiledMigrations migrations)
+        public void Up(ICompiledMigrations migrations)
             => BuildRunner(migrations).MigrateToLastVersion();
 
-        public override void Down(ICompiledMigrations migrations)
+        public void Down(ICompiledMigrations migrations)
             => BuildRunner(migrations).MigrateTo(0); // verify this is ok
 
         private global::Migrator.Migrator BuildRunner(ICompiledMigrations migrations)
@@ -72,11 +40,6 @@ namespace EasyMigrator.Tests.Integration.MigratorDotNet
 
             return new global::Migrator.Migrator("SqlServer", _connectionString, mig.MigrationsAssembly);
         }
-
-        private global::Migrator.Migrator BuildRunner(string connectionString, IEnumerable<Action<Migration>> actions)
-            => new global::Migrator.Migrator("SqlServer", connectionString, BuildMigrationAssembly(new List<MigrationActions> {
-                new MigrationActions(m => { foreach (var a in actions) a(m); })
-            }));
 
         static private readonly Dictionary<string, IList<MigrationActions>> _migrationActions = new Dictionary<string, IList<MigrationActions>>();
         static public MigrationActions GetMigrationAction(string assemblyName, int version)

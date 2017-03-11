@@ -78,8 +78,7 @@
     <Compile Include="..\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="Integration\CompiledMigrations.MigratorDotNet.cs" />
-    <Compile Include="Integration\ICompiledMigrations.cs" />
+    <Compile Include="Integration\CompiledMigrations.cs" />
     <Compile Include="Integration\MigrationSet.cs" />
     <Compile Include="Schemas\Fk1.cs" />
     <Compile Include="Schemas\Table1.cs" />
@@ -88,7 +87,6 @@
     <Compile Include="Integration\MigrationActions.cs" />
     <Compile Include="RoundTrip.cs" />
     <Compile Include="Integration\Migrator.FluentMigrator.cs" />
-    <Compile Include="Integration\MigratorBase.cs" />
     <Compile Include="Integration\Migrator.MigratorDotNet.cs" />
     <Compile Include="TableTest\MigrationOrderAttribute.cs" />
     <Compile Include="TableTest\TableTestCase.cs" />
