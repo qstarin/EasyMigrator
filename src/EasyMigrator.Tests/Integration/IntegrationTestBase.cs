@@ -100,7 +100,7 @@ namespace EasyMigrator.Tests.Integration
                     Length = c.Length.IfHasValue(l => l == -1 || l == 0x3fffffff ? int.MaxValue : l, (int?)null),
                     DefaultValue =
                         dbType == DbType.Boolean
-                            ? ((c.DefaultValue?.Contains("0") ?? true) ? false : true)
+                            ? ((c.DefaultValue?.Contains("0") ?? true) ? "0" : "1")
                             : (object)c.DefaultValue,
                     AutoIncrement = c.IsAutoNumber
                         ? new AutoIncAttribute(c.IdentityDefinition.IdentitySeed, c.IdentityDefinition.IdentityIncrement)

@@ -87,10 +87,12 @@ namespace EasyMigrator
                 c.DefaultValue = col.DefaultValue;
 
             if (col.Length.HasValue)
-                c.Size = col.Length.Value == int.MaxValue ? /*-1*/ 0x3fffffff : col.Length.Value; // http://code.google.com/p/migratordotnet/issues/detail?id=130
+                c.Size = col.Length.Value == int.MaxValue ? 0x3fffffff : col.Length.Value;
+            // http://code.google.com/p/migratordotnet/issues/detail?id=130
+            // using this sets the column type to ntext instead of nvarchar
 
-            // TODO: decimal scale isn't handled, and not sure if precision is right
             if (col.Type == DbType.Decimal && col.Precision != null) {
+                // MigratorDotNet doesn't seem to support precision
                 c.Size = col.Precision.Scale;
             }
 

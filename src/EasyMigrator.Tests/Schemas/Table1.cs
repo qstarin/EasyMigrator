@@ -14,7 +14,7 @@ namespace EasyMigrator.Tests.Schemas
             [NotNull] string Name;
             [Fixed(8), Ansi, NotNull, Unique(Name = "idx_code")] string Code;
             [Length(Length.Medium)] string Headline;
-            [Max] string Description;
+            [Max, Name("[Desc]")] string Desc;
             decimal? Rate;
             [Precision(Length.Short, 3)] decimal Adjustment;
         }
@@ -35,7 +35,7 @@ namespace EasyMigrator.Tests.Schemas
                 new Column {
                     Name = "Accepted",
                     Type = DbType.Boolean,
-                    DefaultValue = false,
+                    DefaultValue = "0",
                 },
                 new Column {
                     Name = "Name",
@@ -55,7 +55,7 @@ namespace EasyMigrator.Tests.Schemas
                     Length = 255
                 },
                 new Column {
-                    Name = "Description",
+                    Name = "Desc",
                     Type = DbType.String,
                     IsNullable = true,
                     Length = int.MaxValue

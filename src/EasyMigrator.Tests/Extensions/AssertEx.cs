@@ -19,7 +19,10 @@ namespace EasyMigrator.Tests
                 var e = expected.Columns.ElementAt(i);
                 var a = actual.Columns.ElementAt(i);
 
-                Assert.AreEqual(e.Name, a.Name);
+                if ($"[{e.Name}]" == a.Name)
+                    Assert.AreEqual($"[{e.Name}]", a.Name);
+                else
+                    Assert.AreEqual(e.Name, a.Name);
                 Assert.AreEqual(e.Type, a.Type);
                 Assert.AreEqual(e.DefaultValue, a.DefaultValue);
                 Assert.AreEqual(e.IsNullable, a.IsNullable);

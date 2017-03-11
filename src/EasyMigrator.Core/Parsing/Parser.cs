@@ -27,7 +27,7 @@ namespace EasyMigrator.Parsing
                 ModelType = type,
                 Model = Activator.CreateInstance(type),
             };
-            context.Table = new Table { Name = Conventions.TableName(context) };
+            context.Table = new Table { Name = type.GetAttribute<NameAttribute>()?.Name ?? Conventions.TableName(context) };
 
             return context;
         }
@@ -74,7 +74,7 @@ namespace EasyMigrator.Parsing
                 var fk = field.GetAttribute<FkAttribute>();
 
                 var column = new Column {
-                    Name = Conventions.ColumnName(context, field), 
+                    Name = field.GetAttribute<NameAttribute>()?.Name ?? Conventions.ColumnName(context, field), 
                     Type = dbType,
                     DefaultValue = GetDefaultValue(context.Model, field),
                     IsNullable = IsNullable(field),
