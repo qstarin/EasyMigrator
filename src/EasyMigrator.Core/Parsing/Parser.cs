@@ -116,7 +116,7 @@ namespace EasyMigrator.Parsing
                 table.Columns.Add(column);
             }
 
-            if (!table.HasPrimaryKey && !context.ModelType.HasAttribute<NoPkAttribute>()) {
+            if (!table.HasPrimaryKey && !context.ModelType.HasAttribute<NoPkAttribute>() && Conventions.PrimaryKey != null) {
                 foreach (var pk in Conventions.PrimaryKey(context).Reverse()) { // Reverse so Insert(0.. puts everything in the right order
                     pk.IsPrimaryKey = true;
                     pk.DefinedInPoco = false;
