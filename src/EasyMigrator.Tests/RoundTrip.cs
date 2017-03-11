@@ -32,12 +32,17 @@ namespace EasyMigrator.Tests
 
         public class FkStuff
         {
-            string Description;
+            public string Description;
+        }
+
+        public class FkStuffTable
+        {
+            public int Quantity;
         }
 
         public class FkCol
         {
-            string Name;
+            public string Name;
         }
 
         public class FkColTable
@@ -57,7 +62,7 @@ namespace EasyMigrator.Tests.FluentMigrator
         public RoundTrip() : base(s => new Integration.FluentMigrator.Migrator(s)) { }
 
         [Test]
-        public void RemoveFkCol()
+        public void RemoveFkColAndPopulate()
         {
             var set = Migrator.CreateMigrationSet();
             set.AddMigrationForFluentMigrator(
@@ -68,6 +73,22 @@ namespace EasyMigrator.Tests.FluentMigrator
                 },
                 m => {
                     m.Delete.Columns<FkColTable>();
+                });
+
+            set.AddMigrationForPocoDb(
+                db => {
+                    db.Insert(new FkStuff { Description = "One" });
+                    db.Insert(new FkStuff { Description = "Two" });
+                },
+                db => { db.Delete<FkStuff>("WHERE 1=1"); });
+
+            set.AddMigrationForFluentMigrator(
+                m => {
+                    m.Create.Columns<FkStuffTable>(() => m.Update.Table(nameof(FkStuff)).Set(new { Quantity = 2 }).AllRows());
+                    m.Alter.PostPopulate<FkStuffTable>();
+                },
+                m => {
+                    m.Delete.Columns<FkStuffTable>();
                 });
 
             var mig = Migrator.CompileMigrations(set);
@@ -85,7 +106,7 @@ namespace EasyMigrator.Tests.MigratorDotNet
         public RoundTrip() : base(s => new Integration.MigratorDotNet.Migrator(s)) { }
 
         [Test]
-        public void RemoveFkCol()
+        public void RemoveFkColAndPopulate()
         {
             var set = Migrator.CreateMigrationSet();
             set.AddMigrationForMigratorDotNet(
@@ -96,6 +117,21 @@ namespace EasyMigrator.Tests.MigratorDotNet
                 },
                 m => {
                     m.Database.RemoveColumns<FkColTable>();
+                });
+
+            set.AddMigrationForPocoDb(
+                db => {
+                    db.Insert(new FkStuff { Description = "One" });
+                    db.Insert(new FkStuff { Description = "Two" });
+                },
+                db => { db.Delete<FkStuff>("WHERE 1=1"); });
+
+            set.AddMigrationForMigratorDotNet(
+                m => {
+                    m.Database.AddColumns<FkStuffTable>(() => m.Database.Update(nameof(FkStuff), new[] { "Quantity" }, new[] { "2" }));
+                },
+                m => {
+                    m.Database.RemoveColumns<FkStuffTable>();
                 });
 
             var mig = Migrator.CompileMigrations(set);

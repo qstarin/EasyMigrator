@@ -40,23 +40,33 @@ namespace EasyMigrator
             }
         }
 
-        static public void AddColumns<T>(this ITransformationProvider db) => db.AddColumns(typeof(T));
-        static public void AddColumns(this ITransformationProvider db, Type tableType) => db.AddColumns(tableType, Parsing.Parser.Default);
-        static public void AddColumns<T>(this ITransformationProvider db, Parsing.Parser parser) => db.AddColumns(typeof(T), parser);
-        static public void AddColumns(this ITransformationProvider db, Type tableType, Parsing.Parser parser)
+        static public void AddColumns<T>(this ITransformationProvider db, Action populate = null) => db.AddColumns(typeof(T), populate);
+        static public void AddColumns(this ITransformationProvider db, Type tableType, Action populate = null) => db.AddColumns(tableType, Parsing.Parser.Default, populate);
+        static public void AddColumns<T>(this ITransformationProvider db, Parsing.Parser parser, Action populate = null) => db.AddColumns(typeof(T), parser, populate);
+        static public void AddColumns(this ITransformationProvider db, Type tableType, Parsing.Parser parser, Action populate = null)
         {
             var table = parser.ParseTableType(tableType);
             var pocoColumns = table.Columns.DefinedInPoco();
-            var columns = new List<Column>();
+            var nonNullables = new List<EColumn>();
             foreach (var col in pocoColumns) {
                 if (col.AutoIncrement != null && (col.AutoIncrement.Seed > 1 || col.AutoIncrement.Step > 1))
                     throw new NotImplementedException("AutoIncrement Seeds or Steps other than 1 are not supported for MigratorDotNet.");
 
-                columns.Add(BuildColumn(col));
+				if (populate != null && !col.IsNullable && col.DefaultValue == null) {
+				    col.IsNullable = true;
+					nonNullables.Add(col);
+				}
+
+                db.AddColumn(table.Name, BuildColumn(col));
             }
 
-            foreach (var col in columns)
-                db.AddColumn(table.Name, col);
+            if (populate != null) {
+                populate();
+                foreach (var col in nonNullables) {
+                    col.IsNullable = false;
+                    db.ChangeColumn(table.Name, BuildColumn(col));
+                }
+            }
 
             foreach (var col in pocoColumns.Where(c => c.ForeignKey != null)) {
                 var fk = col.ForeignKey;

@@ -6,6 +6,8 @@ using System.Text;
 using EasyMigrator.Parsing.Model;
 using EasyMigrator.Extensions;
 using FluentMigrator.Builders;
+using FluentMigrator.Builders.Alter;
+using FluentMigrator.Builders.Alter.Column;
 using FluentMigrator.Builders.Create;
 using FluentMigrator.Builders.Create.Column;
 using FluentMigrator.Builders.Create.Table;
@@ -16,9 +18,9 @@ namespace EasyMigrator
 {
     static public class CreateExtensions
     {
-        static public void Table<T>(this ICreateExpressionRoot Create) { Create.Table(typeof(T)); }
-        static public void Table(this ICreateExpressionRoot Create, Type tableType) { Create.Table(tableType, Parsing.Parser.Default); }
-        static public void Table<T>(this ICreateExpressionRoot Create, Parsing.Parser parser) { Create.Table(typeof(T), parser); }
+        static public void Table<T>(this ICreateExpressionRoot Create) => Create.Table(typeof(T));
+        static public void Table(this ICreateExpressionRoot Create, Type tableType) => Create.Table(tableType, Parsing.Parser.Default);
+        static public void Table<T>(this ICreateExpressionRoot Create, Parsing.Parser parser) => Create.Table(typeof(T), parser);
         static public void Table(this ICreateExpressionRoot Create, Type tableType, Parsing.Parser parser)
         {
             var table = parser.ParseTableType(tableType);
@@ -30,17 +32,44 @@ namespace EasyMigrator
                                               ICreateTableColumnOptionOrForeignKeyCascadeOrWithColumnSyntax>(table, col);
         }
 
-        static public void Columns<T>(this ICreateExpressionRoot Create) { Create.Columns(typeof(T)); }
-        static public void Columns(this ICreateExpressionRoot Create, Type tableType) { Create.Columns(tableType, Parsing.Parser.Default); }
-        static public void Columns<T>(this ICreateExpressionRoot Create, Parsing.Parser parser) { Create.Columns(typeof(T), parser); }
-        static public void Columns(this ICreateExpressionRoot Create, Type tableType, Parsing.Parser parser)
+        static public void Columns<T>(this ICreateExpressionRoot Create, Action populate = null) =>Create.Columns(typeof(T), populate);
+        static public void Columns(this ICreateExpressionRoot Create, Type tableType, Action populate = null) => Create.Columns(tableType, Parsing.Parser.Default, populate);
+        static public void Columns<T>(this ICreateExpressionRoot Create, Parsing.Parser parser, Action populate = null) => Create.Columns(typeof(T), parser, populate);
+        static public void Columns(this ICreateExpressionRoot Create, Type tableType, Parsing.Parser parser, Action populate = null)
         {
             var table = parser.ParseTableType(tableType);
-            foreach (var col in table.Columns.DefinedInPoco()) // avoids trying to add the default primary key column
+            var nonNullables = new List<Column>();
+            foreach (var col in table.Columns.DefinedInPoco()) { // avoids trying to add the default primary key column
+                if (populate != null && !col.IsNullable && col.DefaultValue == null) {
+                    col.IsNullable = true;
+                    nonNullables.Add(col);
+                }
+
                 Create.Column(col.Name).OnTable(table.Name)
                                  .BuildColumn<ICreateColumnAsTypeOrInSchemaSyntax,
                                               ICreateColumnOptionSyntax,
                                               ICreateColumnOptionOrForeignKeyCascadeSyntax>(table, col);
+
+                if (nonNullables.Contains(col))
+                    col.IsNullable = false;
+            }
+
+            if (populate != null)
+                populate();
+        }
+
+        static public void PostPopulate<T>(this IAlterExpressionRoot Alter) => Alter.PostPopulate(typeof(T));
+        static public void PostPopulate(this IAlterExpressionRoot Alter, Type tableType) => Alter.PostPopulate(tableType, Parsing.Parser.Default);
+        static public void PostPopulate<T>(this IAlterExpressionRoot Alter, Parsing.Parser parser) => Alter.PostPopulate(typeof(T), parser);
+        static public void PostPopulate(this IAlterExpressionRoot Alter, Type tableType, Parsing.Parser parser)
+        {
+            var table = parser.ParseTableType(tableType);
+            var nonNullables = table.Columns.DefinedInPoco().Where(col => !col.IsNullable && col.DefaultValue == null);
+            foreach (var col in nonNullables)
+                Alter.Column(col.Name).OnTable(table.Name)
+                                 .BuildColumn<IAlterColumnAsTypeOrInSchemaSyntax,
+                                              IAlterColumnOptionSyntax,
+                                              IAlterColumnOptionOrForeignKeyCascadeSyntax>(table, col);
         }
 
         static private void BuildColumn<TSyntax, TNext, TNextFk>(this TSyntax s, Table table, Column col)
