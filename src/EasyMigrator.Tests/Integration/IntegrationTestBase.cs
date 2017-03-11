@@ -41,6 +41,8 @@ namespace EasyMigrator.Tests.Integration
 
         protected IntegrationTestBase(Func<string, IMigrator> getMigrator) { _getMigrator = getMigrator; }
 
+        protected bool IsMigratorDotNet => Migrator is MigratorDotNet.Migrator;
+        protected bool IsFluentMigrator => Migrator is FluentMigrator.Migrator;
 
         public override void SetupFixture()
         {
@@ -95,8 +97,11 @@ namespace EasyMigrator.Tests.Integration
                     Type = dbType,//(DbType)Enum.Parse(typeof(DbType), c.DbDataType),
                     IsPrimaryKey = c.IsPrimaryKey,
                     IsNullable = c.Nullable,
-                    Length = c.Length.IfHasValue(l => l == -1 ? int.MaxValue : l, (int?)null),
-                    DefaultValue = c.DefaultValue,
+                    Length = c.Length.IfHasValue(l => l == -1 || l == 0x3fffffff ? int.MaxValue : l, (int?)null),
+                    DefaultValue =
+                        dbType == DbType.Boolean
+                            ? ((c.DefaultValue?.Contains("0") ?? true) ? false : true)
+                            : (object)c.DefaultValue,
                     AutoIncrement = c.IsAutoNumber
                         ? new AutoIncAttribute(c.IdentityDefinition.IdentitySeed, c.IdentityDefinition.IdentityIncrement)
                         : null,

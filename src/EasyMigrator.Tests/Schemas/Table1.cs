@@ -35,7 +35,7 @@ namespace EasyMigrator.Tests.Schemas
                 new Column {
                     Name = "Accepted",
                     Type = DbType.Boolean,
-                    DefaultValue = "0",
+                    DefaultValue = false,
                 },
                 new Column {
                     Name = "Name",

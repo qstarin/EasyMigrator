@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using EasyMigrator.Parsing.Model;
@@ -10,7 +11,7 @@ namespace EasyMigrator.Tests
 {
     static public class AssertEx
     {
-        static public void AreEqual(Table expected, Table actual)
+        static public void AreEqual(Table expected, Table actual, bool isMigratorDotNet)
         {
             Assert.AreEqual(expected.Name, actual.Name);
             Assert.AreEqual(expected.Columns.Count, actual.Columns.Count);
@@ -35,7 +36,7 @@ namespace EasyMigrator.Tests
                 if (e.Precision == null)
                     Assert.IsNull(a.Precision);
                 else {
-                    Assert.AreEqual(e.Precision.Precision, a.Precision.Precision);
+                    Assert.AreEqual(isMigratorDotNet ? 19 : e.Precision.Precision, a.Precision.Precision);
                     Assert.AreEqual(e.Precision.Scale, a.Precision.Scale);
                 }
 

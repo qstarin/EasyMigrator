@@ -25,14 +25,14 @@ namespace EasyMigrator.Tests
             Migrator.Up(mig);
 
             foreach (var data in testCase.Datum)
-                AssertEx.AreEqual(data.Model, GetTableModelFromDb(data.Model.Name));
+                AssertEx.AreEqual(data.Model, GetTableModelFromDb(data.Model.Name), IsMigratorDotNet);
 
             Migrator.Down(mig);
         }
 
         public class FkStuff
         {
-            string Desc;
+            string Description;
         }
 
         public class FkCol

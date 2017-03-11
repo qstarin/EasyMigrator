@@ -17,7 +17,7 @@ namespace EasyMigrator
         static public void AddTable(this ITransformationProvider db, Type tableType, Parsing.Parser parser)
         {
             var table = parser.ParseTableType(tableType);
-            var pocoColumns = table.Columns.DefinedInPoco();
+            var pocoColumns = table.Columns;
             var columns = new List<Column>();
             foreach (var col in pocoColumns) {
                 if (col.AutoIncrement != null && (col.AutoIncrement.Seed > 1 || col.AutoIncrement.Step > 1))
@@ -27,11 +27,11 @@ namespace EasyMigrator
             }
 
             db.AddTable(table.Name, columns.ToArray());
-            db.AddPrimaryKey(table.PrimaryKeyName, table.Name, table.PrimaryKeyColumns.Select(c => c.Name).ToArray());
+            //db.AddPrimaryKey(table.PrimaryKeyName, table.Name, table.PrimaryKeyColumns.Select(c => c.Name).ToArray());
 
             foreach (var col in pocoColumns.Where(c => c.ForeignKey != null)) {
                 var fk = col.ForeignKey;
-                db.AddForeignKey(fk.Name, fk.Table, fk.Column, table.Name, col.Name);
+                db.AddForeignKey(fk.Name, table.Name, col.Name, fk.Table, fk.Column);
             }
             
             foreach (var col in pocoColumns.Where(c => c.Index != null)) {
@@ -46,11 +46,27 @@ namespace EasyMigrator
         static public void AddColumns(this ITransformationProvider db, Type tableType, Parsing.Parser parser)
         {
             var table = parser.ParseTableType(tableType);
+            var pocoColumns = table.Columns.DefinedInPoco();
             var columns = new List<Column>();
-            foreach (var col in table.Columns.DefinedInPoco())
-                columns.Add(BuildColumn(col));
+            foreach (var col in pocoColumns) {
+                if (col.AutoIncrement != null && (col.AutoIncrement.Seed > 1 || col.AutoIncrement.Step > 1))
+                    throw new NotImplementedException("AutoIncrement Seeds or Steps other than 1 are not supported for MigratorDotNet.");
 
-            db.AddTable(table.Name, columns.ToArray());
+                columns.Add(BuildColumn(col));
+            }
+
+            foreach (var col in columns)
+                db.AddColumn(table.Name, col);
+
+            foreach (var col in pocoColumns.Where(c => c.ForeignKey != null)) {
+                var fk = col.ForeignKey;
+                db.AddForeignKey(fk.Name, table.Name, col.Name, fk.Table, fk.Column);
+            }
+            
+            foreach (var col in pocoColumns.Where(c => c.Index != null)) {
+                var idx = col.Index;
+                db.CreateIndex(idx.Unique, idx.Clustered, idx.Name, table.Name, col.Name);
+            }
         }
 
         static private Column BuildColumn(EColumn col)
@@ -71,11 +87,12 @@ namespace EasyMigrator
                 c.DefaultValue = col.DefaultValue;
 
             if (col.Length.HasValue)
-                c.Size = col.Length.Value;
+                c.Size = col.Length.Value == int.MaxValue ? /*-1*/ 0x3fffffff : col.Length.Value; // http://code.google.com/p/migratordotnet/issues/detail?id=130
 
             // TODO: decimal scale isn't handled, and not sure if precision is right
-            if (col.Type == DbType.Decimal && col.Precision != null)
-                c.Size = col.Precision.Precision;
+            if (col.Type == DbType.Decimal && col.Precision != null) {
+                c.Size = col.Precision.Scale;
+            }
 
 
             return c;
