@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using EasyMigrator.Extensions;
 using Migrator.Framework;
@@ -11,12 +12,29 @@ namespace EasyMigrator
 {
     static public class CreateExtensions
     {
+        static public void AddPrimaryKey<TTable>(this ITransformationProvider db, params Expression<Func<TTable, object>>[] columns) => db.AddPrimaryKey(true, Parsing.Parser.Default, columns);
+        static public void AddPrimaryKey<TTable>(this ITransformationProvider db, Parsing.Parser parser, params Expression<Func<TTable, object>>[] columns) => db.AddPrimaryKey(true, parser, columns);
+        static public void AddPrimaryKey<TTable>(this ITransformationProvider db, bool clustered, params Expression<Func<TTable, object>>[] columns) => db.AddPrimaryKey(null, clustered, Parsing.Parser.Default, columns);
+        static public void AddPrimaryKey<TTable>(this ITransformationProvider db, bool clustered, Parsing.Parser parser, params Expression<Func<TTable, object>>[] columns) => db.AddPrimaryKey(null, clustered, parser, columns);
+        static public void AddPrimaryKey<TTable>(this ITransformationProvider db, string constraintName, bool clustered, params Expression<Func<TTable, object>>[] columns) => db.AddPrimaryKey(constraintName, clustered, Parsing.Parser.Default, columns);
+        static public void AddPrimaryKey<TTable>(this ITransformationProvider db, string constraintName, bool clustered, Parsing.Parser parser, params Expression<Func<TTable, object>>[] columns)
+        {
+            var context = parser.ParseTableType(typeof(TTable));
+            var colNames = columns.Select(e => e.GetExpressionField()).Select(fi => context.Columns[fi].Name);
+            db.AddPrimaryKey(context.Table.Name, constraintName ?? context.Table.PrimaryKeyName, clustered, colNames.ToArray());
+        }
+        static public void AddPrimaryKey(this ITransformationProvider db, string table, params string[] columns) => db.AddPrimaryKey(table, true, columns);
+        static public void AddPrimaryKey(this ITransformationProvider db, string table, bool clustered, params string[] columns) => db.AddPrimaryKey(table, null, clustered, columns);
+        static public void AddPrimaryKey(this ITransformationProvider db, string table, string constraintName, bool clustered, params string[] columns)
+
+            => db.ExecuteNonQuery($"ALTER TABLE [{table}] ADD CONSTRAINT {(constraintName ?? $"PK_{table}")} PRIMARY KEY {(clustered ? "CLUSTERED" : "NONCLUSTERED")} ({string.Join(", ", columns)})");
+
         static public void AddTable<T>(this ITransformationProvider db) => db.AddTable(typeof(T));
         static public void AddTable(this ITransformationProvider db, Type tableType) => db.AddTable(tableType, Parsing.Parser.Default);
         static public void AddTable<T>(this ITransformationProvider db, Parsing.Parser parser) => db.AddTable(typeof(T), parser);
         static public void AddTable(this ITransformationProvider db, Type tableType, Parsing.Parser parser)
         {
-            var table = parser.ParseTableType(tableType);
+            var table = parser.ParseTableType(tableType).Table;
             var pocoColumns = table.Columns;
             var columns = new List<Column>();
             foreach (var col in pocoColumns) {
@@ -45,7 +63,7 @@ namespace EasyMigrator
         static public void AddColumns<T>(this ITransformationProvider db, Parsing.Parser parser, Action populate = null) => db.AddColumns(typeof(T), parser, populate);
         static public void AddColumns(this ITransformationProvider db, Type tableType, Parsing.Parser parser, Action populate = null)
         {
-            var table = parser.ParseTableType(tableType);
+            var table = parser.ParseTableType(tableType).Table;
             var pocoColumns = table.Columns.DefinedInPoco();
             var nonNullables = new List<EColumn>();
             foreach (var col in pocoColumns) {
@@ -59,7 +77,7 @@ namespace EasyMigrator
 
                 db.AddColumn(table.Name, BuildColumn(col));
             }
-
+            
             if (populate != null) {
                 populate();
                 foreach (var col in nonNullables) {

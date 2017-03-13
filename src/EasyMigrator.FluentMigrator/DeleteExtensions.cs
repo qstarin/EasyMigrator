@@ -16,7 +16,7 @@ namespace EasyMigrator
         public static void Table<T>(this IDeleteExpressionRoot Delete, Parsing.Parser parser) { Delete.Table(typeof(T), parser); }
         static public void Table(this IDeleteExpressionRoot Delete, Type tableType, Parsing.Parser parser)
         {
-            var table = parser.ParseTableType(tableType);
+            var table = parser.ParseTableType(tableType).Table;
             Delete.ForeignKeys(table);
             Delete.Indexes(table);
             Delete.Table(table.Name);
@@ -27,7 +27,7 @@ namespace EasyMigrator
         public static void Columns<T>(this IDeleteExpressionRoot Delete, Parsing.Parser parser) { Delete.Columns(typeof(T), parser); }
         static public void Columns(this IDeleteExpressionRoot Delete, Type tableType, Parsing.Parser parser)
         {
-            var table = parser.ParseTableType(tableType);
+            var table = parser.ParseTableType(tableType).Table;
             Delete.ForeignKeys(table);
             Delete.Indexes(table);
             Delete.Columns(table);

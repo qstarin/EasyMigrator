@@ -16,7 +16,7 @@ namespace EasyMigrator
         static public void RemoveTable<T>(this ITransformationProvider db, Parsing.Parser parser) => db.RemoveTable(typeof(T), parser);
         static public void RemoveTable(this ITransformationProvider db, Type tableType, Parsing.Parser parser)
         {
-            var table = parser.ParseTableType(tableType);
+            var table = parser.ParseTableType(tableType).Table;
             db.RemoveForeignKeys(table);
             db.RemoveIndexes(table);
             db.RemoveTable(table.Name);
@@ -27,7 +27,7 @@ namespace EasyMigrator
         static public void RemoveColumns<T>(this ITransformationProvider db, Parsing.Parser parser) => db.RemoveColumns(typeof(T), parser);
         static public void RemoveColumns(this ITransformationProvider db, Type tableType, Parsing.Parser parser)
         {
-            var table = parser.ParseTableType(tableType);
+            var table = parser.ParseTableType(tableType).Table;
             db.RemoveForeignKeys(table);
             db.RemoveIndexes(table);
             db.RemoveColumns(table);

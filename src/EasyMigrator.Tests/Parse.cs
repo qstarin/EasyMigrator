@@ -20,7 +20,7 @@ namespace EasyMigrator.Tests
         protected override void Test(ITableTestCase testCase)
         {
             foreach (var data in testCase.Datum)
-                AssertEx.AreEqual(data.Model, Parser.Default.ParseTableType(data.Poco), false);
+                AssertEx.AreEqual(data.Model, Parser.Default.ParseTableType(data.Poco).Table, false);
         }
     }
 }

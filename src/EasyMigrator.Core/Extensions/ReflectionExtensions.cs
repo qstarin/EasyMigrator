@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
@@ -8,6 +9,9 @@ namespace EasyMigrator.Extensions
 {
     static public class ReflectionExtensions
     {
+        static public FieldInfo GetExpressionField<TSource, TField>(this Expression<Func<TSource, TField>> fieldExpression)
+            => (fieldExpression.Body as MemberExpression ?? ((UnaryExpression)fieldExpression.Body).Operand as MemberExpression).Member as FieldInfo;
+
         static public TAttr GetAttribute<TAttr>(this MemberInfo member) where TAttr : Attribute
         {
             return member.GetCustomAttributes(typeof(TAttr), false).Cast<TAttr>().FirstOrDefault();

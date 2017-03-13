@@ -80,6 +80,7 @@
     </Compile>
     <Compile Include="Integration\CompiledMigrations.cs" />
     <Compile Include="Integration\MigrationSet.cs" />
+    <Compile Include="ReflectionTests.cs" />
     <Compile Include="Schemas\Fk1.cs" />
     <Compile Include="Schemas\Table1.cs" />
     <Compile Include="Extensions\DbConnectionExtensions.cs" />

@@ -23,7 +23,7 @@ namespace EasyMigrator
         static public void Table<T>(this ICreateExpressionRoot Create, Parsing.Parser parser) => Create.Table(typeof(T), parser);
         static public void Table(this ICreateExpressionRoot Create, Type tableType, Parsing.Parser parser)
         {
-            var table = parser.ParseTableType(tableType);
+            var table = parser.ParseTableType(tableType).Table;
             var createTableSyntax = Create.Table(table.Name);
             foreach (var col in table.Columns)
                 createTableSyntax.WithColumn(col.Name)
@@ -33,15 +33,15 @@ namespace EasyMigrator
         }
 
         static public void Columns<T>(this ICreateExpressionRoot Create) => Create.Columns(typeof(T));
-        static public void Columns<T>(this ICreateExpressionRoot Create, IAlterExpressionRoot alter, Action populate = null) => Create.Columns(typeof(T), alter, populate);
+        static public void Columns<T>(this ICreateExpressionRoot Create, IAlterExpressionRoot alter, Action populate) => Create.Columns(typeof(T), alter, populate);
         static public void Columns(this ICreateExpressionRoot Create, Type tableType) => Create.Columns(tableType, Parsing.Parser.Default);
-        static public void Columns(this ICreateExpressionRoot Create, Type tableType, IAlterExpressionRoot alter, Action populate = null) => Create.Columns(tableType, Parsing.Parser.Default, alter, populate);
+        static public void Columns(this ICreateExpressionRoot Create, Type tableType, IAlterExpressionRoot alter, Action populate) => Create.Columns(tableType, Parsing.Parser.Default, alter, populate);
         static public void Columns<T>(this ICreateExpressionRoot Create, Parsing.Parser parser) => Create.Columns(typeof(T), parser);
-        static public void Columns<T>(this ICreateExpressionRoot Create, Parsing.Parser parser, IAlterExpressionRoot alter, Action populate = null) => Create.Columns(typeof(T), parser, alter, populate);
+        static public void Columns<T>(this ICreateExpressionRoot Create, Parsing.Parser parser, IAlterExpressionRoot alter, Action populate) => Create.Columns(typeof(T), parser, alter, populate);
         static public void Columns(this ICreateExpressionRoot Create, Type tableType, Parsing.Parser parser) => Create.Columns(tableType, parser, null, null);
-        static public void Columns(this ICreateExpressionRoot Create, Type tableType, Parsing.Parser parser, IAlterExpressionRoot alter, Action populate = null)
+        static public void Columns(this ICreateExpressionRoot Create, Type tableType, Parsing.Parser parser, IAlterExpressionRoot alter, Action populate)
         {
-            var table = parser.ParseTableType(tableType);
+            var table = parser.ParseTableType(tableType).Table;
             var nonNullables = new List<Column>();
             foreach (var col in table.Columns.DefinedInPoco()) { // avoids trying to add the default primary key column
                 if (populate != null && !col.IsNullable && col.DefaultValue == null) {

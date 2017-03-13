@@ -34,12 +34,12 @@ namespace EasyMigrator.Parsing
 
         private readonly ConcurrentDictionary<Type, Table> _parsedTables = new ConcurrentDictionary<Type, Table>();
 
-        public Table ParseTableType(Type type)
+        public Context ParseTableType(Type type)
         {
             var context = CreateContext(type);
             context.Table = _parsedTables.GetOrAdd(type, t => ParseTable(context));
             PostParseTable(context);
-            return context.Table;
+            return context;
         }
 
         protected virtual void PostParseTable(Context context)
@@ -50,7 +50,7 @@ namespace EasyMigrator.Parsing
                                                            }))
             {
                 var fk = col.ForeignKey as FkAttribute;
-                var fkTable = ParseTableType(fk.TableType);
+                var fkTable = ParseTableType(fk.TableType).Table;
                 if (fkTable.PrimaryKeyColumns.Count() != 1)
                     throw new Exception($"Cannot create a foreign key from table {context.Table.Name} to table {fkTable.Name} with {(fkTable.HasPrimaryKey ? "composite" : "no")} primary key.");
 
@@ -86,6 +86,7 @@ namespace EasyMigrator.Parsing
                     ForeignKey = fk,
                     DefinedInPoco = true
                 };
+                context.Columns.Add(field, column);
 
                 if (pk != null) {
                     if (table.PrimaryKeyName == null)
