@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Text;
 using EasyMigrator.Extensions;
 using Migrator.Framework;
@@ -12,27 +11,10 @@ namespace EasyMigrator
 {
     static public class CreateExtensions
     {
-        static public void AddPrimaryKey<TTable>(this ITransformationProvider db, params Expression<Func<TTable, object>>[] columns) => db.AddPrimaryKey(true, Parsing.Parser.Default, columns);
-        static public void AddPrimaryKey<TTable>(this ITransformationProvider db, Parsing.Parser parser, params Expression<Func<TTable, object>>[] columns) => db.AddPrimaryKey(true, parser, columns);
-        static public void AddPrimaryKey<TTable>(this ITransformationProvider db, bool clustered, params Expression<Func<TTable, object>>[] columns) => db.AddPrimaryKey(null, clustered, Parsing.Parser.Default, columns);
-        static public void AddPrimaryKey<TTable>(this ITransformationProvider db, bool clustered, Parsing.Parser parser, params Expression<Func<TTable, object>>[] columns) => db.AddPrimaryKey(null, clustered, parser, columns);
-        static public void AddPrimaryKey<TTable>(this ITransformationProvider db, string constraintName, bool clustered, params Expression<Func<TTable, object>>[] columns) => db.AddPrimaryKey(constraintName, clustered, Parsing.Parser.Default, columns);
-        static public void AddPrimaryKey<TTable>(this ITransformationProvider db, string constraintName, bool clustered, Parsing.Parser parser, params Expression<Func<TTable, object>>[] columns)
-        {
-            var context = parser.ParseTableType(typeof(TTable));
-            var colNames = columns.Select(e => e.GetExpressionField()).Select(fi => context.Columns[fi].Name);
-            db.AddPrimaryKey(context.Table.Name, constraintName ?? context.Table.PrimaryKeyName, clustered, colNames.ToArray());
-        }
-        static public void AddPrimaryKey(this ITransformationProvider db, string table, params string[] columns) => db.AddPrimaryKey(table, true, columns);
-        static public void AddPrimaryKey(this ITransformationProvider db, string table, bool clustered, params string[] columns) => db.AddPrimaryKey(table, null, clustered, columns);
-        static public void AddPrimaryKey(this ITransformationProvider db, string table, string constraintName, bool clustered, params string[] columns)
-
-            => db.ExecuteNonQuery($"ALTER TABLE [{table}] ADD CONSTRAINT {(constraintName ?? $"PK_{table}")} PRIMARY KEY {(clustered ? "CLUSTERED" : "NONCLUSTERED")} ({string.Join(", ", columns)})");
-
-        static public void AddTable<T>(this ITransformationProvider db) => db.AddTable(typeof(T));
-        static public void AddTable(this ITransformationProvider db, Type tableType) => db.AddTable(tableType, Parsing.Parser.Default);
-        static public void AddTable<T>(this ITransformationProvider db, Parsing.Parser parser) => db.AddTable(typeof(T), parser);
-        static public void AddTable(this ITransformationProvider db, Type tableType, Parsing.Parser parser)
+        static public void AddTable<T>(this ITransformationProvider Database) => Database.AddTable(typeof(T));
+        static public void AddTable(this ITransformationProvider Database, Type tableType) => Database.AddTable(tableType, Parsing.Parser.Default);
+        static public void AddTable<T>(this ITransformationProvider Database, Parsing.Parser parser) => Database.AddTable(typeof(T), parser);
+        static public void AddTable(this ITransformationProvider Database, Type tableType, Parsing.Parser parser)
         {
             var table = parser.ParseTableType(tableType).Table;
             var pocoColumns = table.Columns;
@@ -44,24 +26,24 @@ namespace EasyMigrator
                 columns.Add(BuildColumn(col));
             }
 
-            db.AddTable(table.Name, columns.ToArray());
-            //db.AddPrimaryKey(table.PrimaryKeyName, table.Name, table.PrimaryKeyColumns.Select(c => c.Name).ToArray());
+            Database.AddTable(table.Name, columns.ToArray());
+            //Database.AddPrimaryKey(table.PrimaryKeyName, table.Name, table.PrimaryKeyColumns.Select(c => c.Name).ToArray());
 
             foreach (var col in pocoColumns.Where(c => c.ForeignKey != null)) {
                 var fk = col.ForeignKey;
-                db.AddForeignKey(fk.Name, table.Name, col.Name, fk.Table, fk.Column);
+                Database.AddForeignKey(fk.Name, table.Name, col.Name, fk.Table, fk.Column);
             }
             
             foreach (var col in pocoColumns.Where(c => c.Index != null)) {
                 var idx = col.Index;
-                db.CreateIndex(idx.Unique, idx.Clustered, idx.Name, table.Name, col.Name);
+                Database.CreateIndex(idx.Unique, idx.Clustered, idx.Name, table.Name, col.Name);
             }
         }
 
-        static public void AddColumns<T>(this ITransformationProvider db, Action populate = null) => db.AddColumns(typeof(T), populate);
-        static public void AddColumns(this ITransformationProvider db, Type tableType, Action populate = null) => db.AddColumns(tableType, Parsing.Parser.Default, populate);
-        static public void AddColumns<T>(this ITransformationProvider db, Parsing.Parser parser, Action populate = null) => db.AddColumns(typeof(T), parser, populate);
-        static public void AddColumns(this ITransformationProvider db, Type tableType, Parsing.Parser parser, Action populate = null)
+        static public void AddColumns<T>(this ITransformationProvider Database, Action populate = null) => Database.AddColumns(typeof(T), populate);
+        static public void AddColumns(this ITransformationProvider Database, Type tableType, Action populate = null) => Database.AddColumns(tableType, Parsing.Parser.Default, populate);
+        static public void AddColumns<T>(this ITransformationProvider Database, Parsing.Parser parser, Action populate = null) => Database.AddColumns(typeof(T), parser, populate);
+        static public void AddColumns(this ITransformationProvider Database, Type tableType, Parsing.Parser parser, Action populate = null)
         {
             var table = parser.ParseTableType(tableType).Table;
             var pocoColumns = table.Columns.DefinedInPoco();
@@ -75,25 +57,25 @@ namespace EasyMigrator
 					nonNullables.Add(col);
 				}
 
-                db.AddColumn(table.Name, BuildColumn(col));
+                Database.AddColumn(table.Name, BuildColumn(col));
             }
             
             if (populate != null) {
                 populate();
                 foreach (var col in nonNullables) {
                     col.IsNullable = false;
-                    db.ChangeColumn(table.Name, BuildColumn(col));
+                    Database.ChangeColumn(table.Name, BuildColumn(col));
                 }
             }
 
             foreach (var col in pocoColumns.Where(c => c.ForeignKey != null)) {
                 var fk = col.ForeignKey;
-                db.AddForeignKey(fk.Name, table.Name, col.Name, fk.Table, fk.Column);
+                Database.AddForeignKey(fk.Name, table.Name, col.Name, fk.Table, fk.Column);
             }
             
             foreach (var col in pocoColumns.Where(c => c.Index != null)) {
                 var idx = col.Index;
-                db.CreateIndex(idx.Unique, idx.Clustered, idx.Name, table.Name, col.Name);
+                Database.CreateIndex(idx.Unique, idx.Clustered, idx.Name, table.Name, col.Name);
             }
         }
 
@@ -128,7 +110,7 @@ namespace EasyMigrator
             return c;
         }
 
-        static private void CreateIndex(this ITransformationProvider db, bool unique, bool clustered, string indexName, string table, params string[] columns)
-            => db.ExecuteNonQuery($"CREATE {(unique ? "UNIQUE " : "")}{(clustered ? "CLUSTERED" : "NONCLUSTERED")} INDEX {indexName} ON [{table}] ({string.Join(", ", columns)})");
+        static private void CreateIndex(this ITransformationProvider Database, bool unique, bool clustered, string indexName, string table, params string[] columns)
+            => Database.ExecuteNonQuery($"CREATE {(unique ? "UNIQUE " : "")}{(clustered ? "CLUSTERED" : "NONCLUSTERED")} INDEX {indexName} ON [{table}] ({string.Join(", ", columns)})");
     }
 }
