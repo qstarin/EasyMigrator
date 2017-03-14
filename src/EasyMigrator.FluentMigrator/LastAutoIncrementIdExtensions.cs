@@ -14,22 +14,20 @@ namespace EasyMigrator
             => migration.GetLastAutoIncrementInt32((id, conn, tran) => receiveId(id));
 
         static public void GetLastAutoIncrementInt32(this Migration migration, Action<int, IDbConnection, IDbTransaction> receiveId)
-            => migration.Execute.WithConnection((conn, tran) => {
-                var cmd = conn.CreateCommand();
-                cmd.Transaction = tran;
-                cmd.CommandText = "SELECT SCOPE_IDENTITY();";
-                receiveId(Convert.ToInt32(cmd.ExecuteScalar()), conn, tran);
-            });
+            => migration.Execute.WithConnection((conn, tran) => receiveId(Convert.ToInt32(CreateGetLastAutoIncIdCommand(conn, tran).ExecuteScalar()), conn, tran));
 
         static public void GetLastAutoIncrementInt64(this Migration migration, Action<long> receiveId)
             => migration.GetLastAutoIncrementInt64((id, conn, tran) => receiveId(id));
 
         static public void GetLastAutoIncrementInt64(this Migration migration, Action<long, IDbConnection, IDbTransaction> receiveId)
-            => migration.Execute.WithConnection((conn, tran) => {
-                var cmd = conn.CreateCommand();
-                cmd.Transaction = tran;
-                cmd.CommandText = "SELECT SCOPE_IDENTITY();";
-                receiveId(Convert.ToInt64(cmd.ExecuteScalar()), conn, tran);
-            });
+            => migration.Execute.WithConnection((conn, tran) => receiveId(Convert.ToInt64(CreateGetLastAutoIncIdCommand(conn, tran).ExecuteScalar()), conn, tran));
+
+        static private IDbCommand CreateGetLastAutoIncIdCommand(IDbConnection conn, IDbTransaction tran)
+        {
+            var cmd = conn.CreateCommand();
+            cmd.Transaction = tran;
+            cmd.CommandText = "SELECT SCOPE_IDENTITY();";
+            return cmd;
+        }
     }
 }
