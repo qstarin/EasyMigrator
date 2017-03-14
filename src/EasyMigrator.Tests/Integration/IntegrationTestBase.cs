@@ -44,6 +44,22 @@ namespace EasyMigrator.Tests.Integration
         protected bool IsMigratorDotNet => Migrator is MigratorDotNet.Migrator;
         protected bool IsFluentMigrator => Migrator is FluentMigrator.Migrator;
 
+        protected override void Test(ITableTestCase testCase)
+        {
+            var set = Migrator.CreateMigrationSet();
+            set.AddMigrationForTableTestCase(testCase);
+            var mig = Migrator.CompileMigrations(set);
+            Migrator.Up(mig);
+            TestBetweenUpAndDown(testCase);
+            Migrator.Down(mig);
+        }
+
+        protected virtual void TestBetweenUpAndDown(ITableTestCase testCase)
+        {
+            foreach (var data in testCase.Datum)
+                AssertEx.AreEqual(data.Model, GetTableModelFromDb(data.Model.Name), IsMigratorDotNet);
+        }
+
         public override void SetupFixture()
         {
             base.SetupFixture();

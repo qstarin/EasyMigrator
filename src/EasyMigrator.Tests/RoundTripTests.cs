@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using EasyMigrator.Tests.Integration;
 using EasyMigrator.Tests.Schemas;
-using EasyMigrator.Tests.TableTest;
 using NUnit.Framework;
 
 
@@ -16,19 +15,6 @@ namespace EasyMigrator.Tests
 
         [Test] public void Table1() => Test<Table1>();
         [Test] public void Fk1() => Test<Fk1>();
-
-        protected override void Test(ITableTestCase testCase)
-        {
-            var set = Migrator.CreateMigrationSet();
-            set.AddMigrationForTableTestCase(testCase);
-            var mig = Migrator.CompileMigrations(set);
-            Migrator.Up(mig);
-
-            foreach (var data in testCase.Datum)
-                AssertEx.AreEqual(data.Model, GetTableModelFromDb(data.Model.Name), IsMigratorDotNet);
-
-            Migrator.Down(mig);
-        }
 
         public class FkStuff
         {

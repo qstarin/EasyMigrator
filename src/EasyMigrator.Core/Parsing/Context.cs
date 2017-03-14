@@ -19,7 +19,7 @@ namespace EasyMigrator.Parsing
         public Table Table { get; set; }
         public Type ModelType { get; set; }
         public IEnumerable<FieldInfo> Fields { get; set; }
-        public IDictionary<FieldInfo, Column> Columns { get; set; }
+        public IDictionary<FieldInfo, Column> Columns { get; set; } = new Dictionary<FieldInfo, Column>();
         public object Model { get; set; }
     }
 }
