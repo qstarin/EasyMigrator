@@ -86,7 +86,7 @@
     <Compile Include="Extensions\DbConnectionExtensions.cs" />
     <Compile Include="Integration\IMigrator.cs" />
     <Compile Include="Integration\MigrationActions.cs" />
-    <Compile Include="RoundTrip.cs" />
+    <Compile Include="RoundTripTests.cs" />
     <Compile Include="Integration\Migrator.FluentMigrator.cs" />
     <Compile Include="Integration\Migrator.MigratorDotNet.cs" />
     <Compile Include="TableTest\MigrationOrderAttribute.cs" />
@@ -95,7 +95,7 @@
     <Compile Include="Integration\IntegrationTestBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Extensions\AssertEx.cs" />
-    <Compile Include="Parse.cs" />
+    <Compile Include="ParseTests.cs" />
     <Compile Include="TableTest\TableTestBase.cs" />
     <Compile Include="TableTest\TableTestDatum.cs" />
   </ItemGroup>
