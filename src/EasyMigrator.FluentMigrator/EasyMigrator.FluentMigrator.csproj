@@ -54,6 +54,7 @@
     </Compile>
     <Compile Include="CreateExtensions.cs" />
     <Compile Include="DeleteExtensions.cs" />
+    <Compile Include="LastAutoIncrementIdExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

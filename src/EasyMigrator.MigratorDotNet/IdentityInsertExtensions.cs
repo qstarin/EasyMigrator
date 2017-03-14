@@ -5,7 +5,7 @@ using System.Text;
 using Migrator.Framework;
 
 
-namespace EasyMigrator.MigratorDotNet
+namespace EasyMigrator
 {
     static public class IdentityInsertExtensions
     {

@@ -5,9 +5,9 @@ using System.Text;
 using Migrator.Framework;
 
 
-namespace EasyMigrator.MigratorDotNet
+namespace EasyMigrator
 {
-    static public class MiscExtensions
+    static public class LastAutoIncrementIdExtensions
     {
         static public int GetLastAutoIncrementInt32(this ITransformationProvider Database)
             => Convert.ToInt32(Database.ExecuteScalar("SELECT SCOPE_IDENTITY();"));

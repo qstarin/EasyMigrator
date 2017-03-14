@@ -56,7 +56,7 @@
     <Compile Include="CreateExtensions.cs" />
     <Compile Include="DeleteExtensions.cs" />
     <Compile Include="IdentityInsertExtensions.cs" />
-    <Compile Include="MiscExtensions.cs" />
+    <Compile Include="LastAutoIncrementIdExtensions.cs" />
     <Compile Include="PrimaryKeyExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -31,7 +31,7 @@ namespace EasyMigrator.Tests
     }
 }
 
-namespace EasyMigrator.Tests.FluentMigrator
+namespace EasyMigrator.Tests.MigratorDotNet
 {
 
     [TestFixture]
@@ -48,6 +48,32 @@ namespace EasyMigrator.Tests.FluentMigrator
                     m.Database.Insert("Stuff", new[] { "Description" }, new[] { "Three" });
                     var lastId = m.Database.GetLastAutoIncrementInt32();
                     Assert.AreEqual(3, lastId);
+                }, 
+                m => { });
+        }
+    }
+}
+
+namespace EasyMigrator.Tests.FluentMigrator
+{
+
+    [TestFixture]
+    public class GetLastAutoIncId : Tests.GetLastAutoIncId
+    {
+        public GetLastAutoIncId() : base(s => new Integration.FluentMigrator.Migrator(s)) { }
+
+        protected override void AddMigrations(IMigrationSet migrations)
+        {
+            migrations.AddMigrationForFluentMigrator(
+                m => {
+                    m.Insert.IntoTable("Stuff")
+                            .Row(new { Description = "One" })
+                            .Row(new { Description = "Two" })
+                            .Row(new { Description = "Three" });
+
+                    m.GetLastAutoIncrementInt32(id => {
+                        Assert.AreEqual(3, id);
+                    });
                 }, 
                 m => { });
         }
