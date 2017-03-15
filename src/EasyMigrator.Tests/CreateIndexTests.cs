@@ -25,7 +25,9 @@ namespace EasyMigrator.Tests.MigratorDotNet
                     m => {
                         m.Database.AddIndex<Table1.Poco>(t => t.Name, t => t.Headline);
                     },
-                    m => { },
+                    m => {
+                        m.Database.RemoveIndex<Table1.Poco>(t => t.Name, t => t.Headline);
+                    },
                     idx => {
                         Assert.AreEqual(false, idx.IsUnique);
                     });
@@ -36,7 +38,9 @@ namespace EasyMigrator.Tests.MigratorDotNet
                     m => {
                         m.Database.AddIndex(new Descending<Table1.Poco>(t => t.Name), new Ascending<Table1.Poco>(t => t.Headline));
                     },
-                    m => { },
+                    m => {
+                        m.Database.RemoveIndex(new Descending<Table1.Poco>(t => t.Name), new Ascending<Table1.Poco>(t => t.Headline));
+                    },
                     idx => {
                         Assert.AreEqual(false, idx.IsUnique);
                     });
@@ -47,7 +51,9 @@ namespace EasyMigrator.Tests.MigratorDotNet
                     m => {
                         m.Database.AddIndex<Table1.Poco>(true, t => t.Name, t => t.Headline);
                     },
-                    m => { },
+                    m => {
+                        m.Database.RemoveIndex<Table1.Poco>(t => t.Name, t => t.Headline);
+                    },
                     idx => {
                         // Assert.AreEqual(false, idx.IsUnique); // <- Schema reader doesn't pick this up correctly
                     });
@@ -58,7 +64,9 @@ namespace EasyMigrator.Tests.MigratorDotNet
                     m => {
                         m.Database.AddIndex<Table1.Poco>("MyNamedIndex", t => t.Name, t => t.Headline);
                     },
-                    m => { },
+                    m => {
+                        m.Database.RemoveIndex<Table1.Poco>("MyNamedIndex");
+                    },
                     idx => {
                         Assert.AreEqual(false, idx.IsUnique);
                     });
