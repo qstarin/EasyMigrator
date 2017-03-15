@@ -97,10 +97,12 @@ namespace EasyMigrator.Tests.Integration
         private void DeleteDatabase(DbConnection conn)
             => conn.ExecuteNonQuery($"IF EXISTS(select * from sys.databases where name='{DatabaseName}') DROP DATABASE [{DatabaseName}]");
 
+        protected DatabaseSchema GetDbSchema() => new DatabaseReader(ConnectionStringWithDatabase, SqlType.SqlServer).ReadAll();
+
         protected Table GetTableModelFromDb(string tableName)
         {
             var table = new Table {Name = tableName};
-            var schema = new DatabaseReader(ConnectionStringWithDatabase, SqlType.SqlServer).ReadAll();
+            var schema = GetDbSchema();
             var st = schema.Tables.Single(t => t.Name == table.Name);
             table.Columns = st.Columns.Select(c => {
                 var sqlDbType = (SqlDbType)c.DataType.ProviderDbType;

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using EasyMigrator.MigratorDotNet;
 using EasyMigrator.Tests.Integration;
 using EasyMigrator.Tests.Schemas;
 using EasyMigrator.Tests.TableTest;

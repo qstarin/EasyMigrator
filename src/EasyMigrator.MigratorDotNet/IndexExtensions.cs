@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
+using EasyMigrator.Extensions;
 using Migrator.Framework;
 
 
@@ -9,13 +11,156 @@ namespace EasyMigrator.MigratorDotNet
 {
     static public class IndexExtensions
     {
-        static private void AddIndex(this ITransformationProvider Database, string table, string indexName, params string[] columnsWithDirection)
-            => Database.AddIndex(table, indexName, false, false, columnsWithDirection);
+        static public void AddIndex<TTable>(this ITransformationProvider Database, params Expression<Func<TTable, object>>[] columns)
+            => Database.AddIndex(false, Parsing.Parser.Default, columns);
 
-        static private void AddIndex(this ITransformationProvider Database, string table, string indexName, bool unique, params string[] columnsWithDirection)
-            => Database.AddIndex(table, indexName, unique, false, columnsWithDirection);
+        static public void AddIndex<TTable>(this ITransformationProvider Database, Parsing.Parser parser, params Expression<Func<TTable, object>>[] columns)
+            => Database.AddIndex(false, parser, columns);
 
-        static private void AddIndex(this ITransformationProvider Database, string table, string indexName, bool unique, bool clustered, params string[] columnsWithDirection)
-            => Database.ExecuteNonQuery($"CREATE {(unique ? "UNIQUE " : "")}{(clustered ? "CLUSTERED" : "NONCLUSTERED")} INDEX {indexName} ON [{table}] ({string.Join(", ", columnsWithDirection)})");
+        static public void AddIndex<TTable>(this ITransformationProvider Database, bool unique, params Expression<Func<TTable, object>>[] columns)
+            => Database.AddIndex(null, unique, Parsing.Parser.Default, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, bool unique, Parsing.Parser parser, params Expression<Func<TTable, object>>[] columns)
+            => Database.AddIndex(null, unique, parser, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, string indexName, params Expression<Func<TTable, object>>[] columns)
+            => Database.AddIndex(indexName, false, Parsing.Parser.Default, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, string indexName, Parsing.Parser parser, params Expression<Func<TTable, object>>[] columns)
+            => Database.AddIndex(indexName, false, parser, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, string indexName, bool unique, params Expression<Func<TTable, object>>[] columns)
+            => Database.AddIndex(indexName, unique, false, Parsing.Parser.Default, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, string indexName, bool unique, Parsing.Parser parser, params Expression<Func<TTable, object>>[] columns)
+            => Database.AddIndex(indexName, unique, false, parser, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, bool unique, bool clustered, params Expression<Func<TTable, object>>[] columns)
+            => Database.AddIndex(null, unique, clustered, Parsing.Parser.Default, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, bool unique, bool clustered, Parsing.Parser parser, params Expression<Func<TTable, object>>[] columns)
+            => Database.AddIndex(null, unique, clustered, parser, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, string indexName, bool unique, bool clustered, params Expression<Func<TTable, object>>[] columns)
+            => Database.AddIndex(indexName, unique, clustered, Parsing.Parser.Default, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, string indexName, bool unique, bool clustered, Parsing.Parser parser, params Expression<Func<TTable, object>>[] columns)
+            => Database.AddIndex(indexName, unique, clustered, parser, columns.Select(c => new IndexColumn<TTable>(c)).ToArray());
+
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, params IndexColumn<TTable>[] columns)
+            => Database.AddIndex(false, Parsing.Parser.Default, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, Parsing.Parser parser, params IndexColumn<TTable>[] columns)
+            => Database.AddIndex(false, parser, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, bool unique, params IndexColumn<TTable>[] columns)
+            => Database.AddIndex(null, unique, Parsing.Parser.Default, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, bool unique, Parsing.Parser parser, params IndexColumn<TTable>[] columns)
+            => Database.AddIndex(null, unique, parser, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, string indexName, params IndexColumn<TTable>[] columns)
+            => Database.AddIndex(indexName, false, Parsing.Parser.Default, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, string indexName, Parsing.Parser parser, params IndexColumn<TTable>[] columns)
+            => Database.AddIndex(indexName, false, parser, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, string indexName, bool unique, params IndexColumn<TTable>[] columns)
+            => Database.AddIndex(indexName, unique, false, Parsing.Parser.Default, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, string indexName, bool unique, Parsing.Parser parser, params IndexColumn<TTable>[] columns)
+            => Database.AddIndex(indexName, unique, false, parser, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, bool unique, bool clustered, params IndexColumn<TTable>[] columns)
+            => Database.AddIndex(null, unique, clustered, Parsing.Parser.Default, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, bool unique, bool clustered, Parsing.Parser parser, params IndexColumn<TTable>[] columns)
+            => Database.AddIndex(null, unique, clustered, parser, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, string indexName, bool unique, bool clustered, params IndexColumn<TTable>[] columns)
+            => Database.AddIndex(indexName, unique, clustered, Parsing.Parser.Default, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, string indexName, bool unique, bool clustered, Parsing.Parser parser, params IndexColumn<TTable>[] columns)
+        {
+            var context = parser.ParseTableType(typeof(TTable));
+            var cols = columns.Select(c => new { c, fi = c.ColumnExpression.GetExpressionField() })
+                              .Select(o => new IndexColumn(context.Columns[o.fi].Name, o.c.Direction));
+            Database.AddIndex<TTable>(indexName, unique, clustered, parser, cols.ToArray());
+        }
+
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, params IndexColumn[] columns)
+            => Database.AddIndex<TTable>(false, Parsing.Parser.Default, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, Parsing.Parser parser, params IndexColumn[] columns)
+            => Database.AddIndex<TTable>(false, parser, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, bool unique, params IndexColumn[] columns)
+            => Database.AddIndex<TTable>(null, unique, Parsing.Parser.Default, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, bool unique, Parsing.Parser parser, params IndexColumn[] columns)
+            => Database.AddIndex<TTable>(null, unique, parser, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, string indexName, params IndexColumn[] columns)
+            => Database.AddIndex<TTable>(indexName, false, Parsing.Parser.Default, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, string indexName, Parsing.Parser parser, params IndexColumn[] columns)
+            => Database.AddIndex<TTable>(indexName, false, parser, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, string indexName, bool unique, params IndexColumn[] columns)
+            => Database.AddIndex<TTable>(indexName, unique, false, Parsing.Parser.Default, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, string indexName, bool unique, Parsing.Parser parser, params IndexColumn[] columns)
+            => Database.AddIndex<TTable>(indexName, unique, false, parser, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, bool unique, bool clustered, params IndexColumn[] columns)
+            => Database.AddIndex<TTable>(null, unique, clustered, Parsing.Parser.Default, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, bool unique, bool clustered, Parsing.Parser parser, params IndexColumn[] columns)
+            => Database.AddIndex<TTable>(null, unique, clustered, parser, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, string indexName, bool unique, bool clustered, params IndexColumn[] columns)
+            => Database.AddIndex<TTable>(indexName, unique, clustered, Parsing.Parser.Default, columns);
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, string indexName, bool unique, bool clustered, Parsing.Parser parser, params IndexColumn[] columns)
+        {
+            var context = parser.ParseTableType(typeof(TTable));
+            Database.AddIndex(context.Table.Name, 
+                              indexName ?? context.Conventions.IndexNameByTableAndColumnNames(context.Table.Name, columns.Select(s => s.ColumnName)), 
+                              unique, 
+                              clustered, 
+                              columns.Select(c => c.ColumnNameWithDirection).ToArray());
+        }
+
+        static public void AddIndex(this ITransformationProvider Database, string table, params string[] columnNamesWithDirection)
+            => Database.AddIndex(table, false, columnNamesWithDirection);
+
+        static public void AddIndex(this ITransformationProvider Database, string table, bool unique, params string[] columnNamesWithDirection)
+            => Database.AddIndex(table, null, unique, columnNamesWithDirection);
+
+        static public void AddIndex(this ITransformationProvider Database, string table, string indexName, params string[] columnNamesWithDirection)
+            => Database.AddIndex(table, indexName, false, columnNamesWithDirection);
+
+        static public void AddIndex(this ITransformationProvider Database, string table, string indexName, bool unique, params string[] columnNamesWithDirection)
+            => Database.AddIndex(table, indexName, unique, false, columnNamesWithDirection);
+
+        static public void AddIndex(this ITransformationProvider Database, string table, bool unique, bool clustered, params string[] columnNamesWithDirection)
+            => Database.AddIndex(table, null, unique, clustered, columnNamesWithDirection);
+
+        static public void AddIndex(this ITransformationProvider Database, string table, string indexName, bool unique, bool clustered, params string[] columnNamesWithDirection)
+            => Database.ExecuteNonQuery($"CREATE {(unique ? "UNIQUE " : "")}{(clustered ? "CLUSTERED" : "NONCLUSTERED")} INDEX {indexName ?? Parsing.Parser.Default.Conventions.IndexNameByTableAndColumnNames(table, RemoveDirection(columnNamesWithDirection))} ON [{table}] ({string.Join(", ", columnNamesWithDirection)})");
+
+        static private IEnumerable<string> RemoveDirection(IEnumerable<string> columnNamesWithDirection)
+        {
+            foreach (var c in columnNamesWithDirection) {
+                if (c.EndsWith(" ASC"))
+                    yield return c.Substring(0, c.Length - " ASC".Length);
+                else if (c.EndsWith(" DESC"))
+                    yield return c.Substring(0, c.Length - " DESC".Length);
+                else
+                    yield return c;
+            }
+        }
     }
 }

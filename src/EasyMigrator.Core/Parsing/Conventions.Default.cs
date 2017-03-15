@@ -25,11 +25,12 @@ namespace EasyMigrator.Parsing
                         Type = DbType.Int32,
                         AutoIncrement = new AutoIncAttribute()
                     }},
-                PrimaryKeyName = c => $"PK_{c.Table.Name}",
+                PrimaryKeyName = c => c.Conventions.PrimaryKeyNameByTableName(c.Table.Name),
+                PrimaryKeyNameByTableName = s => $"PK_{s}",
                 PrimaryKeyColumnName = t => "Id",
                 ForeignKeyName = (c, col) => $"FK_{col.ForeignKey.Table}_{col.Name}",
-                IndexNameByColumns = (c, cols) => c.Conventions.IndexNameByColumnNames(c, cols.Select(col => col.Name)),
-                IndexNameByColumnNames = (c, cols) => $"IX_{c.Table.Name}_{string.Join("_", cols)}",
+                IndexNameByColumns = (c, cols) => c.Conventions.IndexNameByTableAndColumnNames(c.Table.Name, cols.Select(col => col.Name)),
+                IndexNameByTableAndColumnNames = (t, cols) => $"IX_{t}_{string.Join("_", cols)}",
                 IndexForeignKeys = c => true,
                 StringLengths = c => new Lengths {
                     Default = 50,

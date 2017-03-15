@@ -7,16 +7,16 @@ namespace EasyMigrator.Tests.Schemas
 {
     public class Table1 : TableTestCase
     {
-        class Poco
+        public class Poco
         {
-            int Sequence;
-            bool Accepted;
-            [NotNull] string Name;
-            [Fixed(8), Ansi, NotNull, Unique(Name = "idx_code")] string Code;
-            [Length(Length.Medium)] string Headline;
-            [Max, Name("[Desc]")] string Desc;
-            [DbType(DbType.Currency)] decimal? Rate;
-            [Precision(Length.Short, 3)] decimal Adjustment;
+            public int Sequence;
+            public bool Accepted;
+            [NotNull] public string Name;
+            [Fixed(8), Ansi, NotNull, Unique(Name = "idx_code")] public string Code;
+            [Length(Length.Medium)] public string Headline;
+            [Max, Name("[Desc]")] public string Desc;
+            [DbType(DbType.Currency)] public decimal? Rate;
+            [Precision(Length.Short, 3)] public decimal Adjustment;
         }
 
         static Table Model = new Table {

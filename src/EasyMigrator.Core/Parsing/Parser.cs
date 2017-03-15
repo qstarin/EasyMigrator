@@ -32,17 +32,12 @@ namespace EasyMigrator.Parsing
             return context;
         }
 
-        private readonly ConcurrentDictionary<Type, Table> _parsedTables = new ConcurrentDictionary<Type, Table>();
+        private readonly ConcurrentDictionary<Type, Context> _parsedTables = new ConcurrentDictionary<Type, Context>();
 
         public Context ParseTableType(Type type)
-        {
-            var context = CreateContext(type);
-            context.Table = _parsedTables.GetOrAdd(type, t => ParseTable(context));
-            PostParseTable(context);
-            return context;
-        }
+            => PostParseTable(_parsedTables.GetOrAdd(type, t => ParseTable(type)));
 
-        protected virtual void PostParseTable(Context context)
+        protected virtual Context PostParseTable(Context context)
         {
             foreach (var col in context.Table.Columns.Where(c => {
                                                                var f = c.ForeignKey as FkAttribute;
@@ -59,10 +54,12 @@ namespace EasyMigrator.Parsing
                 if (fk.Name == null)
                     fk.Name = Conventions.ForeignKeyName(context, col);
             }
+            return context;
         }
 
-        protected virtual Table ParseTable(Context context)
+        protected virtual Context ParseTable(Type tableType)
         {
+            var context = CreateContext(tableType);
             var fields = context.Fields;
             var table = context.Table;
             var typemap = Conventions.TypeMap(context);
@@ -131,7 +128,7 @@ namespace EasyMigrator.Parsing
             if (table.PrimaryKeyName == null)
                 table.PrimaryKeyName = Conventions.PrimaryKeyName(context);
 
-            return table;
+            return context;
         }
 
         protected virtual IEnumerable<FieldInfo> GetColumnFields(Type type)

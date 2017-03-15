@@ -26,6 +26,6 @@ namespace EasyMigrator.MigratorDotNet
         static public void AddPrimaryKey(this ITransformationProvider Database, string table, bool clustered, params string[] columns) => Database.AddPrimaryKey(table, null, clustered, columns);
         static public void AddPrimaryKey(this ITransformationProvider Database, string table, string constraintName, bool clustered, params string[] columns)
 
-            => Database.ExecuteNonQuery($"ALTER TABLE [{table}] ADD CONSTRAINT {(constraintName ?? $"PK_{table}")} PRIMARY KEY {(clustered ? "CLUSTERED" : "NONCLUSTERED")} ({string.Join(", ", columns)})");
+            => Database.ExecuteNonQuery($"ALTER TABLE [{table}] ADD CONSTRAINT {constraintName ?? Parsing.Parser.Default.Conventions.PrimaryKeyNameByTableName(table)} PRIMARY KEY {(clustered ? "CLUSTERED" : "NONCLUSTERED")} ({string.Join(", ", columns)})");
     }
 }
