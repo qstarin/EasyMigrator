@@ -9,7 +9,7 @@ using Migrator.Framework;
 
 namespace EasyMigrator.MigratorDotNet
 {
-    static public class IndexExtensions
+    static public class CreateIndexExtensions
     {
         static public void AddIndex<TTable>(this ITransformationProvider Database, params Expression<Func<TTable, object>>[] columns)
             => Database.AddIndex(false, Parsing.Parser.Default, columns);
@@ -211,50 +211,5 @@ namespace EasyMigrator.MigratorDotNet
                     yield return c;
             }
         }
-
-
-        static public void RemoveIndex<TTable>(this ITransformationProvider Database, params Expression<Func<TTable, object>>[] columns)
-            => Database.RemoveIndex(Parsing.Parser.Default, columns);
-
-        static public void RemoveIndex<TTable>(this ITransformationProvider Database, Parsing.Parser parser, params Expression<Func<TTable, object>>[] columns)
-            => Database.RemoveIndex(parser, columns.Select(c => new IndexColumn<TTable>(c)).ToArray());
-
-        static public void RemoveIndex<TTable>(this ITransformationProvider Database, params IndexColumn<TTable>[] columns)
-            => Database.RemoveIndex(Parsing.Parser.Default, columns);
-
-        static public void RemoveIndex<TTable>(this ITransformationProvider Database, Parsing.Parser parser, params IndexColumn<TTable>[] columns)
-        {
-            var context = parser.ParseTableType(typeof(TTable));
-            var cols = columns.Select(c => new { c, fi = c.ColumnExpression.GetExpressionField() })
-                              .Select(o => new IndexColumn(context.Columns[o.fi].Name, o.c.Direction));
-            Database.RemoveIndex<TTable>(parser, cols.ToArray());
-        }
-
-        static public void RemoveIndex<TTable>(this ITransformationProvider Database, params IndexColumn[] columns)
-            => Database.RemoveIndex<TTable>(Parsing.Parser.Default, columns);
-
-        static public void RemoveIndex<TTable>(this ITransformationProvider Database, Parsing.Parser parser, params IndexColumn[] columns)
-            => Database.RemoveIndex<TTable>(parser, columns.Select(c => c.ColumnName).ToArray());
-
-        static public void RemoveIndex<TTable>(this ITransformationProvider Database, params string[] columns)
-            => Database.RemoveIndex<TTable>(Parsing.Parser.Default, columns);
-
-        static public void RemoveIndex<TTable>(this ITransformationProvider Database, Parsing.Parser parser, params string[] columns)
-            => Database.RemoveIndex(parser.ParseTableType(typeof(TTable)).Table.Name, parser, columns);
-
-        static public void RemoveIndex(this ITransformationProvider Database, string table, params string[] columns)
-            => Database.RemoveIndex(table, Parsing.Parser.Default, columns);
-
-        static public void RemoveIndex(this ITransformationProvider Database, string table, Parsing.Parser parser, params string[] columns)
-            => Database.RemoveIndex(table, parser.Conventions.IndexNameByTableAndColumnNames(table, columns));
-
-        static public void RemoveIndex<TTable>(this ITransformationProvider Database, string indexName)
-            => Database.RemoveIndex<TTable>(Parsing.Parser.Default, indexName);
-
-        static public void RemoveIndex<TTable>(this ITransformationProvider Database, Parsing.Parser parser, string indexName)
-            => Database.RemoveIndex(parser.ParseTableType(typeof(TTable)).Table.Name, indexName);
-
-        static public void RemoveIndex(this ITransformationProvider Database, string table, string indexName)
-            => Database.ExecuteNonQuery($"DROP INDEX {indexName} ON [{table}]");
     }
 }
