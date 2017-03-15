@@ -130,26 +130,45 @@ namespace EasyMigrator.MigratorDotNet
                               indexName ?? context.Conventions.IndexNameByTableAndColumnNames(context.Table.Name, columns.Select(s => s.ColumnName)), 
                               unique, 
                               clustered, 
+                              parser,
                               columns.Select(c => c.ColumnNameWithDirection).ToArray());
         }
 
         static public void AddIndex(this ITransformationProvider Database, string table, params string[] columnNamesWithDirection)
-            => Database.AddIndex(table, false, columnNamesWithDirection);
+            => Database.AddIndex(table, false, Parsing.Parser.Default, columnNamesWithDirection);
+
+        static public void AddIndex(this ITransformationProvider Database, string table, Parsing.Parser parser, params string[] columnNamesWithDirection)
+            => Database.AddIndex(table, false, parser, columnNamesWithDirection);
 
         static public void AddIndex(this ITransformationProvider Database, string table, bool unique, params string[] columnNamesWithDirection)
-            => Database.AddIndex(table, null, unique, columnNamesWithDirection);
+            => Database.AddIndex(table, null, unique, Parsing.Parser.Default, columnNamesWithDirection);
+
+        static public void AddIndex(this ITransformationProvider Database, string table, bool unique, Parsing.Parser parser, params string[] columnNamesWithDirection)
+            => Database.AddIndex(table, null, unique, parser, columnNamesWithDirection);
 
         static public void AddIndex(this ITransformationProvider Database, string table, string indexName, params string[] columnNamesWithDirection)
-            => Database.AddIndex(table, indexName, false, columnNamesWithDirection);
+            => Database.AddIndex(table, indexName, false, Parsing.Parser.Default, columnNamesWithDirection);
+
+        static public void AddIndex(this ITransformationProvider Database, string table, string indexName, Parsing.Parser parser, params string[] columnNamesWithDirection)
+            => Database.AddIndex(table, indexName, false, parser, columnNamesWithDirection);
 
         static public void AddIndex(this ITransformationProvider Database, string table, string indexName, bool unique, params string[] columnNamesWithDirection)
-            => Database.AddIndex(table, indexName, unique, false, columnNamesWithDirection);
+            => Database.AddIndex(table, indexName, unique, false, Parsing.Parser.Default, columnNamesWithDirection);
+
+        static public void AddIndex(this ITransformationProvider Database, string table, string indexName, bool unique, Parsing.Parser parser, params string[] columnNamesWithDirection)
+            => Database.AddIndex(table, indexName, unique, false, parser, columnNamesWithDirection);
 
         static public void AddIndex(this ITransformationProvider Database, string table, bool unique, bool clustered, params string[] columnNamesWithDirection)
-            => Database.AddIndex(table, null, unique, clustered, columnNamesWithDirection);
+            => Database.AddIndex(table, null, unique, clustered, Parsing.Parser.Default, columnNamesWithDirection);
+
+        static public void AddIndex(this ITransformationProvider Database, string table, bool unique, bool clustered, Parsing.Parser parser, params string[] columnNamesWithDirection)
+            => Database.AddIndex(table, null, unique, clustered, parser, columnNamesWithDirection);
 
         static public void AddIndex(this ITransformationProvider Database, string table, string indexName, bool unique, bool clustered, params string[] columnNamesWithDirection)
-            => Database.ExecuteNonQuery($"CREATE {(unique ? "UNIQUE " : "")}{(clustered ? "CLUSTERED" : "NONCLUSTERED")} INDEX {indexName ?? Parsing.Parser.Default.Conventions.IndexNameByTableAndColumnNames(table, RemoveDirection(columnNamesWithDirection))} ON [{table}] ({string.Join(", ", columnNamesWithDirection)})");
+            => Database.AddIndex(table, indexName, unique, clustered, Parsing.Parser.Default, columnNamesWithDirection);
+
+        static public void AddIndex(this ITransformationProvider Database, string table, string indexName, bool unique, bool clustered, Parsing.Parser parser, params string[] columnNamesWithDirection)
+            => Database.ExecuteNonQuery($"CREATE {(unique ? "UNIQUE " : "")}{(clustered ? "CLUSTERED" : "NONCLUSTERED")} INDEX {indexName ?? parser.Conventions.IndexNameByTableAndColumnNames(table, RemoveDirection(columnNamesWithDirection))} ON [{table}] ({string.Join(", ", columnNamesWithDirection)})");
 
         static private IEnumerable<string> RemoveDirection(IEnumerable<string> columnNamesWithDirection)
         {

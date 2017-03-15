@@ -26,7 +26,7 @@ namespace EasyMigrator.Parsing
                         AutoIncrement = new AutoIncAttribute()
                     }},
                 PrimaryKeyName = c => c.Conventions.PrimaryKeyNameByTableName(c.Table.Name),
-                PrimaryKeyNameByTableName = s => $"PK_{s}",
+                PrimaryKeyNameByTableName = t => $"PK_{t}",
                 PrimaryKeyColumnName = t => "Id",
                 ForeignKeyName = (c, col) => $"FK_{col.ForeignKey.Table}_{col.Name}",
                 IndexNameByColumns = (c, cols) => c.Conventions.IndexNameByTableAndColumnNames(c.Table.Name, cols.Select(col => col.Name)),
