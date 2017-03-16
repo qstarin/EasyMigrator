@@ -7,7 +7,7 @@ using EasyMigrator.Extensions;
 using Migrator.Framework;
 
 
-namespace EasyMigrator.MigratorDotNet
+namespace EasyMigrator
 {
     static public class PrimaryKeyExtensions
     {
