@@ -131,7 +131,7 @@ namespace EasyMigrator.Tests.FluentMigrator
                         m.Create.Index<Table1.Poco>().OnColumns(t => t.Name, t => t.Headline);
                     },
                     m => {
-                        //m.Database.RemoveIndex<Table1.Poco>(t => t.Name, t => t.Headline);
+                        m.Delete.Index<Table1.Poco>().OnColumns(t => t.Name, t => t.Headline);
                     }));
 
         [Test]
@@ -142,7 +142,7 @@ namespace EasyMigrator.Tests.FluentMigrator
                         m.Create.Index<Table1.Poco>().OnColumns(t => t.Name, t => t.Headline).WithOptions().Unique();
                     },
                     m => {
-                        //m.Database.RemoveIndex<Table1.Poco>(t => t.Name, t => t.Headline);
+                        m.Delete.Index<Table1.Poco>().OnColumns(t => t.Name, t => t.Headline);
                     }),
                     dbIndex => { }); //Assert.AreEqual(true, dbIndex.IsUnique); // <- Schema reader doesn't pick this up correctly);
 
@@ -154,7 +154,7 @@ namespace EasyMigrator.Tests.FluentMigrator
                         m.Create.Index<Table1.Poco>().OnColumns(new Descending<Table1.Poco>(t => t.Name), new Ascending<Table1.Poco>(t => t.Headline));
                     },
                     m => {
-                        //m.Database.RemoveIndex(new Descending<Table1.Poco>(t => t.Name), new Ascending<Table1.Poco>(t => t.Headline));
+                        m.Delete.Index<Table1.Poco>().OnColumns(new Descending<Table1.Poco>(t => t.Name), new Ascending<Table1.Poco>(t => t.Headline));
                     }));
 
         [Test]
@@ -166,7 +166,7 @@ namespace EasyMigrator.Tests.FluentMigrator
                         m.Create.Index("MyNamedIndex").OnTable<Table1.Poco>().OnColumns(t => t.Name, t => t.Headline);
                     },
                     m => {
-                        //m.Database.RemoveIndex<Table1.Poco>("MyNamedIndex");
+                        m.Delete.Index("MyNamedIndex").OnTable<Table1.Poco>();
                     }));
     }
 }
