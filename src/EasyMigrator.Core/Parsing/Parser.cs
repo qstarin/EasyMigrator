@@ -69,7 +69,11 @@ namespace EasyMigrator.Parsing
             var fields = context.Fields;
             var table = context.Table;
             var typemap = Conventions.TypeMap(context);
-            table.PrimaryKeyName = context.ModelType.GetAttribute<PkAttribute>()?.Name;
+            var tablePk = context.ModelType.GetAttribute<PkAttribute>();
+            if (tablePk != null) {
+                table.PrimaryKeyName = tablePk.Name;
+                table.PrimaryKeyIsClustered = tablePk.Clustered;
+            }
 
             foreach (var field in fields) {
                 var dbType = field.GetAttribute<DbTypeAttribute>()?.DbType ?? typemap[field];
@@ -97,6 +101,12 @@ namespace EasyMigrator.Parsing
                     else {
                         if (table.PrimaryKeyName != pk.Name)
                             throw new Exception($"Conflicting primary key names '{table.PrimaryKeyName}' on table {context.Table.Name}, '{pk.Name}' on column {column.Name}");
+                    }
+
+                    if (table.PrimaryKeyIsClustered != pk.Clustered) {
+                        if (!table.PrimaryKeyIsClustered)
+                            throw new Exception($"Conflicting primary key clustering on table {context.Table.Name}");
+                        table.PrimaryKeyIsClustered = pk.Clustered;
                     }
                 }
 

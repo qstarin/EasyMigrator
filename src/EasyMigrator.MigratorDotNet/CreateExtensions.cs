@@ -19,7 +19,6 @@ namespace EasyMigrator
             var table = parser.ParseTableType(tableType).Table;
             var pocoColumns = table.Columns;
             var columns = new List<Column>();
-            //var primaryKeyColumns = new List<Column>();
             foreach (var col in pocoColumns) {
                 if (col.AutoIncrement != null && (col.AutoIncrement.Seed > 1 || col.AutoIncrement.Step > 1))
                     throw new NotImplementedException("AutoIncrement Seeds or Steps other than 1 are not supported for MigratorDotNet.");
@@ -36,7 +35,7 @@ namespace EasyMigrator
             }
 
             Database.AddTable(table.Name, columns.ToArray());
-            Database.AddPrimaryKey(table.PrimaryKeyName, table.Name, table.PrimaryKeyColumns.Select(c => c.Name).ToArray());
+            Database.AddPrimaryKey(table.Name, table.PrimaryKeyName, table.PrimaryKeyIsClustered, table.PrimaryKeyColumns.Select(c => c.Name).ToArray());
 
             foreach (var col in pocoColumns.Where(c => c.ForeignKey != null)) {
                 var fk = col.ForeignKey;
@@ -45,7 +44,7 @@ namespace EasyMigrator
             
             foreach (var col in pocoColumns.Where(c => c.Index != null)) {
                 var idx = col.Index;
-                Database.CreateIndex(idx.Unique, idx.Clustered, idx.Name, table.Name, col.Name);
+                Database.AddIndex(table.Name, idx.Name, idx.Unique, idx.Clustered, col.Name);
             }
         }
 
@@ -84,7 +83,7 @@ namespace EasyMigrator
             
             foreach (var col in pocoColumns.Where(c => c.Index != null)) {
                 var idx = col.Index;
-                Database.CreateIndex(idx.Unique, idx.Clustered, idx.Name, table.Name, col.Name);
+                Database.AddIndex(table.Name, idx.Name, idx.Unique, idx.Clustered, col.Name);
             }
         }
 
@@ -115,11 +114,7 @@ namespace EasyMigrator
                 c.Size = col.Precision.Scale;
             }
 
-
             return c;
         }
-
-        static private void CreateIndex(this ITransformationProvider Database, bool unique, bool clustered, string indexName, string table, params string[] columns)
-            => Database.ExecuteNonQuery($"CREATE {(unique ? "UNIQUE " : "")}{(clustered ? "CLUSTERED" : "NONCLUSTERED")} INDEX {indexName} ON [{table}] ({string.Join(", ", columns)})");
     }
 }

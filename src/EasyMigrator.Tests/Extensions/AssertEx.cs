@@ -46,8 +46,8 @@ namespace EasyMigrator.Tests
                 if (e.Index == null)
                     Assert.IsNull(a.Index);
                 else {
-                    //Assert.AreEqual(e.Index.Name, a.Index.Name);
-                    //Assert.AreEqual(e.Index.Unique, a.Index.Unique);
+                    Assert.AreEqual(e.Index.Name, a.Index.Name);
+                    //Assert.AreEqual(e.Index.Unique, a.Index.Unique); // <- Schema reader doesn't pick this up correctly);
                     Assert.AreEqual(e.Index.Clustered, a.Index.Clustered);
                 }
 

@@ -46,7 +46,7 @@ namespace EasyMigrator.Tests.Schemas
                     Name = "Code",
                     Type = DbType.AnsiStringFixedLength,
                     Length = 8,
-                    Index = new IndexAttribute {Name = "idx_code", Unique = true}
+                    Index = new UniqueAttribute { Name = "idx_code" }
                 },
                 new Column {
                     Name = "Headline",

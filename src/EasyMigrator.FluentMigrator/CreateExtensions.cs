@@ -30,6 +30,20 @@ namespace EasyMigrator
                                  .BuildColumn<ICreateTableColumnAsTypeSyntax, 
                                               ICreateTableColumnOptionOrWithColumnSyntax,
                                               ICreateTableColumnOptionOrForeignKeyCascadeOrWithColumnSyntax>(table, col);
+
+            var pkCreator = Create.PrimaryKey(table.PrimaryKeyName)
+                                  .OnTable(table.Name)
+                                  .Columns(table.Columns.Where(c => c.IsPrimaryKey)
+                                  .Select(c => c.Name)
+                                  .ToArray());
+
+            if (table.PrimaryKeyIsClustered)
+                pkCreator.Clustered();
+            else
+                pkCreator.NonClustered();
+
+            foreach (var col in table.Columns.Where(c => c.Index?.Clustered ?? false))
+                Create.UniqueConstraint(col.Index.Name).OnTable(table.Name).Columns(col.Name).Clustered();
         }
 
         static public void Columns<T>(this ICreateExpressionRoot Create) => Create.Columns(typeof(T));
@@ -55,6 +69,9 @@ namespace EasyMigrator
                                               ICreateColumnOptionOrForeignKeyCascadeSyntax>(table, col);
             }
 
+            foreach (var col in table.Columns.Where(c => c.Index?.Clustered ?? false))
+                Create.UniqueConstraint(col.Index.Name).OnTable(table.Name).Columns(col.Name).Clustered();
+
             if (populate != null) {
                 populate();
                 foreach (var col in nonNullables) {
@@ -79,9 +96,6 @@ namespace EasyMigrator
                     ? createColumnOptionSyntax.Nullable()
                     : createColumnOptionSyntax.NotNullable();
 
-            if (col.IsPrimaryKey)
-                createColumnOptionSyntax = createColumnOptionSyntax.PrimaryKey(table.PrimaryKeyName);
-
             if (col.ForeignKey != null)
                 createColumnOptionSyntax = createColumnOptionSyntax.ForeignKey(col.ForeignKey.Name, col.ForeignKey.Table, col.ForeignKey.Column);
 
@@ -91,15 +105,11 @@ namespace EasyMigrator
             if (col.AutoIncrement != null)
                 createColumnOptionSyntax = createColumnOptionSyntax.Identity((int)col.AutoIncrement.Seed, (int)col.AutoIncrement.Step);
 
-            if (col.Index != null) {
-                if (col.Index.Clustered)
-                    throw new NotImplementedException("Clustered indexes are not supported for FluentMigrator.");
-
+            if (col.Index != null && !col.Index.Clustered)
                 createColumnOptionSyntax =
                     col.Index.Unique
                         ? createColumnOptionSyntax.Unique(col.Index.Name)
                         : createColumnOptionSyntax.Indexed(col.Index.Name);
-            }
         }
 
         static private TNext As<TSyntax, TNext, TNextFk>(this TSyntax s, Column col)

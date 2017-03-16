@@ -8,7 +8,7 @@ namespace EasyMigrator.Parsing.Model
     public interface IIndex
     {
         string Name { get; set; }
-        bool Unique { get; set; }
-        bool Clustered { get; set; }
+        bool Unique { get; }
+        bool Clustered { get; }
     }
 }

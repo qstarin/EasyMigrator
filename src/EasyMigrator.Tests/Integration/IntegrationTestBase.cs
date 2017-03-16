@@ -110,6 +110,8 @@ namespace EasyMigrator.Tests.Integration
                 param.SqlDbType = sqlDbType;
                 var dbType = param.DbType;
 
+                var idx = st.Indexes.SingleOrDefault(i => !c.IsPrimaryKey && i.Columns.Count == 1 && i.Columns.Single().Name == c.Name);
+
                 return new Column {
                     Name = c.Name,
                     Type = dbType,//(DbType)Enum.Parse(typeof(DbType), c.DbDataType),
@@ -126,8 +128,8 @@ namespace EasyMigrator.Tests.Integration
                     Precision = dbType == DbType.Decimal && (c.Precision.HasValue || c.Scale.HasValue)
                         ? new PrecisionAttribute(c.Precision.Value, c.Scale.Value) 
                         : null,
-                    Index = c.IsIndexed && !c.IsPrimaryKey
-                        ? new IndexAttribute { Unique = c.IsUniqueKey }
+                    Index = idx != null
+                        ? c.IsUniqueKey ? new UniqueAttribute { Name = idx.Name } : new IndexAttribute { Name = idx.Name }
                         : null,
                     ForeignKey = c.IsForeignKey
                         ? new FkAttribute(c.ForeignKeyTableName) { Column = c.ForeignKeyTable.PrimaryKeyColumn.Name }

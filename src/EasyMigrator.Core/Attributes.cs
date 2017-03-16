@@ -29,6 +29,8 @@ namespace EasyMigrator
     public class PkAttribute : Attribute
     {
         public string Name { get; }
+        public bool Clustered { get; set; } = true;
+
         public PkAttribute() { }
         public PkAttribute(string name) { Name = name; }
     }
@@ -73,13 +75,18 @@ namespace EasyMigrator
     public class IndexAttribute : Attribute, Parsing.Model.IIndex
     {
         public string Name { get; set; }
-        public bool Unique { get; set; }
-        public bool Clustered { get; set; }
+        public bool Unique { get; protected set; }
+        public bool Clustered { get; protected set; }
     }
 
     public class UniqueAttribute : IndexAttribute
     {
         public UniqueAttribute() { Unique = true; }
+    }
+
+    public class ClusteredIndexAttribute : UniqueAttribute
+    {
+        public ClusteredIndexAttribute() { Clustered = true; }
     }
 
     public class AnsiAttribute : Attribute { }
