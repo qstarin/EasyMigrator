@@ -84,6 +84,7 @@
     <Compile Include="Integration\MigrationSet.cs" />
     <Compile Include="ReflectionTests.cs" />
     <Compile Include="Schemas\Fk1.cs" />
+    <Compile Include="Schemas\ManyToMany1.cs" />
     <Compile Include="Schemas\Table1.cs" />
     <Compile Include="Extensions\DbConnectionExtensions.cs" />
     <Compile Include="Integration\IMigrator.cs" />

@@ -19,15 +19,24 @@ namespace EasyMigrator
             var table = parser.ParseTableType(tableType).Table;
             var pocoColumns = table.Columns;
             var columns = new List<Column>();
+            //var primaryKeyColumns = new List<Column>();
             foreach (var col in pocoColumns) {
                 if (col.AutoIncrement != null && (col.AutoIncrement.Seed > 1 || col.AutoIncrement.Step > 1))
                     throw new NotImplementedException("AutoIncrement Seeds or Steps other than 1 are not supported for MigratorDotNet.");
 
-                columns.Add(BuildColumn(col));
+                var isPk = col.IsPrimaryKey;
+                if (isPk)
+                    col.IsPrimaryKey = false;
+
+                var c = BuildColumn(col);
+                columns.Add(c);
+
+                if (isPk)
+                    col.IsPrimaryKey = true;
             }
 
             Database.AddTable(table.Name, columns.ToArray());
-            //Database.AddPrimaryKey(table.PrimaryKeyName, table.Name, table.PrimaryKeyColumns.Select(c => c.Name).ToArray());
+            Database.AddPrimaryKey(table.PrimaryKeyName, table.Name, table.PrimaryKeyColumns.Select(c => c.Name).ToArray());
 
             foreach (var col in pocoColumns.Where(c => c.ForeignKey != null)) {
                 var fk = col.ForeignKey;
