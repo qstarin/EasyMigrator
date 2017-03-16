@@ -84,9 +84,9 @@ namespace EasyMigrator
         public UniqueAttribute() { Unique = true; }
     }
 
-    public class ClusteredIndexAttribute : UniqueAttribute
+    public class ClusteredAttribute : UniqueAttribute
     {
-        public ClusteredIndexAttribute() { Clustered = true; }
+        public ClusteredAttribute() { Clustered = true; }
     }
 
     public class AnsiAttribute : Attribute { }

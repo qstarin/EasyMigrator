@@ -37,6 +37,10 @@ namespace EasyMigrator
             Database.AddTable(table.Name, columns.ToArray());
             Database.AddPrimaryKey(table.Name, table.PrimaryKeyName, table.PrimaryKeyIsClustered, table.PrimaryKeyColumns.Select(c => c.Name).ToArray());
 
+            foreach (var col in table.Columns.Where(c => (c.Type == DbType.AnsiString || c.Type == DbType.String) && c.Length == int.MaxValue)) {
+                Database.ExecuteNonQuery($"ALTER TABLE [{table.Name}] ALTER COLUMN {col.Name} {(col.Type == DbType.AnsiString ? "" : "N")}VARCHAR(MAX) {(col.IsNullable ? "" : "NOT ")}NULL");
+            }
+
             foreach (var col in pocoColumns.Where(c => c.ForeignKey != null)) {
                 var fk = col.ForeignKey;
                 Database.AddForeignKey(fk.Name, table.Name, col.Name, fk.Table, fk.Column);
@@ -105,7 +109,7 @@ namespace EasyMigrator
                 c.DefaultValue = col.DefaultValue;
 
             if (col.Length.HasValue)
-                c.Size = col.Length.Value == int.MaxValue ? 0x3fffffff : col.Length.Value;
+                c.Size = col.Length.Value; //== int.MaxValue ? 0x3fffffff : col.Length.Value;
             // http://code.google.com/p/migratordotnet/issues/detail?id=130
             // using this sets the column type to ntext instead of nvarchar
 

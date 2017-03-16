@@ -33,9 +33,7 @@ namespace EasyMigrator
 
             var pkCreator = Create.PrimaryKey(table.PrimaryKeyName)
                                   .OnTable(table.Name)
-                                  .Columns(table.Columns.Where(c => c.IsPrimaryKey)
-                                  .Select(c => c.Name)
-                                  .ToArray());
+                                  .Columns(table.Columns.Where(c => c.IsPrimaryKey).Select(c => c.Name).ToArray());
 
             if (table.PrimaryKeyIsClustered)
                 pkCreator.Clustered();
