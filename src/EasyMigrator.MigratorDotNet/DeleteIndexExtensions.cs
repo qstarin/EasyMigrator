@@ -47,9 +47,9 @@ namespace EasyMigrator
             => Database.RemoveIndexByName(table, parser.Conventions.IndexNameByTableAndColumnNames(table, columns));
 
         static public void RemoveIndexByName<TTable>(this ITransformationProvider Database, string indexName)
-            => Database.RemoveIndex<TTable>(Parsing.Parser.Default, indexName);
+            => Database.RemoveIndexByName<TTable>(Parsing.Parser.Default, indexName);
 
-        static public void RemoveIndex<TTable>(this ITransformationProvider Database, Parsing.Parser parser, string indexName)
+        static public void RemoveIndexByName<TTable>(this ITransformationProvider Database, Parsing.Parser parser, string indexName)
             => Database.RemoveIndexByName(parser.ParseTableType(typeof(TTable)).Table.Name, indexName);
 
         static public void RemoveIndexByName(this ITransformationProvider Database, string table, string indexName)
