@@ -19,10 +19,7 @@ namespace EasyMigrator.Tests
                 var e = expected.Columns.ElementAt(i);
                 var a = actual.Columns.ElementAt(i);
 
-                if ($"[{e.Name}]" == a.Name)
-                    Assert.AreEqual($"[{e.Name}]", a.Name);
-                else
-                    Assert.AreEqual(e.Name, a.Name);
+                Assert.AreEqual(e.Name, a.Name);
                 Assert.AreEqual(e.Type, a.Type);
                 Assert.AreEqual(e.DefaultValue, a.DefaultValue);
                 Assert.AreEqual(e.IsNullable, a.IsNullable);
@@ -39,7 +36,7 @@ namespace EasyMigrator.Tests
                 if (e.Precision == null)
                     Assert.IsNull(a.Precision);
                 else {
-                    Assert.AreEqual(isMigratorDotNet ? 19 : e.Precision.Precision, a.Precision.Precision);
+                    Assert.AreEqual(e.Precision.Precision, a.Precision.Precision);
                     Assert.AreEqual(e.Precision.Scale, a.Precision.Scale);
                 }
 

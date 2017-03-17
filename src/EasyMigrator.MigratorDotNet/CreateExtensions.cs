@@ -22,7 +22,7 @@ namespace EasyMigrator
                 if (col.AutoIncrement != null && (col.AutoIncrement.Seed > 1 || col.AutoIncrement.Step > 1))
                     throw new NotImplementedException("AutoIncrement Seeds or Steps other than 1 are not supported for MigratorDotNet.");
 
-                // do this temporarily because we want to create the PK ourselves later in order to set the name and support unclustered and composite indices
+                // do this temporarily because we want to create the PK ourselves later in order to set the name and support unclustered and composite PK's
                 var isPk = col.IsPrimaryKey;
                 if (isPk)
                     col.IsPrimaryKey = false;
@@ -39,6 +39,9 @@ namespace EasyMigrator
 
             foreach (var col in table.Columns.MaxLength())
                 AlterToMaxLength(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.IsNullable);
+
+            foreach (var col in table.Columns.WithPrecision())
+                AlterForPrecision(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Precision.Precision, col.Precision.Scale, col.IsNullable);
 
             foreach (var col in table.Columns.ForeignKeys()) {
                 var fk = col.ForeignKey;
@@ -74,6 +77,9 @@ namespace EasyMigrator
             foreach (var col in table.Columns.MaxLength())
                 AlterToMaxLength(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.IsNullable);
 
+            foreach (var col in table.Columns.WithPrecision())
+                AlterForPrecision(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Precision.Precision, col.Precision.Scale, col.IsNullable);
+
             if (populate != null) {
                 populate();
                 foreach (var col in nonNullables) {
@@ -101,8 +107,9 @@ namespace EasyMigrator
             var c = new Column(SqlReservedWords.Quote(col.Name), col.Type);
             ColumnProperty cp = ColumnProperty.None;
 
-            if (col.IsPrimaryKey)
-                cp |= ColumnProperty.PrimaryKey;
+            // don't set this property on the columns so we can create the primary key ourselves later to set the same and support nonclustered and composite PK's
+            //if (col.IsPrimaryKey)
+            //    cp |= ColumnProperty.PrimaryKey;
 
             if (col.AutoIncrement != null)
                 cp |= ColumnProperty.Identity;
@@ -116,10 +123,9 @@ namespace EasyMigrator
             if (col.Length.HasValue)
                 c.Size = col.Length.Value;
 
-            if (col.Type == DbType.Decimal && col.Precision != null) {
-                // MigratorDotNet doesn't seem to support precision
-                c.Size = col.Precision.Scale;
-            }
+            // Migrator.Net doesn't support setting the precision so we do it manually with SQL
+            //if (col.Type == DbType.Decimal && col.Precision != null)
+            //    c.Size = col.Precision.Scale;
 
             return c;
         }
@@ -131,5 +137,7 @@ namespace EasyMigrator
         // so, we work around it
         static private void AlterToMaxLength(ITransformationProvider Database, string tableName, string columnName, DbType dbType, bool isNullable)
             => Database.ExecuteNonQuery($"ALTER TABLE {tableName} ALTER COLUMN {columnName} {(dbType == DbType.AnsiString ? "" : "N")}VARCHAR(MAX) {(isNullable ? "" : "NOT ")}NULL");
+        static private void AlterForPrecision(ITransformationProvider Database, string tableName, string columnName, int precision, int scale, bool isNullable)
+            => Database.ExecuteNonQuery($"ALTER TABLE {tableName} ALTER COLUMN {columnName} DECIMAL({precision}, {scale}) {(isNullable ? "" : "NOT ")}NULL");
     }
 }
