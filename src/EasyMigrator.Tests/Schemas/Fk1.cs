@@ -54,13 +54,13 @@ namespace EasyMigrator.Tests.Schemas
                         Name = "StuffId",
                         Type = DbType.Int32,
                         ForeignKey = new FkAttribute("Stuff") { Column = "Id" },
-                        Index = new IndexAttribute()
+                        Index = new IndexAttribute { Name = "IX_Assoc_StuffId" }
                     },
                     new Column {
                         Name = "AltStuffId",
                         Type = DbType.Int32,
                         ForeignKey = new FkAttribute("Stuff") { Column = "Id" },
-                        Index = new IndexAttribute()
+                        Index = new IndexAttribute { Name = "IX_Assoc_AltStuffId" }
                     }
                 }
             };

@@ -33,14 +33,14 @@ namespace EasyMigrator
 
             var pkCreator = Create.PrimaryKey(table.PrimaryKeyName)
                                   .OnTable(table.Name)
-                                  .Columns(table.Columns.Where(c => c.IsPrimaryKey).Select(c => c.Name).ToArray());
+                                  .Columns(table.Columns.PrimaryKey().Select(c => c.Name).ToArray());
 
             if (table.PrimaryKeyIsClustered)
                 pkCreator.Clustered();
             else
                 pkCreator.NonClustered();
 
-            foreach (var col in table.Columns.Where(c => c.Index?.Clustered ?? false))
+            foreach (var col in table.Columns.Indexed().Where(c => c.Index.Clustered))
                 Create.UniqueConstraint(col.Index.Name).OnTable(table.Name).Columns(col.Name).Clustered();
         }
 
@@ -67,7 +67,7 @@ namespace EasyMigrator
                                               ICreateColumnOptionOrForeignKeyCascadeSyntax>(table, col);
             }
 
-            foreach (var col in table.Columns.Where(c => c.Index?.Clustered ?? false))
+            foreach (var col in table.Columns.Indexed().Where(c => c.Index.Clustered))
                 Create.UniqueConstraint(col.Index.Name).OnTable(table.Name).Columns(col.Name).Clustered();
 
             if (populate != null) {

@@ -25,6 +25,7 @@ namespace EasyMigrator.Tests
         public class FkStuffTable
         {
             public int Quantity;
+            [Max, NotNull] public string Story;
         }
 
         public class FkCol
@@ -71,7 +72,7 @@ namespace EasyMigrator.Tests.FluentMigrator
 
             set.AddMigrationForFluentMigrator(
                 m => {
-                    m.Create.Columns<FkStuffTable>(m.Alter, () => m.Update.Table(nameof(FkStuff)).Set(new { Quantity = 2 }).AllRows());
+                    m.Create.Columns<FkStuffTable>(m.Alter, () => m.Update.Table(nameof(FkStuff)).Set(new { Quantity = 2, Story = "Hi" }).AllRows());
                 },
                 m => {
                     m.Delete.Columns<FkStuffTable>();
@@ -114,7 +115,7 @@ namespace EasyMigrator.Tests.MigratorDotNet
 
             set.AddMigrationForMigratorDotNet(
                 m => {
-                    m.Database.AddColumns<FkStuffTable>(() => m.Database.Update(nameof(FkStuff), new[] { "Quantity" }, new[] { "2" }));
+                    m.Database.AddColumns<FkStuffTable>(() => m.Database.Update(nameof(FkStuff), new[] { "Quantity", "Story" }, new[] { "2", "Hi" }));
                 },
                 m => {
                     m.Database.RemoveColumns<FkStuffTable>();
