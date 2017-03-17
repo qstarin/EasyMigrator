@@ -39,6 +39,7 @@ namespace EasyMigrator.Tests.Schemas
             {
                 [Fk("Stuff")] int StuffId;
                 [Fk("Stuff")] int AltStuffId;
+                [Fk("Stuff")] int Desc;
             }
 
             static Table Model = new Table {
@@ -61,6 +62,12 @@ namespace EasyMigrator.Tests.Schemas
                         Type = DbType.Int32,
                         ForeignKey = new FkAttribute("Stuff") { Column = "Id" },
                         Index = new IndexAttribute { Name = "IX_Assoc_AltStuffId" }
+                    },
+                    new Column {
+                        Name = "Desc",
+                        Type = DbType.Int32,
+                        ForeignKey = new FkAttribute("Stuff") { Column = "Id" },
+                        Index = new IndexAttribute { Name = "IX_Assoc_Desc" }
                     }
                 }
             };

@@ -198,7 +198,7 @@ namespace EasyMigrator
             => Database.AddIndex(table, indexName, unique, clustered, Parsing.Parser.Default, columnNamesWithDirection);
 
         static public void AddIndex(this ITransformationProvider Database, string table, string indexName, bool unique, bool clustered, Parsing.Parser parser, params string[] columnNamesWithDirection)
-            => Database.ExecuteNonQuery($"CREATE {(unique ? "UNIQUE " : "")}{(clustered ? "CLUSTERED" : "NONCLUSTERED")} INDEX {indexName ?? parser.Conventions.IndexNameByTableAndColumnNames(table, RemoveDirection(columnNamesWithDirection))} ON [{table}] ({string.Join(", ", columnNamesWithDirection)})");
+            => Database.ExecuteNonQuery($"CREATE {(unique ? "UNIQUE " : "")}{(clustered ? "CLUSTERED" : "NONCLUSTERED")} INDEX {indexName ?? parser.Conventions.IndexNameByTableAndColumnNames(table, RemoveDirection(columnNamesWithDirection))} ON {SqlReservedWords.Quote(table)} ({string.Join(", ", QuoteColumns(columnNamesWithDirection))})");
 
         static private IEnumerable<string> RemoveDirection(IEnumerable<string> columnNamesWithDirection)
         {
@@ -209,6 +209,18 @@ namespace EasyMigrator
                     yield return c.Substring(0, c.Length - " DESC".Length);
                 else
                     yield return c;
+            }
+        }
+
+        static private IEnumerable<string> QuoteColumns(IEnumerable<string> columnNamesWithDirection)
+        {
+            foreach (var c in columnNamesWithDirection) {
+                if (c.EndsWith(" ASC"))
+                    yield return SqlReservedWords.Quote(c.Substring(0, c.Length - " ASC".Length)) + " ASC";
+                else if (c.EndsWith(" DESC"))
+                    yield return SqlReservedWords.Quote(c.Substring(0, c.Length - " DESC".Length)) + " DESC";
+                else
+                    yield return SqlReservedWords.Quote(c);
             }
         }
     }

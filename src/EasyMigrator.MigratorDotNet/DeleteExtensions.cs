@@ -19,7 +19,7 @@ namespace EasyMigrator
             var table = parser.ParseTableType(tableType).Table;
             db.RemoveForeignKeys(table);
             db.RemoveIndexes(table);
-            db.RemoveTable(table.Name);
+            db.RemoveTable(SqlReservedWords.Quote(table.Name));
         }
 
         static public void RemoveColumns<T>(this ITransformationProvider db) => db.RemoveColumns(typeof(T));
@@ -39,7 +39,7 @@ namespace EasyMigrator
         static private void RemoveColumns(this ITransformationProvider db, Table table)
         {
             foreach (var c in table.Columns.DefinedInPoco())
-                db.RemoveColumn(table.Name, c.Name);
+                db.RemoveColumn(SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(c.Name));
         }
 
         static private void RemoveForeignKeys(this ITransformationProvider db, Table table)
@@ -47,7 +47,7 @@ namespace EasyMigrator
             foreach (var c in table.Columns.DefinedInPoco()) {
                 var f = c.ForeignKey;
                 if (f != null)
-                    db.RemoveForeignKey(table.Name, f.Name);
+                    db.RemoveForeignKey(SqlReservedWords.Quote(table.Name), f.Name);
             }
         }
 
@@ -56,7 +56,7 @@ namespace EasyMigrator
             foreach (var c in table.Columns.DefinedInPoco()) {
                 var i = c.Index;
                 if (i != null)
-                    db.RemoveIndex(table.Name, i.Name);
+                    db.RemoveIndex(SqlReservedWords.Quote(table.Name), i.Name);
             }
         }
     }

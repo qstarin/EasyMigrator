@@ -34,20 +34,20 @@ namespace EasyMigrator
                     col.IsPrimaryKey = true;
             }
 
-            Database.AddTable(table.Name, columns.ToArray());
-            Database.AddPrimaryKey(table.Name, table.PrimaryKeyName, table.PrimaryKeyIsClustered, table.Columns.PrimaryKey().Select(c => c.Name).ToArray());
+            Database.AddTable(SqlReservedWords.Quote(table.Name), columns.ToArray());
+            Database.AddPrimaryKey(SqlReservedWords.Quote(table.Name), table.PrimaryKeyName, table.PrimaryKeyIsClustered, table.Columns.PrimaryKey().Select(c => SqlReservedWords.Quote(c.Name)).ToArray());
 
             foreach (var col in table.Columns.MaxLength())
-                AlterToMaxLength(Database, table.Name, col.Name, col.Type, col.IsNullable);
+                AlterToMaxLength(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.IsNullable);
 
             foreach (var col in table.Columns.ForeignKeys()) {
                 var fk = col.ForeignKey;
-                Database.AddForeignKey(fk.Name, table.Name, col.Name, fk.Table, fk.Column);
+                Database.AddForeignKey(fk.Name, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), SqlReservedWords.Quote(fk.Table), SqlReservedWords.Quote(fk.Column));
             }
             
             foreach (var col in table.Columns.Indexed()) {
                 var idx = col.Index;
-                Database.AddIndex(table.Name, idx.Name, idx.Unique, idx.Clustered, col.Name);
+                Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, SqlReservedWords.Quote(col.Name));
             }
         }
 
@@ -68,37 +68,37 @@ namespace EasyMigrator
 					nonNullables.Add(col);
 				}
 
-                Database.AddColumn(table.Name, BuildColumn(col));
+                Database.AddColumn(SqlReservedWords.Quote(table.Name), BuildColumn(col));
             }
 
             foreach (var col in table.Columns.MaxLength())
-                AlterToMaxLength(Database, table.Name, col.Name, col.Type, col.IsNullable);
+                AlterToMaxLength(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.IsNullable);
 
             if (populate != null) {
                 populate();
                 foreach (var col in nonNullables) {
                     col.IsNullable = false;
                     if (table.Columns.MaxLength().Contains(col))
-                        AlterToMaxLength(Database, table.Name, col.Name, col.Type, col.IsNullable);
+                        AlterToMaxLength(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.IsNullable);
                     else
-                        Database.ChangeColumn(table.Name, BuildColumn(col));
+                        Database.ChangeColumn(SqlReservedWords.Quote(table.Name), BuildColumn(col));
                 }
             }
 
             foreach (var col in pocoColumns.ForeignKeys()) {
                 var fk = col.ForeignKey;
-                Database.AddForeignKey(fk.Name, table.Name, col.Name, fk.Table, fk.Column);
+                Database.AddForeignKey(fk.Name, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), SqlReservedWords.Quote(fk.Table), SqlReservedWords.Quote(fk.Column));
             }
             
             foreach (var col in pocoColumns.Indexed()) {
                 var idx = col.Index;
-                Database.AddIndex(table.Name, idx.Name, idx.Unique, idx.Clustered, col.Name);
+                Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, SqlReservedWords.Quote(col.Name));
             }
         }
 
         static private Column BuildColumn(EColumn col)
         {
-            var c = new Column(col.Name, col.Type);
+            var c = new Column(SqlReservedWords.Quote(col.Name), col.Type);
             ColumnProperty cp = ColumnProperty.None;
 
             if (col.IsPrimaryKey)
@@ -130,6 +130,6 @@ namespace EasyMigrator
         // using this sets the column type to ntext instead of nvarchar
         // so, we work around it
         static private void AlterToMaxLength(ITransformationProvider Database, string tableName, string columnName, DbType dbType, bool isNullable)
-            => Database.ExecuteNonQuery($"ALTER TABLE [{tableName}] ALTER COLUMN {columnName} {(dbType == DbType.AnsiString ? "" : "N")}VARCHAR(MAX) {(isNullable ? "" : "NOT ")}NULL");
+            => Database.ExecuteNonQuery($"ALTER TABLE {tableName} ALTER COLUMN {columnName} {(dbType == DbType.AnsiString ? "" : "N")}VARCHAR(MAX) {(isNullable ? "" : "NOT ")}NULL");
     }
 }

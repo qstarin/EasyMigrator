@@ -35,7 +35,8 @@ namespace EasyMigrator.Tests
 
         public class FkColTable
         {
-            [Fk("FkStuff")] int StuffId;
+            [Fk("FkStuff")] public int StuffId;
+            public int Case;
         }
     }
 }
@@ -101,8 +102,10 @@ namespace EasyMigrator.Tests.MigratorDotNet
                     m.Database.AddTable<FkStuff>();
                     m.Database.AddTable<FkCol>();
                     m.Database.AddColumns<FkColTable>();
+                    m.Database.AddIndex(new Descending<FkColTable>(t => t.Case), new Ascending<FkColTable>(t => t.StuffId));
                 },
                 m => {
+                    m.Database.RemoveIndex<FkColTable>(t => t.Case, t => t.StuffId);
                     m.Database.RemoveColumns<FkColTable>();
                 });
 

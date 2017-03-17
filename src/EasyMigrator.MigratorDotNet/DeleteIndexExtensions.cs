@@ -53,6 +53,6 @@ namespace EasyMigrator
             => Database.RemoveIndexByName(parser.ParseTableType(typeof(TTable)).Table.Name, indexName);
 
         static public void RemoveIndexByName(this ITransformationProvider Database, string table, string indexName)
-            => Database.ExecuteNonQuery($"DROP INDEX {indexName} ON [{table}]");
+            => Database.ExecuteNonQuery($"DROP INDEX {indexName} ON {SqlReservedWords.Quote(table)}");
     }
 }
