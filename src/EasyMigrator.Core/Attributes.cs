@@ -7,7 +7,6 @@ using System.Text;
 
 namespace EasyMigrator
 {
-    // TODO: Column & Table name attributes, multi-column indices (sorted..)
     [Obsolete("This attribute is for legacy code that is migrating. Use object types or nullable value types for a nullable field, and use NotNullAttribute to override object types for a non-nullable field")]
     public class NullAttribute : Attribute { }
     public class NotNullAttribute : Attribute { }

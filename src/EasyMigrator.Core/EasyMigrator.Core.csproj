@@ -44,6 +44,7 @@
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="Attributes.cs" />
+    <Compile Include="CompositeIndex.cs" />
     <Compile Include="IndexColumn.cs" />
     <Compile Include="Parsing\Conventions.cs" />
     <Compile Include="Extensions\ModelExtensions.cs" />
@@ -51,6 +52,7 @@
     <Compile Include="Extensions\ObjectExtensions.cs" />
     <Compile Include="Extensions\ReflectionExtensions.cs" />
     <Compile Include="Parsing\Model\Column.cs" />
+    <Compile Include="Parsing\Model\CompositeIndex.cs" />
     <Compile Include="Parsing\Model\IAutoIncrement.cs" />
     <Compile Include="Parsing\Model\IForeignKey.cs" />
     <Compile Include="Parsing\Model\IIndex.cs" />

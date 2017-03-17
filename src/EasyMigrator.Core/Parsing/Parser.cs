@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -23,7 +25,7 @@ namespace EasyMigrator.Parsing
         {
             var context = new Context {
                 Conventions = Conventions,
-                Fields = GetColumnFields(type),
+                ColumnFields = GetColumnFields(type),
                 ModelType = type,
                 Model = Activator.CreateInstance(type),
             };
@@ -66,7 +68,7 @@ namespace EasyMigrator.Parsing
         protected virtual Context ParseTable(Type tableType)
         {
             var context = CreateContext(tableType);
-            var fields = context.Fields;
+            var fields = context.ColumnFields;
             var table = context.Table;
             var typemap = Conventions.TypeMap(context);
             var tablePk = context.ModelType.GetAttribute<PkAttribute>();
@@ -144,11 +146,60 @@ namespace EasyMigrator.Parsing
             if (table.PrimaryKeyName == null)
                 table.PrimaryKeyName = Conventions.PrimaryKeyName(context);
 
+            var getExprFieldMethod = typeof(ReflectionExtensions).GetMethod("GetExpressionField");
+            foreach (var fi in GetCompositeIndexFields(tableType)) {
+                IndexColumn[] columns = null;
+
+                if (fi.FieldType == typeof(EasyMigrator.CompositeIndex)) {
+                    var ci = fi.GetValue(context.Model) as EasyMigrator.CompositeIndex;
+                    columns = ci.Columns;
+                }
+                else {
+                    // this could use some clean up and explanation
+                    var idxTableType = fi.FieldType.GetGenericArguments().Single();
+                    var idxContext = idxTableType == tableType ? context : ParseTableType(idxTableType);
+                    var ci = fi.GetValue(context.Model);
+                    var columnsProperty = fi.FieldType.GetProperty("Columns");
+                    var columnsUntyped = columnsProperty.GetGetMethod().Invoke(ci, null);
+                    var columnsPropertyType = columnsProperty.PropertyType.GetElementType();
+                    var colExprGet = columnsPropertyType.GetProperty("ColumnExpression").GetGetMethod();
+                    var directionGet = columnsPropertyType.GetProperty("Direction").GetGetMethod();
+
+                    var columnList = new List<IndexColumn>();
+                    foreach (var c in columnsUntyped as IEnumerable) {
+                        var colExpr = colExprGet.Invoke(c, null);
+                        var getExprMethod = getExprFieldMethod.MakeGenericMethod(idxTableType, typeof(object));
+                        var cfi = getExprMethod.Invoke(null, new[] { colExpr }) as FieldInfo;
+                        var dir = (SortOrder)directionGet.Invoke(c, null);
+                        columnList.Add(new IndexColumn(idxContext.Columns[cfi].Name, dir));
+                    }
+                    columns = columnList.ToArray();
+                }
+
+                var ciIdxAttr = fi.GetAttribute<IndexAttribute>();
+                table.CompositeIndices.Add(new Model.CompositeIndex {
+                    Name = ciIdxAttr?.Name ?? Conventions.IndexNameByTableAndColumnNames(table.Name, columns.Select(c => c.ColumnName).ToArray()),
+                    Columns = columns,
+                    Unique = ciIdxAttr?.Unique ?? false,
+                    Clustered = ciIdxAttr?.Clustered ?? false,
+                });
+            }
+
             return context;
         }
 
         protected virtual IEnumerable<FieldInfo> GetColumnFields(Type type)
-            => type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            => type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                   .Where(fi => !IsCompositeIndexField(fi));
+
+        protected virtual IEnumerable<FieldInfo> GetCompositeIndexFields(Type type)
+            => type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                   .Where(IsCompositeIndexField);
+
+        protected virtual bool IsCompositeIndexField(FieldInfo fi)
+            => fi.FieldType == typeof(EasyMigrator.CompositeIndex) ||
+               (fi.FieldType.IsGenericType &&
+                fi.FieldType.GetGenericTypeDefinition() == typeof(EasyMigrator.CompositeIndex<>));
 
         protected virtual string GetDefaultValue(object model, FieldInfo field)
         {

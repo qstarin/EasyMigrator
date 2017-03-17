@@ -52,6 +52,9 @@ namespace EasyMigrator
                 var idx = col.Index;
                 Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, SqlReservedWords.Quote(col.Name));
             }
+
+            foreach (var idx in table.CompositeIndices)
+                Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, parser, idx.Columns.Select(c => c.ColumnNameWithDirection).ToArray());
         }
 
         static public void AddColumns<T>(this ITransformationProvider Database, Action populate = null) => Database.AddColumns(typeof(T), populate);
@@ -98,8 +101,11 @@ namespace EasyMigrator
             
             foreach (var col in pocoColumns.Indexed()) {
                 var idx = col.Index;
-                Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, SqlReservedWords.Quote(col.Name));
+                Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, parser, SqlReservedWords.Quote(col.Name));
             }
+
+            foreach (var idx in table.CompositeIndices)
+                Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, parser, idx.Columns.Select(c => c.ColumnNameWithDirection).ToArray());
         }
 
         static private Column BuildColumn(EColumn col)
@@ -137,6 +143,8 @@ namespace EasyMigrator
         // so, we work around it
         static private void AlterToMaxLength(ITransformationProvider Database, string tableName, string columnName, DbType dbType, bool isNullable)
             => Database.ExecuteNonQuery($"ALTER TABLE {tableName} ALTER COLUMN {columnName} {(dbType == DbType.AnsiString ? "" : "N")}VARCHAR(MAX) {(isNullable ? "" : "NOT ")}NULL");
+
+        // Migrator.Net doesn't support setting the precision so we do it manually with SQL
         static private void AlterForPrecision(ITransformationProvider Database, string tableName, string columnName, int precision, int scale, bool isNullable)
             => Database.ExecuteNonQuery($"ALTER TABLE {tableName} ALTER COLUMN {columnName} DECIMAL({precision}, {scale}) {(isNullable ? "" : "NOT ")}NULL");
     }

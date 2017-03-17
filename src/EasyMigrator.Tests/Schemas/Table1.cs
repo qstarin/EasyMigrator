@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System.Collections.Generic;
+using System.Data;
 using EasyMigrator.Parsing.Model;
 using EasyMigrator.Tests.TableTest;
 
@@ -14,13 +15,26 @@ namespace EasyMigrator.Tests.Schemas
             [NotNull] public string Name;
             [Fixed(8), Ansi, NotNull, Unique(Name = "idx_code")] public string Code;
             [Length(Length.Medium)] public string Headline;
-            [Max, Name("[Desc]")] public string Desc;
+            [Max] public string Desc;
             [DbType(DbType.Currency)] public decimal? Rate;
             [Precision(Length.Short, 3)] public decimal Adjustment;
+
+            CompositeIndex<Poco> i1 = new CompositeIndex<Poco>(x => x.Name, x => x.Code);
         }
 
         static Table Model = new Table {
             Name = "Table1",
+            CompositeIndices = new List<Parsing.Model.CompositeIndex> {
+                new Parsing.Model.CompositeIndex {
+                    Name = "IX_Table1_Name_Code",
+                    Unique = false,
+                    Clustered = false,
+                    Columns = new [] {
+                        new IndexColumn("Name"),
+                        new IndexColumn("Code"),
+                    }
+                }
+            },
             Columns = new[] {
                 new Column {
                     Name = "Id",

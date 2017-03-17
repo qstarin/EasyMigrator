@@ -104,6 +104,7 @@ namespace EasyMigrator.Tests.Integration
             var table = new Table {Name = tableName};
             var schema = GetDbSchema();
             var st = schema.Tables.Single(t => t.Name == table.Name);
+
             table.Columns = st.Columns.Select(c => {
                 var sqlDbType = (SqlDbType)c.DataType.ProviderDbType;
                 var param = new SqlParameter();
@@ -129,7 +130,11 @@ namespace EasyMigrator.Tests.Integration
                         ? new PrecisionAttribute(c.Precision.Value, c.Scale.Value) 
                         : null,
                     Index = idx != null
-                        ? c.IsUniqueKey ? new UniqueAttribute { Name = idx.Name } : new IndexAttribute { Name = idx.Name }
+                        ? idx.IndexType != "NONCLUSTERED"
+                            ? new ClusteredAttribute { Name = idx.Name }
+                            : c.IsUniqueKey 
+                                ? new UniqueAttribute { Name = idx.Name } 
+                                : new IndexAttribute { Name = idx.Name }
                         : null,
                     ForeignKey = c.IsForeignKey
                         ? new FkAttribute(c.ForeignKeyTableName) { Column = c.ForeignKeyTable.PrimaryKeyColumn.Name }
