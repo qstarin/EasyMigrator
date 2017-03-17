@@ -52,15 +52,15 @@ namespace EasyMigrator.Parsing
                     throw new Exception($"Cannot create a foreign key from table {context.Table.Name} to table {fkTable.Name} with {(fkTable.HasPrimaryKey ? "composite" : "no")} primary key.");
 
                 var fkCol = fkTable.Columns.PrimaryKey().Single();
-                if (fk.Name == null)
-                    fk.Name = Conventions.ForeignKeyName(context, col);
-
                 var newFk = new FkAttribute(fkTable.Name) {
                     Name = fk.Name,
                     Column = fkCol.Name,
                     Indexed = fk.Indexed,
                 };
                 col.ForeignKey = newFk;
+
+                if (newFk.Name == null)
+                    newFk.Name = Conventions.ForeignKeyName(context, col);
             }
             return context;
         }

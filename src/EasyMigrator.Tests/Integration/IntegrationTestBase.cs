@@ -105,20 +105,34 @@ namespace EasyMigrator.Tests.Integration
             var schema = GetDbSchema();
             var st = schema.Tables.Single(t => t.Name == table.Name);
 
+            var pkIdx = st.Indexes.SingleOrDefault(i => i.IndexType == "PRIMARY");
+            table.PrimaryKeyName = pkIdx.Name;
+
+            foreach (var idx in st.Indexes.Where(i => i.IndexType != "PRIMARY" && i.Columns.Count > 1)) {
+                var ci = new Parsing.Model.CompositeIndex {
+                    Name = idx.Name,
+                    Unique = idx.IsUnique,
+                    Clustered = idx.IndexType != "NONCLUSTERED",
+                    Columns = idx.Columns.Select(c => new IndexColumn(c.Name)).ToArray()
+                };
+                table.CompositeIndices.Add(ci);
+            }
+
             table.Columns = st.Columns.Select(c => {
                 var sqlDbType = (SqlDbType)c.DataType.ProviderDbType;
                 var param = new SqlParameter();
                 param.SqlDbType = sqlDbType;
                 var dbType = param.DbType;
 
-                var idx = st.Indexes.SingleOrDefault(i => !c.IsPrimaryKey && i.Columns.Count == 1 && i.Columns.Single().Name == c.Name);
+                var idx = st.Indexes.SingleOrDefault(i => i.IndexType != "PRIMARY" && i.Columns.Count == 1 && i.Columns[0].Name == c.Name);
+                var fk = st.ForeignKeys.SingleOrDefault(f => f.Columns.Count == 1 && f.Columns[0] == c.Name);
 
                 return new Column {
                     Name = c.Name,
-                    Type = dbType,//(DbType)Enum.Parse(typeof(DbType), c.DbDataType),
+                    Type = dbType,
                     IsPrimaryKey = c.IsPrimaryKey,
                     IsNullable = c.Nullable,
-                    Length = c.Length.IfHasValue(l => l == -1 || l == 0x3fffffff ? int.MaxValue : l, (int?)null),
+                    Length = c.Length.IfHasValue(l => l == -1 ? int.MaxValue : l, (int?)null),
                     DefaultValue =
                         dbType == DbType.Boolean
                             ? ((c.DefaultValue?.Contains("0") ?? true) ? "0" : "1")
@@ -137,7 +151,10 @@ namespace EasyMigrator.Tests.Integration
                                 : new IndexAttribute { Name = idx.Name }
                         : null,
                     ForeignKey = c.IsForeignKey
-                        ? new FkAttribute(c.ForeignKeyTableName) { Column = c.ForeignKeyTable.PrimaryKeyColumn.Name }
+                        ? new FkAttribute(c.ForeignKeyTableName) {
+                                Name = fk.Name,
+                                Column = c.ForeignKeyTable.PrimaryKeyColumn.Name
+                            }
                         : null
                 };
             }).ToList();

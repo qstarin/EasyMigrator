@@ -14,6 +14,7 @@ namespace EasyMigrator.Tests
         static public void AreEqual(Table expected, Table actual, bool isMigratorDotNet)
         {
             Assert.AreEqual(expected.Name, actual.Name);
+            Assert.AreEqual(expected.PrimaryKeyName ?? $"PK_{expected.Name}", actual.PrimaryKeyName);
             Assert.AreEqual(expected.Columns.Count, actual.Columns.Count);
             for (var i = 0; i < expected.Columns.Count; i++) {
                 var e = expected.Columns.ElementAt(i);
@@ -51,9 +52,31 @@ namespace EasyMigrator.Tests
                 if (e.ForeignKey == null)
                     Assert.IsNull(a.ForeignKey);
                 else {
-                    //Assert.AreEqual(e.ForeignKey.Name, a.ForeignKey.Name);
+                    Assert.AreEqual(e.ForeignKey.Name ?? $"FK_{e.ForeignKey.Table}_{e.Name}", a.ForeignKey.Name);
                     Assert.AreEqual(e.ForeignKey.Table, a.ForeignKey.Table);
                     Assert.AreEqual(e.ForeignKey.Column, a.ForeignKey.Column);
+                }
+            }
+
+            expected.CompositeIndices = expected.CompositeIndices.OrderBy(ci => ci.Name).ToList();
+            actual.CompositeIndices = actual.CompositeIndices.OrderBy(ci => ci.Name).ToList();
+            Assert.AreEqual(expected.CompositeIndices.Count, actual.CompositeIndices.Count);
+            for (var i = 0; i < expected.CompositeIndices.Count; i++) {
+                var e = expected.CompositeIndices[i];
+                var a = actual.CompositeIndices[i];
+                Assert.AreEqual(e.Name, a.Name);
+                Assert.AreEqual(e.Unique, a.Unique);
+                Assert.AreEqual(e.Clustered, a.Clustered);
+
+                // this is bad but schema reader doesn't get the correct order of columns
+                e.Columns = e.Columns.OrderBy(ci => ci.ColumnName).ToArray();
+                a.Columns = a.Columns.OrderBy(ci => ci.ColumnName).ToArray();
+                Assert.AreEqual(e.Columns.Length, a.Columns.Length);
+                for (var j = 0; j < e.Columns.Length; j++) {
+                    var ec = e.Columns[j];
+                    var ac = a.Columns[j];
+                    Assert.AreEqual(ec.ColumnName, ac.ColumnName);
+                    Assert.AreEqual(ec.Direction, ac.Direction);
                 }
             }
         }

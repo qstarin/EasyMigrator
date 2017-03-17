@@ -94,12 +94,14 @@ namespace EasyMigrator.Tests.Schemas
                         Type = DbType.Int32,
                         IsPrimaryKey = true,
                         ForeignKey = new FkAttribute("Book") { Column = "Id" },
+                        Index = new IndexAttribute { Name = "IX_BookAuthor_BookId" },
                     },
                     new Column {
                         Name = "AuthorId",
                         Type = DbType.Int32,
                         IsPrimaryKey = true,
                         ForeignKey = new FkAttribute("Author") { Column = "Id" },
+                        Index = new IndexAttribute { Name = "IX_BookAuthor_AuthorId" },
                     },
                 }
             };
