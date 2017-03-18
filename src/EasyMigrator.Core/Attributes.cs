@@ -8,23 +8,27 @@ using System.Text;
 namespace EasyMigrator
 {
     [Obsolete("This attribute is for legacy code that is migrating. Use object types or nullable value types for a nullable field, and use NotNullAttribute to override object types for a non-nullable field")]
-    public class NullAttribute : Attribute { }
-    public class NotNullAttribute : Attribute { }
+    [AttributeUsage(AttributeTargets.Field)] public class NullAttribute : Attribute { }
+    [AttributeUsage(AttributeTargets.Field)] public class NotNullAttribute : Attribute { }
 
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class)]
     public class NameAttribute : Attribute
     {
         public string Name { get; }
         public NameAttribute(string name) { Name = name; }
     }
 
+    [AttributeUsage(AttributeTargets.Field)]
     public class DbTypeAttribute : Attribute
     {
         public DbType DbType { get; }
         public DbTypeAttribute(DbType dbType) { DbType = dbType; }
     }
 
+    [AttributeUsage(AttributeTargets.Class)]
     public class NoPkAttribute : Attribute { }
 
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Class)]
     public class PkAttribute : Attribute
     {
         public string Name { get; }
@@ -34,6 +38,7 @@ namespace EasyMigrator
         public PkAttribute(string name) { Name = name; }
     }
 
+    [AttributeUsage(AttributeTargets.Field)]
     public class AutoIncAttribute : Attribute, Parsing.Model.IAutoIncrement
     {
         public long Seed { get; }
@@ -44,6 +49,7 @@ namespace EasyMigrator
         public AutoIncAttribute(long seed, long step) { Seed = seed; Step = step; }
     }
 
+    [AttributeUsage(AttributeTargets.Field)]
     public class PrecisionAttribute : Attribute, Parsing.Model.IPrecision
     {
         internal Length? DefinedPrecision { get; }
@@ -59,6 +65,7 @@ namespace EasyMigrator
         private PrecisionAttribute(int scale) { Scale = scale; }
     }
 
+    [AttributeUsage(AttributeTargets.Field)]
     public class FkAttribute : Attribute, Parsing.Model.IForeignKey
     {
         public string Name { get; set; }
@@ -71,6 +78,7 @@ namespace EasyMigrator
         public FkAttribute(Type tableType) { TableType = tableType; }
     }
 
+    [AttributeUsage(AttributeTargets.Field)]
     public class IndexAttribute : Attribute, Parsing.Model.IIndex
     {
         public string Name { get; set; }
@@ -78,20 +86,24 @@ namespace EasyMigrator
         public bool Clustered { get; protected set; }
     }
 
+    [AttributeUsage(AttributeTargets.Field)]
     public class UniqueAttribute : IndexAttribute
     {
         public UniqueAttribute() { Unique = true; }
     }
 
+    [AttributeUsage(AttributeTargets.Field)]
     public class ClusteredAttribute : UniqueAttribute
     {
         public ClusteredAttribute() { Clustered = true; }
     }
 
+    [AttributeUsage(AttributeTargets.Field)]
     public class AnsiAttribute : Attribute { }
 
     public enum Length { Default, Short, Medium, Long, Max }
 
+    [AttributeUsage(AttributeTargets.Field)]
     public class LengthAttribute : Attribute
     {
         internal Length? DefinedLength { get; }
@@ -101,16 +113,22 @@ namespace EasyMigrator
         public LengthAttribute(Length length) { DefinedLength = length; }
     }
 
+    [AttributeUsage(AttributeTargets.Field)]
     public class ShortAttribute : LengthAttribute { public ShortAttribute() : base(EasyMigrator.Length.Short) { } }
+    [AttributeUsage(AttributeTargets.Field)]
     public class MediumAttribute : LengthAttribute { public MediumAttribute() : base(EasyMigrator.Length.Medium) { } }
+    [AttributeUsage(AttributeTargets.Field)]
     public class LongAttribute : LengthAttribute { public LongAttribute() : base(EasyMigrator.Length.Long) { } }
+    [AttributeUsage(AttributeTargets.Field)]
     public class MaxAttribute : LengthAttribute { public MaxAttribute() : base(EasyMigrator.Length.Max) { } }
 
+    [AttributeUsage(AttributeTargets.Field)]
     public class FixedAttribute : LengthAttribute
     {
         public FixedAttribute(int length) : base(length) { }
     }
 
+    [AttributeUsage(AttributeTargets.Field)]
     public class DefaultAttribute : Attribute
     {
         public string Expression { get; }
