@@ -9,7 +9,7 @@ using EasyMigrator.Tests.TableTest;
 
 namespace EasyMigrator.Tests.Schemas
 {
-    public class ManyToMany1 : TableTestCase
+    public class Mtm_BookAuthors : TableTestCase
     {
         [MigrationOrder(1)]
         public class Author

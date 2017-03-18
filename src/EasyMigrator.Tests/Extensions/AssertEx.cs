@@ -11,10 +11,12 @@ namespace EasyMigrator.Tests
 {
     static public class AssertEx
     {
-        static public void AreEqual(Table expected, Table actual, bool isMigratorDotNet)
+        static public void AreEqual(Table expected, Table actual, bool isFluentMigrator, bool isMigratorDotNet)
         {
+            var isDb = isFluentMigrator || isMigratorDotNet;
+
             Assert.AreEqual(expected.Name, actual.Name);
-            Assert.AreEqual(expected.PrimaryKeyName ?? $"PK_{expected.Name}", actual.PrimaryKeyName);
+            Assert.AreEqual(expected.PrimaryKeyName ?? $"PK_{expected.Name}", actual.PrimaryKeyName); // TODO: Remove the default name here and fill in the models
             Assert.AreEqual(expected.Columns.Count, actual.Columns.Count);
             for (var i = 0; i < expected.Columns.Count; i++) {
                 var e = expected.Columns.ElementAt(i);
@@ -45,14 +47,15 @@ namespace EasyMigrator.Tests
                     Assert.IsNull(a.Index);
                 else {
                     Assert.AreEqual(e.Index.Name, a.Index.Name);
-                    //Assert.AreEqual(e.Index.Unique, a.Index.Unique); // <- Schema reader doesn't pick this up
+                    if (!isDb)
+                        Assert.AreEqual(e.Index.Unique, a.Index.Unique); // <- Schema reader doesn't pick this up
                     Assert.AreEqual(e.Index.Clustered, a.Index.Clustered);
                 }
 
                 if (e.ForeignKey == null)
                     Assert.IsNull(a.ForeignKey);
                 else {
-                    Assert.AreEqual(e.ForeignKey.Name ?? $"FK_{e.ForeignKey.Table}_{e.Name}", a.ForeignKey.Name);
+                    Assert.AreEqual(e.ForeignKey.Name ?? $"FK_{e.ForeignKey.Table}_{e.Name}", a.ForeignKey.Name); // TODO: Remove the default name here and fill in the models
                     Assert.AreEqual(e.ForeignKey.Table, a.ForeignKey.Table);
                     Assert.AreEqual(e.ForeignKey.Column, a.ForeignKey.Column);
                 }
@@ -65,7 +68,8 @@ namespace EasyMigrator.Tests
                 var e = expected.CompositeIndices[i];
                 var a = actual.CompositeIndices[i];
                 Assert.AreEqual(e.Name, a.Name);
-                //Assert.AreEqual(e.Unique, a.Unique); // <- Schema reader doesn't pick this up
+                if (!isDb)
+                    Assert.AreEqual(e.Unique, a.Unique); // <- Schema reader doesn't pick this up
                 Assert.AreEqual(e.Clustered, a.Clustered);
 
                 // this is bad but schema reader doesn't get the correct order of columns
@@ -76,7 +80,8 @@ namespace EasyMigrator.Tests
                     var ec = e.Columns[j];
                     var ac = a.Columns[j];
                     Assert.AreEqual(ec.ColumnName, ac.ColumnName);
-                    //Assert.AreEqual(ec.Direction, ac.Direction); // <- Schema reader doesn't pick this up
+                    if (!isDb)
+                        Assert.AreEqual(ec.Direction, ac.Direction); // <- Schema reader doesn't pick this up
                 }
             }
         }

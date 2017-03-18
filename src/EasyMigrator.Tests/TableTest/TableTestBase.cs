@@ -7,11 +7,6 @@ namespace EasyMigrator.Tests.TableTest
 {
     abstract public class TableTestBase
     {
-        [Test] public void Table1() => Test<Table1>();
-        [Test] public void Fk1() => Test<Fk1>();
-        [Test] public void ManyToMany1() => Test<ManyToMany1>();
-        [Test] public void CustomAutoIncrement_Int32() => Test<CustomAutoIncrement_Int32>();
-
         protected void Test<TCase>() => Test(new TableTestCase<TCase>());
         abstract protected void Test(ITableTestCase testCase);
 

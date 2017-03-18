@@ -1,13 +1,18 @@
-﻿using System.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Text;
 using EasyMigrator.Parsing.Model;
 using EasyMigrator.Tests.TableTest;
 
 
 namespace EasyMigrator.Tests.Schemas
 {
-    public class Fk1 : TableTestCase
+    public class Fk_AddToExisting : TableTestCase
     {
-        [MigrationOrder(1)] class Stuff
+        [MigrationOrder(1)]
+        class Stuff
         {
             class Poco
             {
@@ -26,20 +31,25 @@ namespace EasyMigrator.Tests.Schemas
                     new Column {
                         Name = "Description",
                         Type = DbType.String,
+                        Length = 255,
                         IsNullable = true,
-                        Length = 255
-                    }
+                    },
                 }
             };
         }
 
-        [MigrationOrder(2)] class Assoc
+        [MigrationOrder(2)]
+        public class Assoc
         {
             class Poco
             {
-                [Fk("Stuff")] int StuffId;
-                [Fk("Stuff")] int AltStuffId;
-                [Fk("Stuff")] int Desc;
+                [Medium] string Description;
+            }
+
+            [Name("Assoc")]
+            public class ColumnsToAdd
+            {
+                [Fk("Stuff")] public int StuffId;
             }
 
             static Table Model = new Table {
@@ -52,23 +62,17 @@ namespace EasyMigrator.Tests.Schemas
                         AutoIncrement = new AutoIncAttribute()
                     },
                     new Column {
+                        Name = "Description",
+                        Type = DbType.String,
+                        Length = 255,
+                        IsNullable = true,
+                    },
+                    new Column {
                         Name = "StuffId",
                         Type = DbType.Int32,
                         ForeignKey = new FkAttribute("Stuff") { Column = "Id" },
                         Index = new IndexAttribute { Name = "IX_Assoc_StuffId" }
                     },
-                    new Column {
-                        Name = "AltStuffId",
-                        Type = DbType.Int32,
-                        ForeignKey = new FkAttribute("Stuff") { Column = "Id" },
-                        Index = new IndexAttribute { Name = "IX_Assoc_AltStuffId" }
-                    },
-                    new Column {
-                        Name = "Desc",
-                        Type = DbType.Int32,
-                        ForeignKey = new FkAttribute("Stuff") { Column = "Id" },
-                        Index = new IndexAttribute { Name = "IX_Assoc_Desc" }
-                    }
                 }
             };
         }

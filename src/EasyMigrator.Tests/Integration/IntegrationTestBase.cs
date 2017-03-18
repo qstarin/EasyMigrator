@@ -46,19 +46,34 @@ namespace EasyMigrator.Tests.Integration
         protected bool IsFluentMigrator => Migrator is FluentMigrator.Migrator;
 
         protected override void Test(ITableTestCase testCase)
+            => Test(testCase, AddMigrations, TestBetweenUpAndDown);
+
+        protected void Test<TCase>(Action<ITableTestCase, IMigrationSet> addMigrations)
+            => Test(new TableTestCase<TCase>(), addMigrations, TestBetweenUpAndDown);
+
+        protected void Test<TCase>(Action<ITableTestCase, IMigrationSet> addMigrations, Action<ITableTestCase> testBetweenUpAndDown) 
+            => Test(new TableTestCase<TCase>(), addMigrations, testBetweenUpAndDown);
+
+        protected void Test(ITableTestCase testCase, Action<ITableTestCase, IMigrationSet> addMigrations, Action<ITableTestCase> testBetweenUpAndDown)
         {
             var set = Migrator.CreateMigrationSet();
-            set.AddMigrationForTableTestCase(testCase);
+            addMigrations(testCase, set);
             var mig = Migrator.CompileMigrations(set);
             Migrator.Up(mig);
-            TestBetweenUpAndDown(testCase);
+            testBetweenUpAndDown(testCase);
             Migrator.Down(mig);
         }
 
+        protected virtual void AddMigrations(ITableTestCase testCase, IMigrationSet migrations)
+            => migrations.AddMigrationForTableTestCase(testCase);
+
         protected virtual void TestBetweenUpAndDown(ITableTestCase testCase)
+            => VerifySchemaAgainstModel(testCase);
+
+        protected virtual void VerifySchemaAgainstModel(ITableTestCase testCase)
         {
             foreach (var data in testCase.Datum)
-                AssertEx.AreEqual(data.Model, GetTableModelFromDb(data.Model.Name), IsMigratorDotNet);
+                AssertEx.AreEqual(data.Model, GetTableModelFromDb(data.Model.Name), IsFluentMigrator, IsMigratorDotNet);
         }
 
         [OneTimeSetUp]
@@ -134,7 +149,7 @@ namespace EasyMigrator.Tests.Integration
                     Type = dbType,
                     IsPrimaryKey = c.IsPrimaryKey,
                     IsNullable = c.Nullable,
-                    Length = c.Length.IfHasValue(l => l == -1 ? int.MaxValue : l, (int?)null),
+                    Length = c.Length.IfHasValue(l => l == -1 ? int.MaxValue : l, default(int?)),
                     DefaultValue =
                         dbType == DbType.Boolean
                             ? ((c.DefaultValue?.Contains("0") ?? true) ? "0" : "1")
@@ -162,14 +177,6 @@ namespace EasyMigrator.Tests.Integration
             }).ToList();
             
             return table;
-        }
-
-
-
-        private class IdentityDefinition
-        {
-            public long Seed { get; set; }
-            public long Step { get; set; }
         }
     }
 }
