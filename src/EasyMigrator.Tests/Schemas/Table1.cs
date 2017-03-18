@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 using EasyMigrator.Parsing.Model;
 using EasyMigrator.Tests.TableTest;
 
@@ -20,6 +21,7 @@ namespace EasyMigrator.Tests.Schemas
             [Precision(Length.Short, 3)] public decimal Adjustment;
 
             CompositeIndex<Poco> i1 = new CompositeIndex<Poco>(x => x.Name, x => x.Code);
+            [Unique(Name = "IX_Custom_Name")] CompositeIndex<Poco> i2 = new CompositeIndex<Poco>(new Descending<Poco>(x => x.Sequence), new Ascending<Poco>(x => x.Code));
         }
 
         static Table Model = new Table {
@@ -33,7 +35,16 @@ namespace EasyMigrator.Tests.Schemas
                         new IndexColumn("Name"),
                         new IndexColumn("Code"),
                     }
-                }
+                },
+                new Parsing.Model.CompositeIndex {
+                    Name = "IX_Custom_Name",
+                    Unique = false,
+                    Clustered = false,
+                    Columns = new [] {
+                        new IndexColumn("Sequence", SortOrder.Descending),
+                        new IndexColumn("Code", SortOrder.Ascending),
+                    }
+                },
             },
             Columns = new[] {
                 new Column {

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using EasyMigrator.Parsing.Model;
@@ -42,6 +43,14 @@ namespace EasyMigrator
 
             foreach (var col in table.Columns.Indexed().Where(c => c.Index.Clustered))
                 Create.UniqueConstraint(col.Index.Name).OnTable(table.Name).Columns(col.Name).Clustered();
+
+            foreach (var ci in table.CompositeIndices) {
+                var ib = Create.Index(ci.Name).OnTable(tableType).OnColumns(ci.Columns);
+                if (ci.Unique)
+                    ib.WithOptions().Unique();
+                if (ci.Clustered)
+                    ib.WithOptions().Clustered();
+            }
         }
 
         static public void Columns<T>(this ICreateExpressionRoot Create) => Create.Columns(typeof(T));
@@ -69,6 +78,24 @@ namespace EasyMigrator
 
             foreach (var col in table.Columns.Indexed().Where(c => c.Index.Clustered))
                 Create.UniqueConstraint(col.Index.Name).OnTable(table.Name).Columns(col.Name).Clustered();
+
+            foreach (var ci in table.CompositeIndices) {
+                //if (ci.Clustered) {
+                //    var ib = Create.UniqueConstraint(ci.Name).OnTable(table.Name);
+                //    foreach (var col in ci.Columns) {
+                //        var cb = ib.Column(col.ColumnName);
+                //        if (col.Direction == SortOrder.Ascending)
+                //            cb.
+                //    }
+                //}
+                //else {
+                var ib = Create.Index(ci.Name).OnTable(tableType).OnColumns(ci.Columns);
+                if (ci.Unique)
+                    ib.WithOptions().Unique();
+                if (ci.Clustered)
+                    ib.WithOptions().Clustered();
+                //}
+            }
 
             if (populate != null) {
                 populate();

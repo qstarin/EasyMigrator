@@ -58,6 +58,9 @@ namespace EasyMigrator
                 if (i != null)
                     db.RemoveIndex(SqlReservedWords.Quote(table.Name), i.Name);
             }
+
+            foreach (var ci in table.CompositeIndices)
+                db.RemoveIndex(SqlReservedWords.Quote(table.Name), ci.Name);
         }
     }
 }

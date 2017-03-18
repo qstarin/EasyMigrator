@@ -71,6 +71,15 @@ namespace EasyMigrator
                           .OnTable(table.Name)
                           .OnColumn(c.Name);
             }
+
+            foreach (var ci in table.CompositeIndices) {
+                if (ci.Name != null)
+                    Delete.Index(ci.Name).OnTable(table.Name);
+                else
+                    Delete.Index()
+                          .OnTable(table.Name)
+                          .OnColumns(ci.Columns.Select(c => c.ColumnName).ToArray());
+            }
         }
     }
 }
