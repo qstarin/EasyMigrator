@@ -38,7 +38,7 @@ namespace EasyMigrator.Tests.Schemas
                 },
                 new Parsing.Model.CompositeIndex {
                     Name = "IX_Custom_Name",
-                    Unique = false,
+                    Unique = true,
                     Clustered = false,
                     Columns = new [] {
                         new IndexColumn("Sequence", SortOrder.Descending),

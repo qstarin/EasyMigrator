@@ -16,5 +16,9 @@ namespace EasyMigrator.Extensions
         static public IEnumerable<Column> Indexed(this IEnumerable<Column> columns) => columns.Where(c => c.Index != null);
         static public IEnumerable<Column> MaxLength(this IEnumerable<Column> columns) => columns.Where(c => (c.Type == DbType.AnsiString || c.Type == DbType.String) && c.Length == int.MaxValue);
         static public IEnumerable<Column> WithPrecision(this IEnumerable<Column> columns) => columns.Where(c => (c.Type == DbType.Decimal || c.Type == DbType.Currency) && c.Precision != null);
+        static public IEnumerable<Column> WithCustomAutoIncrement(this IEnumerable<Column> columns) => columns.Where(c => c.IsCustomAutoIncrement());
+        static public IEnumerable<Column> WithoutCustomAutoIncrement(this IEnumerable<Column> columns) => columns.Where(c => !c.IsCustomAutoIncrement());
+        static public bool IsDefaultAutoIncrement(this Column column) => column.AutoIncrement?.Seed == 1 && column.AutoIncrement?.Step == 1;
+        static public bool IsCustomAutoIncrement(this Column column) => column.AutoIncrement != null && column.AutoIncrement.Seed != 1 && column.AutoIncrement.Step != 1;
     }
 }

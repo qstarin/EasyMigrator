@@ -12,6 +12,7 @@ using DatabaseSchemaReader.DataSchema;
 using EasyMigrator.Extensions;
 using EasyMigrator.Parsing.Model;
 using EasyMigrator.Tests.TableTest;
+using NUnit.Framework;
 
 
 namespace EasyMigrator.Tests.Integration
@@ -60,6 +61,7 @@ namespace EasyMigrator.Tests.Integration
                 AssertEx.AreEqual(data.Model, GetTableModelFromDb(data.Model.Name), IsMigratorDotNet);
         }
 
+        [OneTimeSetUp]
         public override void SetupFixture()
         {
             base.SetupFixture();
@@ -160,6 +162,14 @@ namespace EasyMigrator.Tests.Integration
             }).ToList();
             
             return table;
+        }
+
+
+
+        private class IdentityDefinition
+        {
+            public long Seed { get; set; }
+            public long Step { get; set; }
         }
     }
 }

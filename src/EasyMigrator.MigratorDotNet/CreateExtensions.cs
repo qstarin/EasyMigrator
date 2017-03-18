@@ -18,10 +18,7 @@ namespace EasyMigrator
         {
             var table = parser.ParseTableType(tableType).Table;
             var columns = new List<Column>();
-            foreach (var col in table.Columns) {
-                if (col.AutoIncrement != null && (col.AutoIncrement.Seed > 1 || col.AutoIncrement.Step > 1))
-                    throw new NotImplementedException("AutoIncrement Seeds or Steps other than 1 are not supported for MigratorDotNet.");
-
+            foreach (var col in table.Columns.WithoutCustomAutoIncrement()) {
                 // do this temporarily because we want to create the PK ourselves later in order to set the name and support unclustered and composite PK's
                 var isPk = col.IsPrimaryKey;
                 if (isPk)
@@ -34,7 +31,19 @@ namespace EasyMigrator
                     col.IsPrimaryKey = true;
             }
 
-            Database.AddTable(SqlReservedWords.Quote(table.Name), columns.ToArray());
+            if (table.Columns.WithCustomAutoIncrement().Any()) {
+                Database.ExecuteNonQuery(
+                    $"CREATE TABLE {SqlReservedWords.Quote(table.Name)} (" + 
+                    string.Join(", ", 
+                        table.Columns.WithCustomAutoIncrement().Select(c => BuildColumnWithCustomIdentitySql(SqlReservedWords.Quote(c.Name), c.Type, c.AutoIncrement.Seed, c.AutoIncrement.Step, c.IsNullable))) + 
+                    ")");
+
+                foreach (var col in columns)
+                    Database.AddColumn(SqlReservedWords.Quote(table.Name), col);
+            }
+            else
+                Database.AddTable(SqlReservedWords.Quote(table.Name), columns.ToArray());
+
             Database.AddPrimaryKey(SqlReservedWords.Quote(table.Name), table.PrimaryKeyName, table.PrimaryKeyIsClustered, table.Columns.PrimaryKey().Select(c => SqlReservedWords.Quote(c.Name)).ToArray());
 
             foreach (var col in table.Columns.MaxLength())
@@ -65,22 +74,23 @@ namespace EasyMigrator
             var table = parser.ParseTableType(tableType).Table;
             var pocoColumns = table.Columns.DefinedInPoco();
             var nonNullables = new List<EColumn>();
-            foreach (var col in pocoColumns) {
-                if (col.AutoIncrement != null && (col.AutoIncrement.Seed > 1 || col.AutoIncrement.Step > 1))
-                    throw new NotImplementedException("AutoIncrement Seeds or Steps other than 1 are not supported for MigratorDotNet.");
 
+            foreach (var col in pocoColumns) {
 				if (populate != null && !col.IsNullable && col.DefaultValue == null) {
 				    col.IsNullable = true;
 					nonNullables.Add(col);
 				}
 
-                Database.AddColumn(SqlReservedWords.Quote(table.Name), BuildColumn(col));
+                if (col.IsCustomAutoIncrement())
+                    AddColumnWithCustomIdentity(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.AutoIncrement.Seed, col.AutoIncrement.Step, col.IsNullable);
+                else
+                    Database.AddColumn(SqlReservedWords.Quote(table.Name), BuildColumn(col));
             }
 
-            foreach (var col in table.Columns.MaxLength())
+            foreach (var col in pocoColumns.MaxLength())
                 AlterToMaxLength(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.IsNullable);
 
-            foreach (var col in table.Columns.WithPrecision())
+            foreach (var col in pocoColumns.WithPrecision())
                 AlterForPrecision(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Precision.Precision, col.Precision.Scale, col.IsNullable);
 
             if (populate != null) {
@@ -117,8 +127,11 @@ namespace EasyMigrator
             //if (col.IsPrimaryKey)
             //    cp |= ColumnProperty.PrimaryKey;
 
-            if (col.AutoIncrement != null)
+            if (col.IsDefaultAutoIncrement())
                 cp |= ColumnProperty.Identity;
+
+            if (new [] { DbType.UInt16, DbType.UInt32, DbType.UInt64 }.Contains(col.Type))
+                cp |= ColumnProperty.Unsigned;
 
             cp |= col.IsNullable ? ColumnProperty.Null : ColumnProperty.NotNull;
             c.ColumnProperty = cp;
@@ -147,5 +160,23 @@ namespace EasyMigrator
         // Migrator.Net doesn't support setting the precision so we do it manually with SQL
         static private void AlterForPrecision(ITransformationProvider Database, string tableName, string columnName, int precision, int scale, bool isNullable)
             => Database.ExecuteNonQuery($"ALTER TABLE {tableName} ALTER COLUMN {columnName} DECIMAL({precision}, {scale}) {(isNullable ? "" : "NOT ")}NULL");
+
+        // Migrator.Net doesn't support setting the precision so we do it manually with SQL
+        static private void AddColumnWithCustomIdentity(ITransformationProvider Database, string tableName, string columnName, DbType dbType, long seed, long step, bool isNullable)
+            => Database.ExecuteNonQuery($"ALTER TABLE {tableName} ADD COLUMN {BuildColumnWithCustomIdentitySql(columnName, dbType, seed, step, isNullable)}");
+
+        static private string BuildColumnWithCustomIdentitySql(string columnName, DbType dbType, long seed, long step, bool isNullable)
+            => $"{columnName} {GetSqlTypeString(dbType)} IDENTITY({seed}, {step}) {(isNullable ? "" : "NOT ")}NULL";
+
+        static private string GetSqlTypeString(DbType dbType)
+        {
+            switch (dbType) {
+                case DbType.Byte: return "TINYINT";
+                case DbType.Int16: return "SMALLINT";
+                case DbType.Int32: return "INT";
+                case DbType.Int64: return "BIGINT";
+                default: throw new ArgumentException($"{dbType} is not a valid IDENTITY type.", nameof(dbType));
+            }
+        }
     }
 }

@@ -13,10 +13,6 @@ namespace EasyMigrator.Tests
     {
         protected RoundTrip(Func<string, IMigrator> getMigrator) : base(getMigrator) { }
 
-        [Test] public void Table1() => Test<Table1>();
-        [Test] public void Fk1() => Test<Fk1>();
-        [Test] public void ManyToMany1() => Test<ManyToMany1>();
-
         public class FkStuff
         {
             public string Description;

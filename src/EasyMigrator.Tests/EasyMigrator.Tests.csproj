@@ -83,6 +83,7 @@
     <Compile Include="Integration\CompiledMigrations.cs" />
     <Compile Include="Integration\MigrationSet.cs" />
     <Compile Include="ReflectionTests.cs" />
+    <Compile Include="Schemas\CustomAutoIncrement.cs" />
     <Compile Include="Schemas\Fk1.cs" />
     <Compile Include="Schemas\ManyToMany1.cs" />
     <Compile Include="Schemas\Table1.cs" />
