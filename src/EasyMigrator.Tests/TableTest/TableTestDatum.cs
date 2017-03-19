@@ -28,7 +28,7 @@ namespace EasyMigrator.Tests.TableTest
             if (tableDataType == typeof(TableTestCase) || tableDataType == typeof(TableTestData))
                 return;
             var d = new TableTestData(tableDataType);
-            if (d.Model != null && d.Poco != null) // TODO: ? Check for dup table names
+            if (d.Poco != null) // TODO: ? Check for dup table names
                 Add(d);
         }
     }

@@ -46,12 +46,6 @@ namespace EasyMigrator.Tests.Schemas
                 [Medium] string Description;
             }
 
-            [Name("Assoc")]
-            public class ColumnsToAdd
-            {
-                [Fk("Stuff")] public int StuffId;
-            }
-
             static Table Model = new Table {
                 Name = "Assoc",
                 Columns = new[] {
@@ -75,6 +69,18 @@ namespace EasyMigrator.Tests.Schemas
                     },
                 }
             };
+        }
+
+        public class ColumnsToAdd
+        {
+            [MigrationOrder(3)]
+            public class Assoc
+            {
+                public class Poco
+                {
+                    [Fk("Stuff")] public int StuffId;
+                }
+            }
         }
     }
 }

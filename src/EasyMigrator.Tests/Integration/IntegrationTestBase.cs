@@ -45,6 +45,13 @@ namespace EasyMigrator.Tests.Integration
         protected bool IsMigratorDotNet => Migrator is MigratorDotNet.Migrator;
         protected bool IsFluentMigrator => Migrator is FluentMigrator.Migrator;
 
+        protected virtual void Test<TCreateTables, TAddColumns>()
+            => Test(new TableTestCase(typeof(TCreateTables)), 
+                (testCase, migrations) => {
+                    AddMigrations(testCase, migrations);
+                    migrations.AddColumnsMigrationForTableTestCase(new TableTestCase(typeof(TAddColumns)));
+                }, TestBetweenUpAndDown);
+
         protected override void Test(ITableTestCase testCase)
             => Test(testCase, AddMigrations, TestBetweenUpAndDown);
 
@@ -65,7 +72,7 @@ namespace EasyMigrator.Tests.Integration
         }
 
         protected virtual void AddMigrations(ITableTestCase testCase, IMigrationSet migrations)
-            => migrations.AddMigrationForTableTestCase(testCase);
+            => migrations.AddTableMigrationForTableTestCase(testCase);
 
         protected virtual void TestBetweenUpAndDown(ITableTestCase testCase)
             => VerifySchemaAgainstModel(testCase);

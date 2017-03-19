@@ -39,7 +39,7 @@ namespace EasyMigrator.Tests
         {
             var testCase = new TableTestCase<Table1>();
             var set = Migrator.CreateMigrationSet();
-            set.AddMigrationForTableTestCase(testCase);
+            set.AddTableMigrationForTableTestCase(testCase);
             (addMigrations ?? AddMigrations)(set);
 
             var mig = Migrator.CompileMigrations(set);

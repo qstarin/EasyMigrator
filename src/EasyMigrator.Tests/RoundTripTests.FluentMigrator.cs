@@ -19,20 +19,11 @@ namespace EasyMigrator.Tests.FluentMigrator
         [Test] public void AutoInc_Custom_Int16() => Test<AutoInc_Custom_Int16>();
         [Test] public void AutoInc_Custom_Int32() => Test<AutoInc_Custom_Int32>();
         [Test] public void AutoInc_Custom_Int64() => Test<AutoInc_Custom_Int64>();
+        [Test] public void Fk_AddToExisting() => Test<Schemas.Fk_AddToExisting, Schemas.Fk_AddToExisting.ColumnsToAdd>();
         [Test] public void Fk_ByType_Guid() => Test<Fk_ByType_Guid>();
         [Test] public void Fk_MultipleToSameTable_Int32() => Test<Fk_MultipleToSameTable_Int32>();
         [Test] public void Mtm_BookAuthors() => Test<Mtm_BookAuthors>();
         [Test] public void Table1() => Test<Table1>();
-
-        [Test]
-        public void Fk_AddToExisting() => Test<Schemas.Fk_AddToExisting>(
-            (testCase, migrations) => {
-                AddMigrations(testCase, migrations);
-                migrations.AddMigrationForFluentMigrator(
-                    m => { m.Create.Columns<Schemas.Fk_AddToExisting.Assoc.ColumnsToAdd>(); },
-                    m => { m.Delete.Columns<Schemas.Fk_AddToExisting.Assoc.ColumnsToAdd>(); });
-            }
-        );
 
         [Test]
         public void AddColumns_WithPopulate_IntAndString() => Test<Schemas.AddColumns_WithPopulate_IntAndString>(
