@@ -14,8 +14,8 @@ namespace EasyMigrator.Tests.Integration.FluentMigrator
 {
     public class Migrator : IMigrator
     {
-        private readonly MigrationRunner Runner;
-        public Migrator(string connectionString) { Runner = BuildRunner(connectionString); }
+        private readonly string _connectionString;
+        public Migrator(string connectionString) { _connectionString = connectionString; }
 
 
         public IMigrationSet CreateMigrationSet() => new MigrationSet();
@@ -31,14 +31,16 @@ namespace EasyMigrator.Tests.Integration.FluentMigrator
 
         public void Up(ICompiledMigrations migrations)
         {
+            var runner = BuildRunner(_connectionString);
             foreach (var m in GetMigrations(migrations))
-                Runner.Up(m);
+                runner.Up(m);
         }
 
         public void Down(ICompiledMigrations migrations)
         {
+            var runner = BuildRunner(_connectionString);
             foreach (var m in GetMigrations(migrations).Reverse())
-                Runner.Down(m);
+                runner.Down(m);
         }
 
         private IList<Migration> GetMigrations(ICompiledMigrations migrations)
@@ -55,7 +57,7 @@ namespace EasyMigrator.Tests.Integration.FluentMigrator
             // http://stackoverflow.com/a/10508299/224087
             var announcer = new TextWriterAnnouncer(s => System.Diagnostics.Debug.WriteLine(s));
             var assembly = Assembly.GetExecutingAssembly();
-            var migrationContext = new RunnerContext(announcer) { Namespace = GetType().Namespace };
+            var migrationContext = new RunnerContext(announcer) { Namespace = GetType().Namespace, TransactionPerSession = true };
             var options = new ProcessorOptions { PreviewOnly = false, Timeout = 60 };
             var factory = new SqlServer2012ProcessorFactory();
             var processor = factory.Create(connectionString, announcer, options);

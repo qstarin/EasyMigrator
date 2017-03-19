@@ -4,20 +4,23 @@ using System.Linq;
 using System.Text;
 using EasyMigrator.Tests.Integration;
 using EasyMigrator.Tests.Schemas;
-using EasyMigrator.Tests.TableTest;
 using NUnit.Framework;
 
 
 namespace EasyMigrator.Tests.MigratorDotNet
 {
-
     [TestFixture]
-    public class GetLastAutoIncId : IntegrationTestBase
+    public class AutoInc : IntegrationTestBase
     {
-        public GetLastAutoIncId() : base(s => new Integration.MigratorDotNet.Migrator(s)) { }
+        public AutoInc() : base(s => new Integration.MigratorDotNet.Migrator(s)) { }
+
+        [Test] public void Custom_Byte() => Test<AutoInc_Custom_Byte>();
+        [Test] public void Custom_Int16() => Test<AutoInc_Custom_Int16>();
+        [Test] public void Custom_Int32() => Test<AutoInc_Custom_Int32>();
+        [Test] public void Custom_Int64() => Test<AutoInc_Custom_Int64>();
 
         [Test]
-        public void Fk_MultipleToSameTable_Int32() => Test<Fk_MultipleToSameTable_Int32>(
+        public void GetLastId_Fk_MultipleToSameTable_Int32() => Test<Fk_MultipleToSameTable_Int32>(
             (testCase, migrations) => {
                 AddMigrations(testCase, migrations);
                 migrations.AddMigrationForMigratorDotNet(
@@ -34,16 +37,22 @@ namespace EasyMigrator.Tests.MigratorDotNet
     }
 }
 
+
 namespace EasyMigrator.Tests.FluentMigrator
 {
 
     [TestFixture]
-    public class GetLastAutoIncId : IntegrationTestBase
+    public class AutoInc : IntegrationTestBase
     {
-        public GetLastAutoIncId() : base(s => new Integration.FluentMigrator.Migrator(s)) { }
+        public AutoInc() : base(s => new Integration.FluentMigrator.Migrator(s)) { }
+
+        [Test] public void Custom_Byte() => Test<AutoInc_Custom_Byte>();
+        [Test] public void Custom_Int16() => Test<AutoInc_Custom_Int16>();
+        [Test] public void Custom_Int32() => Test<AutoInc_Custom_Int32>();
+        [Test] public void Custom_Int64() => Test<AutoInc_Custom_Int64>();
 
         [Test]
-        public void Fk_MultipleToSameTable_Int32() => Test<Fk_MultipleToSameTable_Int32>(
+        public void GetLastId_Fk_MultipleToSameTable_Int32() => Test<Fk_MultipleToSameTable_Int32>(
             (testCase, migrations) => {
                 AddMigrations(testCase, migrations);
                 migrations.AddMigrationForFluentMigrator(

@@ -78,25 +78,31 @@
     <Compile Include="..\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="AutoIncTests.cs" />
     <Compile Include="CreateIndexTests.cs" />
-    <Compile Include="GetLastAutoIncIdTests.cs" />
     <Compile Include="Integration\CompiledMigrations.cs" />
     <Compile Include="Integration\MigrationSet.cs" />
+    <Compile Include="PopulateTests.cs" />
+    <Compile Include="PrecisionTests.cs" />
     <Compile Include="ReflectionTests.cs" />
-    <Compile Include="RoundTripTests.FluentMigrator.cs" />
+    <Compile Include="ManyToManyTests.cs" />
     <Compile Include="Schemas\AddColumns.cs" />
     <Compile Include="Schemas\AutoInc_Custom.cs" />
     <Compile Include="Schemas\Fk_AddToExisting.cs" />
     <Compile Include="Schemas\Fk_ByType_Guid.cs" />
     <Compile Include="Schemas\Fk_MultipleToSameTable.cs" />
     <Compile Include="Schemas\Mtm_BookAuthors.cs" />
+    <Compile Include="Schemas\Precisions.cs" />
+    <Compile Include="Schemas\StringLengths.cs" />
     <Compile Include="Schemas\Table1.cs" />
     <Compile Include="Extensions\DbConnectionExtensions.cs" />
     <Compile Include="Integration\IMigrator.cs" />
     <Compile Include="Integration\MigrationActions.cs" />
-    <Compile Include="RoundTripTests.MigratorDotNet.cs" />
+    <Compile Include="ForeignKeyTests.cs" />
     <Compile Include="Integration\Migrator.FluentMigrator.cs" />
     <Compile Include="Integration\Migrator.MigratorDotNet.cs" />
+    <Compile Include="StringLengthTests.cs" />
+    <Compile Include="Table1Test.cs" />
     <Compile Include="TableTest\MigrationOrderAttribute.cs" />
     <Compile Include="TableTest\TableTestCase.cs" />
     <Compile Include="TableTest\TableTestData.cs" />

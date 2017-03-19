@@ -72,10 +72,10 @@ namespace EasyMigrator.Tests.MigratorDotNet
             => CreateAndDropIndex(
                 migrations => migrations.AddMigrationForMigratorDotNet(
                     m => {
-                        m.Database.AddIndex<Table1.Poco>(t => t.Name, t => t.Headline);
+                        m.Database.AddIndex<Schemas.Table1.Poco>(t => t.Name, t => t.Headline);
                     },
                     m => {
-                        m.Database.RemoveIndex<Table1.Poco>(t => t.Name, t => t.Headline);
+                        m.Database.RemoveIndex<Schemas.Table1.Poco>(t => t.Name, t => t.Headline);
                     }));
 
         [Test]
@@ -83,10 +83,10 @@ namespace EasyMigrator.Tests.MigratorDotNet
             => CreateAndDropIndex(
                 migrations => migrations.AddMigrationForMigratorDotNet(
                     m => {
-                        m.Database.AddIndex<Table1.Poco>(true, t => t.Name, t => t.Headline);
+                        m.Database.AddIndex<Schemas.Table1.Poco>(true, t => t.Name, t => t.Headline);
                     },
                     m => {
-                        m.Database.RemoveIndex<Table1.Poco>(t => t.Name, t => t.Headline);
+                        m.Database.RemoveIndex<Schemas.Table1.Poco>(t => t.Name, t => t.Headline);
                     }),
                     dbIndex => { }); //Assert.AreEqual(true, dbIndex.IsUnique); // <- Schema reader doesn't pick this up correctly);
 
@@ -95,10 +95,10 @@ namespace EasyMigrator.Tests.MigratorDotNet
             => CreateAndDropIndex(
                 migrations => migrations.AddMigrationForMigratorDotNet(
                     m => {
-                        m.Database.AddIndex(new Descending<Table1.Poco>(t => t.Name), new Ascending<Table1.Poco>(t => t.Headline));
+                        m.Database.AddIndex(new Descending<Schemas.Table1.Poco>(t => t.Name), new Ascending<Schemas.Table1.Poco>(t => t.Headline));
                     },
                     m => {
-                        m.Database.RemoveIndex(new Descending<Table1.Poco>(t => t.Name), new Ascending<Table1.Poco>(t => t.Headline));
+                        m.Database.RemoveIndex(new Descending<Schemas.Table1.Poco>(t => t.Name), new Ascending<Schemas.Table1.Poco>(t => t.Headline));
                     }));
 
         [Test]
@@ -107,10 +107,10 @@ namespace EasyMigrator.Tests.MigratorDotNet
                 "MyNamedIndex",
                 migrations => migrations.AddMigrationForMigratorDotNet(
                     m => {
-                        m.Database.AddIndex<Table1.Poco>("MyNamedIndex", t => t.Name, t => t.Headline);
+                        m.Database.AddIndex<Schemas.Table1.Poco>("MyNamedIndex", t => t.Name, t => t.Headline);
                     },
                     m => {
-                        m.Database.RemoveIndexByName<Table1.Poco>("MyNamedIndex");
+                        m.Database.RemoveIndexByName<Schemas.Table1.Poco>("MyNamedIndex");
                     }));
     }
 }
@@ -128,10 +128,10 @@ namespace EasyMigrator.Tests.FluentMigrator
             => CreateAndDropIndex(
                 migrations => migrations.AddMigrationForFluentMigrator(
                     m => {
-                        m.Create.Index<Table1.Poco>().OnColumns(t => t.Name, t => t.Headline);
+                        m.Create.Index<Schemas.Table1.Poco>().OnColumns(t => t.Name, t => t.Headline);
                     },
                     m => {
-                        m.Delete.Index<Table1.Poco>().OnColumns(t => t.Name, t => t.Headline);
+                        m.Delete.Index<Schemas.Table1.Poco>().OnColumns(t => t.Name, t => t.Headline);
                     }));
 
         [Test]
@@ -139,10 +139,10 @@ namespace EasyMigrator.Tests.FluentMigrator
             => CreateAndDropIndex(
                 migrations => migrations.AddMigrationForFluentMigrator(
                     m => {
-                        m.Create.Index<Table1.Poco>().OnColumns(t => t.Name, t => t.Headline).WithOptions().Unique();
+                        m.Create.Index<Schemas.Table1.Poco>().OnColumns(t => t.Name, t => t.Headline).WithOptions().Unique();
                     },
                     m => {
-                        m.Delete.Index<Table1.Poco>().OnColumns(t => t.Name, t => t.Headline);
+                        m.Delete.Index<Schemas.Table1.Poco>().OnColumns(t => t.Name, t => t.Headline);
                     }),
                     dbIndex => { }); //Assert.AreEqual(true, dbIndex.IsUnique); // <- Schema reader doesn't pick this up correctly);
 
@@ -151,10 +151,10 @@ namespace EasyMigrator.Tests.FluentMigrator
             => CreateAndDropIndex(
                 migrations => migrations.AddMigrationForFluentMigrator(
                     m => {
-                        m.Create.Index<Table1.Poco>().OnColumns(new Descending<Table1.Poco>(t => t.Name), new Ascending<Table1.Poco>(t => t.Headline));
+                        m.Create.Index<Schemas.Table1.Poco>().OnColumns(new Descending<Schemas.Table1.Poco>(t => t.Name), new Ascending<Schemas.Table1.Poco>(t => t.Headline));
                     },
                     m => {
-                        m.Delete.Index<Table1.Poco>().OnColumns(new Descending<Table1.Poco>(t => t.Name), new Ascending<Table1.Poco>(t => t.Headline));
+                        m.Delete.Index<Schemas.Table1.Poco>().OnColumns(new Descending<Schemas.Table1.Poco>(t => t.Name), new Ascending<Schemas.Table1.Poco>(t => t.Headline));
                     }));
 
         [Test]
@@ -163,10 +163,10 @@ namespace EasyMigrator.Tests.FluentMigrator
                 "MyNamedIndex",
                 migrations => migrations.AddMigrationForFluentMigrator(
                     m => {
-                        m.Create.Index("MyNamedIndex").OnTable<Table1.Poco>().OnColumns(t => t.Name, t => t.Headline);
+                        m.Create.Index("MyNamedIndex").OnTable<Schemas.Table1.Poco>().OnColumns(t => t.Name, t => t.Headline);
                     },
                     m => {
-                        m.Delete.Index("MyNamedIndex").OnTable<Table1.Poco>();
+                        m.Delete.Index("MyNamedIndex").OnTable<Schemas.Table1.Poco>();
                     }));
     }
 }
