@@ -119,12 +119,11 @@ namespace EasyMigrator.Tests.Integration.MigratorDotNet
                 BuildNPocoMigrationAction(down));
 
         private Action<global::Migrator.Framework.Migration> BuildNPocoMigrationAction(Action<NPoco.Database> action)
-            => m => {
-                var cmd = m.Database.GetCommand();
-                var db = new NPoco.Database(cmd.Connection as DbConnection);
-                db.SetTransaction(cmd.Transaction as DbTransaction);
+            => m => m.Database.ExecuteWithConnection((conn, tran) => {
+                var db = new NPoco.Database(conn as DbConnection);
+                db.SetTransaction(tran as DbTransaction);
                 action(db);
-            };
+            });
 
         public IMigrationSet AddMigrationForFluentMigrator(Action<global::FluentMigrator.Migration> up, Action<global::FluentMigrator.Migration> down)
         {
