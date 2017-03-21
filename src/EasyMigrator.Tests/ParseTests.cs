@@ -27,6 +27,7 @@ namespace EasyMigrator.Tests
         [Test] public void Precision_Long() => Test<Precisions.Long>();
         [Test] public void Precision_Max() => Test<Precisions.Max>();
         [Test] public void Precision_Custom_13_9() => Test<Precisions.Custom_13_9>();
+        [Test] public void SelfReferential() => Test<SelfReferential>();
         [Test] public void StringLength_Unspecified() => Test<StringLengths.Unspecified>();
         [Test] public void StringLength_Default() => Test<StringLengths.Default>();
         [Test] public void StringLength_Short() => Test<StringLengths.Short>();

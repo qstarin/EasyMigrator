@@ -17,6 +17,8 @@ namespace EasyMigrator.Tests.MigratorDotNet
         [Test] public void Fk_AddToExisting() => Test<Schemas.Fk_AddToExisting, Schemas.Fk_AddToExisting.ColumnsToAdd>();
         [Test] public void Fk_ByType_Guid() => Test<Fk_ByType_Guid>();
         [Test] public void Fk_MultipleToSameTable_Int32() => Test<Fk_MultipleToSameTable_Int32>();
+        [Test] public void SelfReferential() => Test<SelfReferential.ParentOfSelf>();
+        [Test] public void SelfReferential_AddColumns() => Test<SelfReferential.ParentOfSelf.AddColumns.Empty, SelfReferential.ParentOfSelf.AddColumns.ColumnsToAdd>();
     }
 }
 
@@ -32,5 +34,7 @@ namespace EasyMigrator.Tests.FluentMigrator
         [Test] public void Fk_AddToExisting() => Test<Schemas.Fk_AddToExisting, Schemas.Fk_AddToExisting.ColumnsToAdd>();
         [Test] public void Fk_ByType_Guid() => Test<Fk_ByType_Guid>();
         [Test] public void Fk_MultipleToSameTable_Int32() => Test<Fk_MultipleToSameTable_Int32>();
+        [Test] public void SelfReferential() => Test<SelfReferential>();
+        [Test] public void SelfReferential_AddColumns() => Test<SelfReferential.ParentOfSelf.AddColumns.Empty, SelfReferential.ParentOfSelf.AddColumns.ColumnsToAdd>();
     }
 }

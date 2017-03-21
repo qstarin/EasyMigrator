@@ -41,6 +41,9 @@ namespace EasyMigrator
             else
                 pkCreator.NonClustered();
 
+            foreach (var col in table.Columns.Where(c => c.ForeignKey?.Table == table.Name))
+                Create.ForeignKey(col.ForeignKey.Name).FromTable(table.Name).ForeignColumn(col.Name).ToTable(col.ForeignKey.Table).PrimaryColumn(col.ForeignKey.Column);
+
             foreach (var col in table.Columns.Indexed().Where(c => c.Index.Clustered))
                 Create.UniqueConstraint(col.Index.Name).OnTable(table.Name).Columns(col.Name).Clustered();
 
@@ -78,6 +81,9 @@ namespace EasyMigrator
 
             foreach (var col in table.Columns.Indexed().Where(c => c.Index.Clustered))
                 Create.UniqueConstraint(col.Index.Name).OnTable(table.Name).Columns(col.Name).Clustered();
+
+            foreach (var col in table.Columns.Where(c => c.ForeignKey?.Table == table.Name))
+                Create.ForeignKey(col.ForeignKey.Name).FromTable(table.Name).ForeignColumn(col.Name).ToTable(col.ForeignKey.Table).PrimaryColumn(col.ForeignKey.Column);
 
             foreach (var ci in table.CompositeIndices) {
                 //if (ci.Clustered) {
@@ -121,7 +127,7 @@ namespace EasyMigrator
                     ? createColumnOptionSyntax.Nullable()
                     : createColumnOptionSyntax.NotNullable();
 
-            if (col.ForeignKey != null)
+            if (col.ForeignKey != null && col.ForeignKey.Table != table.Name)
                 createColumnOptionSyntax = createColumnOptionSyntax.ForeignKey(col.ForeignKey.Name, col.ForeignKey.Table, col.ForeignKey.Column);
 
             if (col.DefaultValue != null)

@@ -47,7 +47,8 @@ namespace EasyMigrator.Parsing
                                                            }))
             {
                 var fk = col.ForeignKey as FkAttribute;
-                var fkTable = ParseTableType(fk.TableType).Table;
+                var fkContext = fk.TableType == context.ModelType ? context : ParseTableType(fk.TableType);
+                var fkTable = fkContext.Table;
                 if (fkTable.Columns.PrimaryKey().Count() != 1)
                     throw new Exception($"Cannot create a foreign key from table {context.Table.Name} to table {fkTable.Name} with {(fkTable.HasPrimaryKey ? "composite" : "no")} primary key.");
 
