@@ -55,7 +55,7 @@ namespace EasyMigrator.Tests
                 if (e.ForeignKey == null)
                     Assert.IsNull(a.ForeignKey);
                 else {
-                    Assert.AreEqual(e.ForeignKey.Name ?? $"FK_{e.ForeignKey.Table}_{e.Name}", a.ForeignKey.Name); // TODO: Remove the default name here and fill in the models
+                    Assert.AreEqual(e.ForeignKey.Name ?? $"FK_{expected.Name}_{e.Name}", a.ForeignKey.Name); // TODO: Remove the default name here and fill in the models
                     Assert.AreEqual(e.ForeignKey.Table, a.ForeignKey.Table);
                     Assert.AreEqual(e.ForeignKey.Column, a.ForeignKey.Column);
                 }

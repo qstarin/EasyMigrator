@@ -28,7 +28,7 @@ namespace EasyMigrator.Parsing
                 PrimaryKeyName = c => c.Conventions.PrimaryKeyNameByTableName(c.Table.Name),
                 PrimaryKeyNameByTableName = t => $"PK_{t}",
                 PrimaryKeyColumnName = t => "Id",
-                ForeignKeyName = (c, col) => $"FK_{col.ForeignKey.Table}_{col.Name}",
+                ForeignKeyName = (c, col) => $"FK_{c.Table.Name}_{col.Name}",
                 IndexNameByColumns = (c, cols) => c.Conventions.IndexNameByTableAndColumnNames(c.Table.Name, cols.Select(col => col.Name)),
                 IndexNameByTableAndColumnNames = (t, cols) => $"IX_{t}_{string.Join("_", cols)}",
                 IndexForeignKeys = c => true,

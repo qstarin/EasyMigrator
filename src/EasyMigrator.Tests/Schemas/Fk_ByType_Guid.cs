@@ -52,7 +52,7 @@ namespace EasyMigrator.Tests.Schemas
                         Name = "MasterId",
                         Type = DbType.Guid,
                         ForeignKey = new FkAttribute("Master") {
-                            Name = "FK_Master_MasterId",
+                            Name = "FK_Slave_MasterId",
                             Column = "Id",
                             Indexed = true
                         },

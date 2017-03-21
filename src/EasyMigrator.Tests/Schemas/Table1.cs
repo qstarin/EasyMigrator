@@ -20,9 +20,6 @@ namespace EasyMigrator.Tests.Schemas
             [DbType(DbType.Currency)] public decimal? Rate;
             [Precision(Length.Short, 3)] public decimal Adjustment;
 
-            CompositeIndex index1 = new CompositeIndex("Sequence", "Headline DESC");
-            CompositeIndex index2 = new CompositeIndex(new IndexColumn("Adjustment"), new IndexColumn("Name"));
-            CompositeIndex index3 = new CompositeIndex(new Descending("Adjustment"), new Ascending("Headline"));
             CompositeIndex<Poco> i1 = new CompositeIndex<Poco>(x => x.Name, x => x.Code);
             [Unique(Name = "IX_Custom_Name")] CompositeIndex<Poco> i2 = new CompositeIndex<Poco>(new Descending<Poco>(x => x.Sequence), new Ascending<Poco>(x => x.Code));
         }
