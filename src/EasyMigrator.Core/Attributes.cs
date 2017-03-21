@@ -72,7 +72,7 @@ namespace EasyMigrator
         public string Table { get; }
         public Type TableType { get; }
         public string Column { get; set; }
-        public bool? Indexed { get; set; }
+        public bool Indexed { get; set; }
 
         public FkAttribute(string table) { Table = table; }
         public FkAttribute(Type tableType) { TableType = tableType; }
