@@ -50,7 +50,7 @@ namespace EasyMigrator
                 AlterToMaxLength(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.IsNullable);
 
             foreach (var col in table.Columns.WithPrecision())
-                AlterForPrecision(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Precision.Precision, col.Precision.Scale, col.IsNullable);
+                AlterForPrecision(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable);
 
             foreach (var col in table.Columns.ForeignKeys()) {
                 var fk = col.ForeignKey;
@@ -91,7 +91,7 @@ namespace EasyMigrator
                 AlterToMaxLength(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.IsNullable);
 
             foreach (var col in pocoColumns.WithPrecision())
-                AlterForPrecision(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Precision.Precision, col.Precision.Scale, col.IsNullable);
+                AlterForPrecision(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable);
 
             if (populate != null) {
                 populate();
@@ -158,8 +158,14 @@ namespace EasyMigrator
             => Database.ExecuteNonQuery($"ALTER TABLE {tableName} ALTER COLUMN {columnName} {(dbType == DbType.AnsiString ? "" : "N")}VARCHAR(MAX) {(isNullable ? "" : "NOT ")}NULL");
 
         // Migrator.Net doesn't support setting the precision so we do it manually with SQL
-        static private void AlterForPrecision(ITransformationProvider Database, string tableName, string columnName, int precision, int scale, bool isNullable)
-            => Database.ExecuteNonQuery($"ALTER TABLE {tableName} ALTER COLUMN {columnName} DECIMAL({precision}, {scale}) {(isNullable ? "" : "NOT ")}NULL");
+        static private void AlterForPrecision(ITransformationProvider Database, string tableName, string columnName, DbType dbType, int? precision, int? scale, bool isNullable)
+            => Database.ExecuteNonQuery($"ALTER TABLE {tableName} ALTER COLUMN {columnName} " +
+                GetSqlTypeString(dbType) + 
+                (precision.HasValue && precision > 0 && scale.HasValue && scale > 0
+                    ? $"({precision}, {scale})"
+                    : $"({Math.Max(precision ?? 0, scale ?? 0)})")
+                 +
+                $" {(isNullable ? "" : "NOT ")}NULL");
 
         // Migrator.Net doesn't support setting the precision so we do it manually with SQL
         static private void AddColumnWithCustomIdentity(ITransformationProvider Database, string tableName, string columnName, DbType dbType, long seed, long step, bool isNullable)
@@ -175,6 +181,7 @@ namespace EasyMigrator
                 case DbType.Int16: return "SMALLINT";
                 case DbType.Int32: return "INT";
                 case DbType.Int64: return "BIGINT";
+                case DbType.DateTime2: return "DATETIME2";
                 default: throw new ArgumentException($"{dbType} is not a valid IDENTITY type.", nameof(dbType));
             }
         }

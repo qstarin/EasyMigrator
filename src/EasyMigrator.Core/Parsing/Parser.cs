@@ -91,12 +91,12 @@ namespace EasyMigrator.Parsing
                     IsPrimaryKey = pk != null,
                     AutoIncrement = field.GetAttribute<AutoIncAttribute>(),
                     Length = GetLength(field, dbType, Conventions.StringLengths(context)),
-                    Precision = GetPrecision(context, field, dbType),
                     Index = field.GetAttribute<IndexAttribute>(),
                     ForeignKey = fk,
                     DefinedInPoco = true
                 };
                 context.Columns.Add(field, column);
+                column.Precision = GetPrecision(context, field, column);
 
                 if (pk != null) {
                     if (table.PrimaryKeyName == null)
@@ -239,15 +239,15 @@ namespace EasyMigrator.Parsing
             return lengthAttr.Length;
         }
 
-        protected virtual IPrecision GetPrecision(Context context, FieldInfo field, DbType dbType)
+        protected virtual IPrecision GetPrecision(Context context, FieldInfo field, Column column)
         {
-            var typesWithPrecision = new[] { DbType.Decimal };
-            if (!typesWithPrecision.Contains(dbType))
+            var typesWithPrecision = new[] { DbType.Decimal, DbType.DateTime2 };
+            if (!typesWithPrecision.Contains(column.Type))
                 return null;
 
             var precisionAttr = field.GetAttribute<PrecisionAttribute>();
             if (precisionAttr == null)
-                return Conventions.DefaultPrecision(context);
+                return Conventions.DefaultPrecision(context, column);
 
             if (precisionAttr.DefinedPrecision.HasValue)
                 return new PrecisionAttribute(Conventions.PrecisionLengths(context)[precisionAttr.DefinedPrecision.Value], precisionAttr.Scale);

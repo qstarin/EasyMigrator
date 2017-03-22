@@ -164,9 +164,12 @@ namespace EasyMigrator.Tests.Integration
                     AutoIncrement = c.IsAutoNumber
                         ? new AutoIncAttribute(c.IdentityDefinition.IdentitySeed, c.IdentityDefinition.IdentityIncrement)
                         : null,
-                    Precision = dbType == DbType.Decimal && (c.Precision.HasValue || c.Scale.HasValue)
-                        ? new PrecisionAttribute(c.Precision.Value, c.Scale.Value) 
-                        : null,
+                    Precision = 
+                        (dbType == DbType.Decimal) && (c.Precision.HasValue || c.Scale.HasValue)
+                            ? new PrecisionAttribute(c.Precision ?? 0, c.Scale ?? 0) 
+                            : (dbType == DbType.DateTime2 && c.DateTimePrecision != null)
+                                ? new PrecisionAttribute(0, c.DateTimePrecision.Value)
+                                : null,
                     Index = idx != null
                         ? idx.IndexType != "NONCLUSTERED"
                             ? new ClusteredAttribute { Name = idx.Name }

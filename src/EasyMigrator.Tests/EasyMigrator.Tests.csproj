@@ -80,6 +80,7 @@
     </Compile>
     <Compile Include="AutoIncTests.cs" />
     <Compile Include="CreateIndexTests.cs" />
+    <Compile Include="DateTime2Tests.cs" />
     <Compile Include="Integration\CompiledMigrations.cs" />
     <Compile Include="Integration\MigrationSet.cs" />
     <Compile Include="PopulateTests.cs" />
@@ -88,6 +89,7 @@
     <Compile Include="ManyToManyTests.cs" />
     <Compile Include="Schemas\AddColumns.cs" />
     <Compile Include="Schemas\AutoInc_Custom.cs" />
+    <Compile Include="Schemas\DateTime2.cs" />
     <Compile Include="Schemas\Fk_AddToExisting.cs" />
     <Compile Include="Schemas\Fk_ByType_Guid.cs" />
     <Compile Include="Schemas\Fk_MultipleToSameTable.cs" />

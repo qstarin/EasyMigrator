@@ -62,7 +62,7 @@ namespace EasyMigrator
         public PrecisionAttribute(Length precision, int scale)
             : this(scale) { DefinedPrecision = precision; }
 
-        private PrecisionAttribute(int scale) { Scale = scale; }
+        public PrecisionAttribute(int scale) { Scale = scale; }
     }
 
     [AttributeUsage(AttributeTargets.Field)]

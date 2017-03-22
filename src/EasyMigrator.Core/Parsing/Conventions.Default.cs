@@ -46,7 +46,10 @@ namespace EasyMigrator.Parsing
                     Long = 28,
                     Max = 38
                 },
-                DefaultPrecision = c => new PrecisionAttribute(c.Conventions.PrecisionLengths(c).Default, 2),
+                DefaultPrecision = (c, col) => 
+                    col.Type == DbType.Decimal
+                        ? new PrecisionAttribute(c.Conventions.PrecisionLengths(c).Default, 2)
+                        : null,
                 TypeMap = c => new TypeMap()
                     .Add(new Dictionary<Type, DbType> {
                         {typeof(sbyte), DbType.SByte},

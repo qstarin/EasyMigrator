@@ -22,7 +22,7 @@ namespace EasyMigrator.Parsing
         public Func<Context, ITypeMap> TypeMap { get; set; }
         public Func<Context, Lengths> StringLengths { get; set; }
         public Func<Context, Lengths> PrecisionLengths { get; set; }
-        public Func<Context, IPrecision> DefaultPrecision { get; set; }
+        public Func<Context, Column, IPrecision> DefaultPrecision { get; set; }
         public Func<Context, bool> IndexForeignKeys { get; set; }
     }
 }
