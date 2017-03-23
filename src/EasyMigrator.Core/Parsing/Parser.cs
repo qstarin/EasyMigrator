@@ -241,7 +241,7 @@ namespace EasyMigrator.Parsing
 
         protected virtual IPrecision GetPrecision(Context context, FieldInfo field, Column column)
         {
-            var typesWithPrecision = new[] { DbType.Decimal, DbType.DateTime2 };
+            var typesWithPrecision = new[] { DbType.Decimal, DbType.DateTime2, DbType.DateTimeOffset };
             if (!typesWithPrecision.Contains(column.Type))
                 return null;
 

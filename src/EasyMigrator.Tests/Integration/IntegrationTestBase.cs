@@ -167,7 +167,7 @@ namespace EasyMigrator.Tests.Integration
                     Precision = 
                         (dbType == DbType.Decimal) && (c.Precision.HasValue || c.Scale.HasValue)
                             ? new PrecisionAttribute(c.Precision ?? 0, c.Scale ?? 0) 
-                            : (dbType == DbType.DateTime2 && c.DateTimePrecision != null)
+                            : ((dbType == DbType.DateTime2 || dbType == DbType.DateTimeOffset) && c.DateTimePrecision != null)
                                 ? new PrecisionAttribute(0, c.DateTimePrecision.Value)
                                 : null,
                     Index = idx != null

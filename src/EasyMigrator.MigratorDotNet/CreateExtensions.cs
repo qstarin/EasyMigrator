@@ -189,7 +189,9 @@ namespace EasyMigrator
                 GetSqlTypeString(dbType) + 
                 (precision.HasValue && precision > 0 && scale.HasValue && scale > 0
                     ? $"({precision}, {scale})"
-                    : $"({Math.Max(precision ?? 0, scale ?? 0)})")
+                    : (precision.HasValue && precision > 0) || (scale.HasValue && scale > 0)
+                        ? $"({Math.Max(precision ?? 0, scale ?? 0)})"
+                        : "")
                  +
                 $" {(isNullable ? "" : "NOT ")}NULL");
 

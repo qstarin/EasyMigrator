@@ -36,9 +36,16 @@ namespace EasyMigrator.Tests
                     Assert.AreEqual(e.AutoIncrement.Step, a.AutoIncrement.Step);
                 }
 
-                if (e.Precision == null)
-                    Assert.IsNull(a.Precision);
-                else {
+                if (e.Precision == null) {
+                    if (e.Type == DbType.DateTimeOffset) {
+                        Assert.AreEqual(0, a.Precision.Precision);
+                        Assert.AreEqual(7, a.Precision.Scale);
+                    }
+                    else
+                        Assert.IsNull(a.Precision);
+                }
+                else
+                {
                     Assert.AreEqual(e.Precision.Precision, a.Precision.Precision);
                     Assert.AreEqual(e.Precision.Scale, a.Precision.Scale);
                 }
