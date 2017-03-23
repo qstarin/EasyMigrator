@@ -55,7 +55,7 @@ namespace EasyMigrator.Tests.Integration.FluentMigrator
         private MigrationRunner BuildRunner(string connectionString)
         {
             // http://stackoverflow.com/a/10508299/224087
-            var announcer = new TextWriterAnnouncer(s => System.Diagnostics.Debug.WriteLine(s));
+            var announcer = new TextWriterAnnouncer(s => Console.Out.WriteLine(s));
             var assembly = Assembly.GetExecutingAssembly();
             var migrationContext = new RunnerContext(announcer) { Namespace = GetType().Namespace, TransactionPerSession = true };
             var options = new ProcessorOptions { PreviewOnly = false, Timeout = 60 };
