@@ -60,6 +60,8 @@ namespace EasyMigrator.Tests.Integration.MigratorDotNet
             for (int i = 0; i < migrationActionsList.Count; i++)
                 BuildMigrationClass(assemblyName, moduleBuilder, i + 1);
 
+            // MigratorDotNet won't accept a dynamic assembly (it calls Assembly.GetExportedTypes)
+            // this seems to get around it. it might be better to build the assembly in it's own appdomain that gets discarded after the save but eh, it's just unit tests
             assemblyBuilder.Save($@"{assemblyName}.dll");
             var assembly = Assembly.LoadFile(Path.Combine(Environment.CurrentDirectory, $@"{assemblyName}.dll"));
 

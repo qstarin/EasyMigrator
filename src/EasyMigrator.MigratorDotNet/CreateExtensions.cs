@@ -11,6 +11,10 @@ namespace EasyMigrator
 {
     static public class CreateExtensions
     {
+        static private IDictionary<DbType, DbType> UnsupportedTypes = new Dictionary<DbType, DbType> {
+            { DbType.DateTime2, DbType.DateTime },
+        };
+
         static public void AddTable<T>(this ITransformationProvider Database) => Database.AddTable(typeof(T));
         static public void AddTable(this ITransformationProvider Database, Type tableType) => Database.AddTable(tableType, Parsing.Parser.Default);
         static public void AddTable<T>(this ITransformationProvider Database, Parsing.Parser parser) => Database.AddTable(typeof(T), parser);
@@ -18,6 +22,7 @@ namespace EasyMigrator
         {
             var table = parser.ParseTableType(tableType).Table;
             var columns = new List<Column>();
+            var unsupportedTypeColumns = new List<EColumn>();
             foreach (var col in table.Columns.WithoutCustomAutoIncrement()) {
                 // do this temporarily because we want to create the PK ourselves later in order to set the name and support unclustered and composite PK's
                 var isPk = col.IsPrimaryKey;
@@ -25,6 +30,12 @@ namespace EasyMigrator
                     col.IsPrimaryKey = false;
 
                 var c = BuildColumn(col);
+
+                if (UnsupportedTypes.ContainsKey(col.Type)) {
+                    unsupportedTypeColumns.Add(col);
+                    c.Type = UnsupportedTypes[col.Type];
+                }
+
                 columns.Add(c);
 
                 if (isPk)
@@ -49,8 +60,11 @@ namespace EasyMigrator
             foreach (var col in table.Columns.MaxLength())
                 AlterToMaxLength(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.IsNullable);
 
-            foreach (var col in table.Columns.WithPrecision())
-                AlterForPrecision(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable);
+            foreach (var col in table.Columns.WithPrecision().Except(unsupportedTypeColumns))
+                AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable);
+
+            foreach (var col in unsupportedTypeColumns)
+                AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable);
 
             foreach (var col in table.Columns.ForeignKeys()) {
                 var fk = col.ForeignKey;
@@ -74,6 +88,7 @@ namespace EasyMigrator
             var table = parser.ParseTableType(tableType).Table;
             var pocoColumns = table.Columns.DefinedInPoco();
             var nonNullables = new List<EColumn>();
+            var unsupportedTypeColumns = new List<EColumn>();
 
             foreach (var col in pocoColumns) {
 				if (populate != null && !col.IsNullable && col.DefaultValue == null) {
@@ -81,17 +96,27 @@ namespace EasyMigrator
 					nonNullables.Add(col);
 				}
 
+                var c = BuildColumn(col);
+
+                if (UnsupportedTypes.ContainsKey(col.Type)) {
+                    unsupportedTypeColumns.Add(col);
+                    c.Type = UnsupportedTypes[col.Type];
+                }
+
                 if (col.IsCustomAutoIncrement())
                     AddColumnWithCustomIdentity(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.AutoIncrement.Seed, col.AutoIncrement.Step, col.IsNullable);
                 else
-                    Database.AddColumn(SqlReservedWords.Quote(table.Name), BuildColumn(col));
+                    Database.AddColumn(SqlReservedWords.Quote(table.Name), c);
             }
 
             foreach (var col in pocoColumns.MaxLength())
                 AlterToMaxLength(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.IsNullable);
 
             foreach (var col in pocoColumns.WithPrecision())
-                AlterForPrecision(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable);
+                AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable);
+
+            foreach (var col in unsupportedTypeColumns)
+                AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable);
 
             if (populate != null) {
                 populate();
@@ -157,8 +182,8 @@ namespace EasyMigrator
         static private void AlterToMaxLength(ITransformationProvider Database, string tableName, string columnName, DbType dbType, bool isNullable)
             => Database.ExecuteNonQuery($"ALTER TABLE {tableName} ALTER COLUMN {columnName} {(dbType == DbType.AnsiString ? "" : "N")}VARCHAR(MAX) {(isNullable ? "" : "NOT ")}NULL");
 
-        // Migrator.Net doesn't support setting the precision so we do it manually with SQL
-        static private void AlterForPrecision(ITransformationProvider Database, string tableName, string columnName, DbType dbType, int? precision, int? scale, bool isNullable)
+        // Migrator.Net doesn't support some types or setting the precision so we do it manually with SQL
+        static private void AlterForUnsupportedType(ITransformationProvider Database, string tableName, string columnName, DbType dbType, int? precision, int? scale, bool isNullable)
             => Database.ExecuteNonQuery($"ALTER TABLE {tableName} ALTER COLUMN {columnName} " +
                 GetSqlTypeString(dbType) + 
                 (precision.HasValue && precision > 0 && scale.HasValue && scale > 0
@@ -167,7 +192,7 @@ namespace EasyMigrator
                  +
                 $" {(isNullable ? "" : "NOT ")}NULL");
 
-        // Migrator.Net doesn't support setting the precision so we do it manually with SQL
+        // Migrator.Net also doesn't support identity seed and step values other than the defaults of 1
         static private void AddColumnWithCustomIdentity(ITransformationProvider Database, string tableName, string columnName, DbType dbType, long seed, long step, bool isNullable)
             => Database.ExecuteNonQuery($"ALTER TABLE {tableName} ADD COLUMN {BuildColumnWithCustomIdentitySql(columnName, dbType, seed, step, isNullable)}");
 

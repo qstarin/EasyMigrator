@@ -123,7 +123,7 @@ namespace EasyMigrator.Parsing
                     if (column.ForeignKey.Name == null && column.ForeignKey.Column != null)
                         column.ForeignKey.Name = Conventions.ForeignKeyName(context, column);
 
-                    if (column.Index == null && (fk.Indexed == true || Conventions.IndexForeignKeys(context)))
+                    if (column.Index == null && (fk.Indexed || Conventions.IndexForeignKeys(context)))
                         column.Index = new IndexAttribute { Name = Conventions.IndexNameByColumns(context, new[] { column }) };
                 }
 
