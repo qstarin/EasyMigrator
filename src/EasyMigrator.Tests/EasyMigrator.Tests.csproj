@@ -95,6 +95,7 @@
     <Compile Include="Schemas\Fk_AddToExisting.cs" />
     <Compile Include="Schemas\Fk_ByType_Guid.cs" />
     <Compile Include="Schemas\Fk_MultipleToSameTable.cs" />
+    <Compile Include="Schemas\Fk_Not_Indexed.cs" />
     <Compile Include="Schemas\Mtm_BookAuthors.cs" />
     <Compile Include="Schemas\Precisions.cs" />
     <Compile Include="Schemas\SelfReferential.cs" />

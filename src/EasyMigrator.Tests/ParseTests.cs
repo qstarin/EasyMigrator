@@ -20,6 +20,7 @@ namespace EasyMigrator.Tests
         [Test] public void DateTime2_WithScale() => Test<DateTime2.WithScale>();
         [Test] public void Fk_ByType_Guid() => Test<Fk_ByType_Guid>();
         [Test] public void Fk_MultipleToSameTable_Int32() => Test<Fk_MultipleToSameTable_Int32>();
+        [Test] public void Fk_Not_Indexed() => Test<Fk_Not_Indexed>();
         [Test] public void Mtm_BookAuthors() => Test<Mtm_BookAuthors>();
         [Test] public void Precision_Unspecified() => Test<Precisions.Unspecified>();
         [Test] public void Precision_Default() => Test<Precisions.Default>();

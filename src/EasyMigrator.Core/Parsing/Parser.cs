@@ -123,7 +123,7 @@ namespace EasyMigrator.Parsing
                     if (column.ForeignKey.Name == null && column.ForeignKey.Column != null)
                         column.ForeignKey.Name = Conventions.ForeignKeyName(context, column);
 
-                    if (column.Index == null && (fk.Indexed || Conventions.IndexForeignKeys(context)))
+                    if (column.Index == null && (fk.Indexed || (!fk.IndexedWasSet && Conventions.IndexForeignKeys(context))))
                         column.Index = new IndexAttribute { Name = Conventions.IndexNameByColumns(context, new[] { column }) };
                 }
 
@@ -134,7 +134,7 @@ namespace EasyMigrator.Parsing
             }
 
             if (!table.HasPrimaryKey && !context.ModelType.HasAttribute<NoPkAttribute>() && Conventions.PrimaryKey != null) {
-                foreach (var pk in Conventions.PrimaryKey(context).Reverse()) { // Reverse so Insert(0.. puts everything in the right order
+                foreach (var pk in Conventions.PrimaryKey(context).Reverse()) { // Reverse so Insert(0.. puts everything in the right order (placing PK columns first)
                     pk.IsPrimaryKey = true;
                     pk.DefinedInPoco = false;
                     if (table.Columns.Any(c => c.Name == pk.Name))
