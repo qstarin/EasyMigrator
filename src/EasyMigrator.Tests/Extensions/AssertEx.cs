@@ -37,7 +37,7 @@ namespace EasyMigrator.Tests
                 }
 
                 if (e.Precision == null) {
-                    if (e.Type == DbType.DateTimeOffset) {
+                    if (e.Type == DbType.DateTimeOffset || e.Type == DbType.DateTime2) {
                         Assert.AreEqual(0, a.Precision.Precision);
                         Assert.AreEqual(7, a.Precision.Scale);
                     }

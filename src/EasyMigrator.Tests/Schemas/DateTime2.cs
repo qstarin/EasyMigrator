@@ -52,5 +52,46 @@ namespace EasyMigrator.Tests.Schemas
                 }
             }
         }
+        public class NotNull
+        {
+            public class Poco
+            {
+                [DbType(DbType.DateTime2)] public DateTime CreatedOn;
+            }
+
+            static Table Model = new Table {
+                Name = "NotNull",
+                Columns = new[] {
+                    new Column {
+                        Name = "Id",
+                        Type = DbType.Int32,
+                        IsPrimaryKey = true,
+                        AutoIncrement = new AutoIncAttribute()
+                    },
+                    new Column {
+                        Name = "CreatedOn",
+                        Type = DbType.DateTime2,
+                    },
+                }
+            };
+
+            public class AddColumns
+            {
+                public class Empty
+                {
+                    [Name(nameof(NotNull))] public class Poco { }
+                    static Table Model = NotNull.Model;
+                }
+
+                public class ColumnsToAdd
+                {
+                    [Name(nameof(NotNull))]
+                    public class Poco
+                    {
+                        [DbType(DbType.DateTime2)] public DateTime CreatedOn;
+                    }
+                }
+            }
+        }
     }
 }
