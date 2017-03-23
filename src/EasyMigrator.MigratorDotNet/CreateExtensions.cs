@@ -13,6 +13,7 @@ namespace EasyMigrator
     {
         static private IDictionary<DbType, DbType> UnsupportedTypes = new Dictionary<DbType, DbType> {
             { DbType.DateTime2, DbType.DateTime },
+            { DbType.DateTimeOffset, DbType.DateTime },
         };
 
         static public void AddTable<T>(this ITransformationProvider Database) => Database.AddTable(typeof(T));
@@ -64,7 +65,7 @@ namespace EasyMigrator
                 AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable);
 
             foreach (var col in unsupportedTypeColumns)
-                AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable);
+                AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision?.Precision, col.Precision?.Scale, col.IsNullable);
 
             foreach (var col in table.Columns.ForeignKeys()) {
                 var fk = col.ForeignKey;
@@ -116,7 +117,7 @@ namespace EasyMigrator
                 AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable);
 
             foreach (var col in unsupportedTypeColumns)
-                AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable);
+                AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision?.Precision, col.Precision?.Scale, col.IsNullable);
 
             if (populate != null) {
                 populate();
@@ -207,6 +208,7 @@ namespace EasyMigrator
                 case DbType.Int32: return "INT";
                 case DbType.Int64: return "BIGINT";
                 case DbType.DateTime2: return "DATETIME2";
+                case DbType.DateTimeOffset: return "DATETIMEOFFSET";
                 default: throw new ArgumentException($"{dbType} is not a valid IDENTITY type.", nameof(dbType));
             }
         }

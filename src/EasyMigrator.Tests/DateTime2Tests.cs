@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using EasyMigrator.Tests.Integration;
-using EasyMigrator.Tests.Schemas;
 using NUnit.Framework;
 
 
