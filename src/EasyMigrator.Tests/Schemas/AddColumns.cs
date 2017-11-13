@@ -23,6 +23,7 @@ namespace EasyMigrator.Tests.Schemas
             {
                 public int Quantity;
                 [Max, NotNull] public string Story;
+                [Precision(Length.Short, 2)] decimal? Weight;
             }
 
             static Table Model = new Table {
@@ -48,6 +49,12 @@ namespace EasyMigrator.Tests.Schemas
                         Name = "Story",
                         Type = DbType.String,
                         Length = int.MaxValue,
+                    },
+                    new Column {
+                        Name = "Weight",
+                        Type = DbType.Decimal,
+                        Precision = new PrecisionAttribute(9, 2),
+                        IsNullable = true,
                     },
                 }
             };

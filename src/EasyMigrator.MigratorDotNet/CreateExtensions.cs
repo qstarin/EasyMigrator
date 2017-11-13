@@ -211,7 +211,8 @@ namespace EasyMigrator
                 case DbType.Int64: return "BIGINT";
                 case DbType.DateTime2: return "DATETIME2";
                 case DbType.DateTimeOffset: return "DATETIMEOFFSET";
-                default: throw new ArgumentException($"{dbType} is not a valid IDENTITY type.", nameof(dbType));
+                case DbType.Decimal: return "DECIMAL";
+                default: throw new ArgumentException($"{dbType} is not a supported custom type.", nameof(dbType));
             }
         }
     }
