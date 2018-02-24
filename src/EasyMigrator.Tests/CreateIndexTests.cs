@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using DatabaseSchemaReader.DataSchema;
 using EasyMigrator.Tests.Integration;
@@ -79,11 +80,29 @@ namespace EasyMigrator.Tests.MigratorDotNet
                     }));
 
         [Test]
+        public void Table1ColumnExpressionsInclude()
+            => CreateAndDropIndex(
+                "IX_Table1_Name",
+                migrations => migrations.AddMigrationForMigratorDotNet(
+                    m => {
+                        m.Database.AddIndex(new Expression<Func<Schemas.Table1.Poco, object>>[] { t => t.Name }, new Expression<Func<Schemas.Table1.Poco, object>>[] { t => t.Headline });
+                    },
+                    m => {
+                        m.Database.RemoveIndex<Schemas.Table1.Poco>(t => t.Name);
+                    }),
+                    dbIndex => {
+                        var nameCol = dbIndex.Columns.Find(c => c.Name == "Name");
+                        Assert.NotNull(nameCol);
+                        //var headlineCol = dbIndex.Columns.Find(c => c.Name == "Headline");
+                        //Assert.NotNull(headlineCol);
+                    });
+
+        [Test]
         public void Table1ColumnExpressionsUnique()
             => CreateAndDropIndex(
                 migrations => migrations.AddMigrationForMigratorDotNet(
                     m => {
-                        m.Database.AddIndex<Schemas.Table1.Poco>(true, t => t.Name, t => t.Headline);
+                        m.Database.AddIndex<Schemas.Table1.Poco>(true, false, t => t.Name, t => t.Headline);
                     },
                     m => {
                         m.Database.RemoveIndex<Schemas.Table1.Poco>(t => t.Name, t => t.Headline);
@@ -95,7 +114,7 @@ namespace EasyMigrator.Tests.MigratorDotNet
             => CreateAndDropIndex(
                 migrations => migrations.AddMigrationForMigratorDotNet(
                     m => {
-                        m.Database.AddIndex(new Descending<Schemas.Table1.Poco>(t => t.Name), new Ascending<Schemas.Table1.Poco>(t => t.Headline));
+                        m.Database.AddIndex(new IndexColumn<Schemas.Table1.Poco>[] { new Descending<Schemas.Table1.Poco>(t => t.Name), new Ascending<Schemas.Table1.Poco>(t => t.Headline) });
                     },
                     m => {
                         m.Database.RemoveIndex(new Descending<Schemas.Table1.Poco>(t => t.Name), new Ascending<Schemas.Table1.Poco>(t => t.Headline));

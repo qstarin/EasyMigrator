@@ -150,10 +150,12 @@ namespace EasyMigrator.Parsing
             var getExpressionFieldGenericMethodInfo = typeof(ReflectionExtensions).GetMethod("GetExpressionField");
             foreach (var fi in GetCompositeIndexFields(tableType)) {
                 IndexColumn[] columns = null;
+                IndexColumn[] includes = null;
 
                 if (fi.FieldType == typeof(EasyMigrator.CompositeIndex)) {
                     var ci = fi.GetValue(context.Model) as EasyMigrator.CompositeIndex;
                     columns = ci.Columns;
+                    includes = ci.Includes;
                 }
                 else {
                     var compositeIndexTableType = fi.FieldType.GetGenericArguments().Single();
@@ -161,6 +163,8 @@ namespace EasyMigrator.Parsing
                     var compositeIndexInstance = fi.GetValue(context.Model);
                     var compositeIndexColumnsPropertyInfo = fi.FieldType.GetProperty("Columns");
                     var columnsArray = compositeIndexColumnsPropertyInfo.GetGetMethod().Invoke(compositeIndexInstance, null);
+                    var compositeIndexIncludesPropertyInfo = fi.FieldType.GetProperty("Includes");
+                    var includesArray = compositeIndexIncludesPropertyInfo.GetGetMethod().Invoke(compositeIndexInstance, null);
                     var compositeIndexConcreteType = compositeIndexColumnsPropertyInfo.PropertyType.GetElementType();
                     var columnExpressionGetMethodInfo = compositeIndexConcreteType.GetProperty("ColumnExpression").GetGetMethod();
                     var directionGetMethodInfo = compositeIndexConcreteType.GetProperty("Direction").GetGetMethod();
@@ -174,12 +178,23 @@ namespace EasyMigrator.Parsing
                         columnList.Add(new IndexColumn(compositeIndexParserContext.Columns[columnFieldInfo].Name, direction));
                     }
                     columns = columnList.ToArray();
+
+                    var includeList = new List<IndexColumn>();
+                    foreach (var c in includesArray as IEnumerable) {
+                        var columnExpression = columnExpressionGetMethodInfo.Invoke(c, null);
+                        var getExpressionFieldConcreteMethodInfo = getExpressionFieldGenericMethodInfo.MakeGenericMethod(compositeIndexTableType, typeof(object));
+                        var columnFieldInfo = getExpressionFieldConcreteMethodInfo.Invoke(null, new[] { columnExpression }) as FieldInfo;
+                        var direction = (SortOrder)directionGetMethodInfo.Invoke(c, null);
+                        includeList.Add(new IndexColumn(compositeIndexParserContext.Columns[columnFieldInfo].Name, direction));
+                    }
+                    includes = includeList.ToArray();
                 }
 
                 var ciIdxAttr = fi.GetAttribute<IndexAttribute>();
                 table.CompositeIndices.Add(new Model.CompositeIndex {
                     Name = ciIdxAttr?.Name ?? Conventions.IndexNameByTableAndColumnNames(table.Name, columns.Select(c => c.ColumnName).ToArray()),
                     Columns = columns,
+                    Includes = includes,
                     Unique = ciIdxAttr?.Unique ?? false,
                     Clustered = ciIdxAttr?.Clustered ?? false,
                 });

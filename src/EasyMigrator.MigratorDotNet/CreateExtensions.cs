@@ -74,11 +74,11 @@ namespace EasyMigrator
             
             foreach (var col in table.Columns.Indexed()) {
                 var idx = col.Index;
-                Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, SqlReservedWords.Quote(col.Name));
+                Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, new[] { col.Name }, parser: parser);
             }
 
             foreach (var idx in table.CompositeIndices)
-                Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, parser, idx.Columns.Select(c => c.ColumnNameWithDirection).ToArray());
+                Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, idx.Columns.Select(c => c.ColumnNameWithDirection).ToArray(), idx.Includes?.Select(c => c.ColumnName).ToArray(), parser);
         }
 
         static public void AddColumns<T>(this ITransformationProvider Database, Action populate = null) => Database.AddColumns(typeof(T), populate);
@@ -137,11 +137,11 @@ namespace EasyMigrator
             
             foreach (var col in pocoColumns.Indexed()) {
                 var idx = col.Index;
-                Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, parser, SqlReservedWords.Quote(col.Name));
+                Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, new[] { col.Name }, parser: parser);
             }
 
             foreach (var idx in table.CompositeIndices)
-                Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, parser, idx.Columns.Select(c => c.ColumnNameWithDirection).ToArray());
+                Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, idx.Columns.Select(c => c.ColumnNameWithDirection).ToArray(), idx.Includes?.Select(c => c.ColumnName).ToArray(), parser);
         }
 
         static private Column BuildColumn(EColumn col)

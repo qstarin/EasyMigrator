@@ -9,6 +9,7 @@ namespace EasyMigrator.Parsing.Model
     {
         public string Name { get; set; }
         public IndexColumn[] Columns { get; set; }
+        public IndexColumn[] Includes { get; set; }
         public bool Unique { get; set; }
         public bool Clustered { get; set; }
     }
