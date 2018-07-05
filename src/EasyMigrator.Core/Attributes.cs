@@ -144,4 +144,7 @@ namespace EasyMigrator
         public string Expression { get; }
         public DefaultAttribute(string expression) { Expression = expression; }
     }
+
+    [AttributeUsage(AttributeTargets.Field)]
+    public class SparseAttribute : Attribute { }
 }

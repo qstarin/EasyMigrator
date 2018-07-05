@@ -32,6 +32,9 @@ namespace EasyMigrator
 
                 var c = BuildColumn(col);
 
+                if (col.IsSparse)
+                    unsupportedTypeColumns.Add(col);
+
                 if (UnsupportedTypes.ContainsKey(col.Type)) {
                     unsupportedTypeColumns.Add(col);
                     c.Type = UnsupportedTypes[col.Type];
@@ -62,10 +65,10 @@ namespace EasyMigrator
                 AlterToMaxLength(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.IsNullable);
 
             foreach (var col in table.Columns.WithPrecision().Except(unsupportedTypeColumns))
-                AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable);
+                AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable, col.IsSparse);
 
             foreach (var col in unsupportedTypeColumns)
-                AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision?.Precision, col.Precision?.Scale, col.IsNullable);
+                AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision?.Precision, col.Precision?.Scale, col.IsNullable, col.IsSparse);
 
             foreach (var col in table.Columns.ForeignKeys()) {
                 var fk = col.ForeignKey;
@@ -99,6 +102,9 @@ namespace EasyMigrator
 
                 var c = BuildColumn(col);
 
+                if (col.IsSparse)
+                    unsupportedTypeColumns.Add(col);
+
                 if (UnsupportedTypes.ContainsKey(col.Type)) {
                     unsupportedTypeColumns.Add(col);
                     c.Type = UnsupportedTypes[col.Type];
@@ -114,10 +120,10 @@ namespace EasyMigrator
                 AlterToMaxLength(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.IsNullable);
 
             foreach (var col in pocoColumns.WithPrecision())
-                AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable);
+                AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable, col.IsSparse);
 
             foreach (var col in unsupportedTypeColumns)
-                AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision?.Precision, col.Precision?.Scale, col.IsNullable);
+                AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision?.Precision, col.Precision?.Scale, col.IsNullable, col.IsSparse);
 
             if (populate != null) {
                 populate();
@@ -184,7 +190,7 @@ namespace EasyMigrator
             => Database.ExecuteNonQuery($"ALTER TABLE {tableName} ALTER COLUMN {columnName} {(dbType == DbType.AnsiString ? "" : "N")}VARCHAR(MAX) {(isNullable ? "" : "NOT ")}NULL");
 
         // Migrator.Net doesn't support some types or setting the precision so we do it manually with SQL
-        static private void AlterForUnsupportedType(ITransformationProvider Database, string tableName, string columnName, DbType dbType, int? precision, int? scale, bool isNullable)
+        static private void AlterForUnsupportedType(ITransformationProvider Database, string tableName, string columnName, DbType dbType, int? precision, int? scale, bool isNullable, bool isSparse)
             => Database.ExecuteNonQuery($"ALTER TABLE {tableName} ALTER COLUMN {columnName} " +
                 GetSqlTypeString(dbType) + 
                 (precision.HasValue && precision > 0 && scale.HasValue && scale > 0
@@ -192,8 +198,8 @@ namespace EasyMigrator
                     : (precision.HasValue && precision > 0) || (scale.HasValue && scale > 0)
                         ? $"({Math.Max(precision ?? 0, scale ?? 0)})"
                         : "")
-                 +
-                $" {(isNullable ? "" : "NOT ")}NULL");
+                + (isSparse  ? " SPARSE" : "")
+                + $" {(isNullable ? "" : "NOT ")}NULL");
 
         // Migrator.Net also doesn't support identity seed and step values other than the defaults of 1
         static private void AddColumnWithCustomIdentity(ITransformationProvider Database, string tableName, string columnName, DbType dbType, long seed, long step, bool isNullable)

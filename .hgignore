@@ -1,4 +1,5 @@
 syntax: glob
+.vs\*
 packages\*
 obj\*
 [Bb]in\*

@@ -12,6 +12,7 @@ using DatabaseSchemaReader.DataSchema;
 using EasyMigrator.Extensions;
 using EasyMigrator.Parsing.Model;
 using EasyMigrator.Tests.TableTest;
+using NPoco;
 using NUnit.Framework;
 
 
@@ -123,11 +124,24 @@ namespace EasyMigrator.Tests.Integration
 
         protected DatabaseSchema GetDbSchema() => new DatabaseReader(ConnectionStringWithDatabase, SqlType.SqlServer).ReadAll();
 
+        private class IsSparseInfo
+        {
+            public string Name { get; set; }
+            public bool IsSparse { get; set; }
+        }
+
         protected Table GetTableModelFromDb(string tableName)
         {
             var table = new Table {Name = tableName};
             var schema = GetDbSchema();
             var st = schema.Tables.Single(t => t.Name == table.Name);
+
+            var isSparse = new Dictionary<string, bool>(st.Columns.Count, StringComparer.InvariantCultureIgnoreCase);
+            using (var db = new Database(ConnectionStringWithDatabase, DatabaseType.SqlServer2012)) {
+                var sparseInfo = db.Fetch<IsSparseInfo>("SELECT Name, is_sparse AS IsSparse FROM sys.Columns WHERE object_id=object_id(@0)", tableName);
+                foreach (var o in sparseInfo)
+                    isSparse.Add(o.Name, o.IsSparse);
+            }
 
             var pkIdx = st.Indexes.SingleOrDefault(i => i.IndexType == "PRIMARY");
             table.PrimaryKeyName = pkIdx.Name;
@@ -156,6 +170,7 @@ namespace EasyMigrator.Tests.Integration
                     Type = dbType,
                     IsPrimaryKey = c.IsPrimaryKey,
                     IsNullable = c.Nullable,
+                    IsSparse = isSparse[c.Name],
                     Length = c.Length.IfHasValue(l => l == -1 ? int.MaxValue : l, default(int?)),
                     DefaultValue =
                         dbType == DbType.Boolean

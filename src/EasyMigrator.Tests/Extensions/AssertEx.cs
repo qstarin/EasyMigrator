@@ -27,6 +27,7 @@ namespace EasyMigrator.Tests
                 Assert.AreEqual(e.DefaultValue, a.DefaultValue);
                 Assert.AreEqual(e.IsNullable, a.IsNullable);
                 Assert.AreEqual(e.IsPrimaryKey, a.IsPrimaryKey);
+                Assert.AreEqual(e.IsSparse, a.IsSparse);
                 Assert.AreEqual(e.Length, a.Length);
 
                 if (e.AutoIncrement == null)

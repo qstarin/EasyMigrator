@@ -89,6 +89,7 @@ namespace EasyMigrator.Parsing
                     DefaultValue = GetDefaultValue(context.Model, field),
                     IsNullable = IsNullable(field),
                     IsPrimaryKey = pk != null,
+                    IsSparse = field.HasAttribute<SparseAttribute>(),
                     AutoIncrement = field.GetAttribute<AutoIncAttribute>(),
                     Length = GetLength(field, dbType, Conventions.StringLengths(context)),
                     Index = field.GetAttribute<IndexAttribute>(),
