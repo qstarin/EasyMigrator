@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using EasyMigrator.Parsing.Model;
@@ -32,9 +33,16 @@ namespace EasyMigrator.Tests.Schemas
                         Type = DbType.Int32,
                         IsNullable = true,
                         ForeignKey = new FkAttribute("ParentOfSelf") { Column = "Id" },
-                        Index = new IndexAttribute { Name = "IX_ParentOfSelf_ParentId" }
                     },
-                }
+                },
+                Indices = new List<Index> {
+                    new Index {
+                        Name = "IX_ParentOfSelf_ParentId",
+                        Unique = false,
+                        Clustered = false,
+                        Columns = new [] { new IndexColumn("ParentId") }
+                    },
+                },
             };
 
             public class AddColumns

@@ -82,6 +82,7 @@ namespace EasyMigrator.Parsing
                 var dbType = field.GetAttribute<DbTypeAttribute>()?.DbType ?? typemap[field];
                 var pk = field.GetAttribute<PkAttribute>();
                 var fk = field.GetAttribute<FkAttribute>();
+                var idx = field.GetAttribute<IndexAttribute>();
 
                 var column = new Column {
                     Name = field.GetAttribute<NameAttribute>()?.Name ?? Conventions.ColumnName(context, field), 
@@ -92,11 +93,11 @@ namespace EasyMigrator.Parsing
                     IsSparse = field.HasAttribute<SparseAttribute>(),
                     AutoIncrement = field.GetAttribute<AutoIncAttribute>(),
                     Length = GetLength(field, dbType, Conventions.StringLengths(context)),
-                    Index = field.GetAttribute<IndexAttribute>(),
                     ForeignKey = fk,
                     DefinedInPoco = true
                 };
                 context.Columns.Add(field, column);
+
                 column.Precision = GetPrecision(context, field, column);
 
                 if (pk != null) {
@@ -114,8 +115,6 @@ namespace EasyMigrator.Parsing
                     }
                 }
 
-                if (column.Index != null && column.Index.Name == null)
-                    column.Index.Name = Conventions.IndexNameByColumns(context, new[] { column });
 
                 if (column.ForeignKey != null) {
                     if (column.ForeignKey.Column == null && fk.Table != null)
@@ -124,8 +123,17 @@ namespace EasyMigrator.Parsing
                     if (column.ForeignKey.Name == null && column.ForeignKey.Column != null)
                         column.ForeignKey.Name = Conventions.ForeignKeyName(context, column);
 
-                    if (column.Index == null && (fk.Indexed || (!fk.IndexedWasSet && Conventions.IndexForeignKeys(context))))
-                        column.Index = new IndexAttribute { Name = Conventions.IndexNameByColumns(context, new[] { column }) };
+                    if (idx == null && (fk.Indexed || (!fk.IndexedWasSet && Conventions.IndexForeignKeys(context))))
+                        idx = new IndexAttribute();
+                }
+
+                if (idx != null) {
+                    table.Indices.Add(new Model.Index {
+                        Name = idx.Name ?? Conventions.IndexNameByColumns(context, new[] { column }),
+                        Clustered = idx.Clustered,
+                        Unique = idx.Unique,
+                        Columns = new [] { new IndexColumn(column.Name) },
+                    });
                 }
 
                 if (table.Columns.Any(c => c.Name == column.Name))
@@ -150,8 +158,8 @@ namespace EasyMigrator.Parsing
 
             var getExpressionFieldGenericMethodInfo = typeof(ReflectionExtensions).GetMethod("GetExpressionField");
             foreach (var fi in GetCompositeIndexFields(tableType)) {
-                IndexColumn[] columns = null;
-                IndexColumn[] includes = null;
+                IIndexColumn[] columns = null;
+                IIndexColumn[] includes = null;
 
                 if (fi.FieldType == typeof(EasyMigrator.CompositeIndex)) {
                     var ci = fi.GetValue(context.Model) as EasyMigrator.CompositeIndex;
@@ -170,7 +178,7 @@ namespace EasyMigrator.Parsing
                     var columnExpressionGetMethodInfo = compositeIndexConcreteType.GetProperty("ColumnExpression").GetGetMethod();
                     var directionGetMethodInfo = compositeIndexConcreteType.GetProperty("Direction").GetGetMethod();
 
-                    var columnList = new List<IndexColumn>();
+                    var columnList = new List<IIndexColumn>();
                     foreach (var c in columnsArray as IEnumerable) {
                         var columnExpression = columnExpressionGetMethodInfo.Invoke(c, null);
                         var getExpressionFieldConcreteMethodInfo = getExpressionFieldGenericMethodInfo.MakeGenericMethod(compositeIndexTableType, typeof(object));
@@ -180,7 +188,7 @@ namespace EasyMigrator.Parsing
                     }
                     columns = columnList.ToArray();
 
-                    var includeList = new List<IndexColumn>();
+                    var includeList = new List<IIndexColumn>();
                     foreach (var c in includesArray as IEnumerable) {
                         var columnExpression = columnExpressionGetMethodInfo.Invoke(c, null);
                         var getExpressionFieldConcreteMethodInfo = getExpressionFieldGenericMethodInfo.MakeGenericMethod(compositeIndexTableType, typeof(object));
@@ -192,7 +200,7 @@ namespace EasyMigrator.Parsing
                 }
 
                 var ciIdxAttr = fi.GetAttribute<IndexAttribute>();
-                table.CompositeIndices.Add(new Model.CompositeIndex {
+                table.Indices.Add(new Model.Index {
                     Name = ciIdxAttr?.Name ?? Conventions.IndexNameByTableAndColumnNames(table.Name, columns.Select(c => c.ColumnName).ToArray()),
                     Columns = columns,
                     Includes = includes,

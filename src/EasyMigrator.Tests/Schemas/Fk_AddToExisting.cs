@@ -65,9 +65,16 @@ namespace EasyMigrator.Tests.Schemas
                         Name = "StuffId",
                         Type = DbType.Int32,
                         ForeignKey = new FkAttribute("Stuff") { Column = "Id" },
-                        Index = new IndexAttribute { Name = "IX_Assoc_StuffId" }
                     },
-                }
+                },
+                Indices = new List<Index> {
+                    new Index {
+                        Name = "IX_Assoc_StuffId",
+                        Unique = false,
+                        Clustered = false,
+                        Columns = new [] { new IndexColumn("StuffId") }
+                    },
+                },
             };
         }
 

@@ -56,9 +56,16 @@ namespace EasyMigrator.Tests.Schemas
                             Column = "Id",
                             Indexed = true
                         },
-                        Index = new IndexAttribute { Name = "IX_Slave_MasterId" }
                     },
-                }
+                },
+                Indices = new List<Index> {
+                    new Index {
+                        Name = "IX_Slave_MasterId",
+                        Unique = false,
+                        Clustered = false,
+                        Columns = new [] { new IndexColumn("MasterId") }
+                    },
+                },
             };
         }
     }

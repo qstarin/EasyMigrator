@@ -89,7 +89,7 @@ namespace EasyMigrator
     }
 
     [AttributeUsage(AttributeTargets.Field)]
-    public class IndexAttribute : Attribute, Parsing.Model.IIndex
+    public class IndexAttribute : Attribute
     {
         public string Name { get; set; }
         public bool Unique { get; protected set; }

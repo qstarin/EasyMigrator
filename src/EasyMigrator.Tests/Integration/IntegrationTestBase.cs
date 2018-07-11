@@ -146,14 +146,14 @@ namespace EasyMigrator.Tests.Integration
             var pkIdx = st.Indexes.SingleOrDefault(i => i.IndexType == "PRIMARY");
             table.PrimaryKeyName = pkIdx.Name;
 
-            foreach (var idx in st.Indexes.Where(i => i.IndexType != "PRIMARY" && i.Columns.Count > 1)) {
-                var ci = new Parsing.Model.CompositeIndex {
+            foreach (var idx in st.Indexes.Where(i => i.IndexType != "PRIMARY")) {
+                var ci = new Parsing.Model.Index {
                     Name = idx.Name,
                     Unique = idx.IsUnique,
                     Clustered = idx.IndexType != "NONCLUSTERED",
                     Columns = idx.Columns.Select(c => new IndexColumn(c.Name)).ToArray()
                 };
-                table.CompositeIndices.Add(ci);
+                table.Indices.Add(ci);
             }
 
             table.Columns = st.Columns.Select(c => {
@@ -162,7 +162,6 @@ namespace EasyMigrator.Tests.Integration
                 param.SqlDbType = sqlDbType;
                 var dbType = param.DbType;
 
-                var idx = st.Indexes.SingleOrDefault(i => i.IndexType != "PRIMARY" && i.Columns.Count == 1 && i.Columns[0].Name == c.Name);
                 var fk = st.ForeignKeys.SingleOrDefault(f => f.Columns.Count == 1 && f.Columns[0] == c.Name);
 
                 return new Column {
@@ -185,13 +184,6 @@ namespace EasyMigrator.Tests.Integration
                             : ((dbType == DbType.DateTime2 || dbType == DbType.DateTimeOffset) && c.DateTimePrecision != null)
                                 ? new PrecisionAttribute(0, c.DateTimePrecision.Value)
                                 : null,
-                    Index = idx != null
-                        ? idx.IndexType != "NONCLUSTERED"
-                            ? new ClusteredAttribute { Name = idx.Name }
-                            : c.IsUniqueKey 
-                                ? new UniqueAttribute { Name = idx.Name } 
-                                : new IndexAttribute { Name = idx.Name }
-                        : null,
                     ForeignKey = c.IsForeignKey
                         ? new FkAttribute(c.ForeignKeyTableName) {
                                 Name = fk.Name,

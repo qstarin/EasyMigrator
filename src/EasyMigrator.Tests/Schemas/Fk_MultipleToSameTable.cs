@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System.Collections.Generic;
+using System.Data;
 using EasyMigrator.Parsing.Model;
 using EasyMigrator.Tests.TableTest;
 
@@ -57,21 +58,38 @@ namespace EasyMigrator.Tests.Schemas
                         Name = "StuffId",
                         Type = DbType.Int32,
                         ForeignKey = new FkAttribute("Stuff") { Column = "Id" },
-                        Index = new IndexAttribute { Name = "IX_Assoc_StuffId" }
                     },
                     new Column {
                         Name = "AltStuffId",
                         Type = DbType.Int32,
                         ForeignKey = new FkAttribute("Stuff") { Column = "Id" },
-                        Index = new IndexAttribute { Name = "IX_Assoc_AltStuffId" }
                     },
                     new Column {
                         Name = "Desc",
                         Type = DbType.Int32,
                         ForeignKey = new FkAttribute("Stuff") { Column = "Id" },
-                        Index = new IndexAttribute { Name = "IX_Assoc_Desc" }
                     }
-                }
+                },
+                Indices = new[] {
+                    new Index {
+                        Name = "IX_Assoc_StuffId",
+                        Unique = false,
+                        Clustered = false,
+                        Columns = new [] { new IndexColumn("StuffId") }
+                    },
+                    new Index {
+                        Name = "IX_Assoc_AltStuffId",
+                        Unique = false,
+                        Clustered = false,
+                        Columns = new [] { new IndexColumn("AltStuffId") }
+                    },
+                    new Index {
+                        Name = "IX_Assoc_Desc",
+                        Unique = false,
+                        Clustered = false,
+                        Columns = new [] { new IndexColumn("Desc") }
+                    },
+                },
             };
         }
     }

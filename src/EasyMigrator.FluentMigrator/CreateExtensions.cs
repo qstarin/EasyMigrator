@@ -44,11 +44,8 @@ namespace EasyMigrator
             foreach (var col in table.Columns.Where(c => c.ForeignKey?.Table == table.Name))
                 Create.ForeignKey(col.ForeignKey.Name).FromTable(table.Name).ForeignColumn(col.Name).ToTable(col.ForeignKey.Table).PrimaryColumn(col.ForeignKey.Column);
 
-            foreach (var col in table.Columns.Indexed().Where(c => c.Index.Clustered))
-                Create.UniqueConstraint(col.Index.Name).OnTable(table.Name).Columns(col.Name).Clustered();
-
-            foreach (var ci in table.CompositeIndices) {
-                var ib = Create.Index(ci.Name).OnTable(tableType).OnColumns(ci.Columns);
+            foreach (var ci in table.Indices) {
+                var ib = Create.Index(ci.Name).OnTable(tableType).OnColumns(ci.Columns.Select(c => new IndexColumn(c.ColumnName, c.Direction)).ToArray());
                 if (ci.Unique)
                     ib.WithOptions().Unique();
                 if (ci.Clustered)
@@ -79,13 +76,10 @@ namespace EasyMigrator
                                               ICreateColumnOptionOrForeignKeyCascadeSyntax>(table, col);
             }
 
-            foreach (var col in table.Columns.Indexed().Where(c => c.Index.Clustered))
-                Create.UniqueConstraint(col.Index.Name).OnTable(table.Name).Columns(col.Name).Clustered();
-
             foreach (var col in table.Columns.Where(c => c.ForeignKey?.Table == table.Name))
                 Create.ForeignKey(col.ForeignKey.Name).FromTable(table.Name).ForeignColumn(col.Name).ToTable(col.ForeignKey.Table).PrimaryColumn(col.ForeignKey.Column);
 
-            foreach (var ci in table.CompositeIndices) {
+            foreach (var ci in table.Indices) {
                 //if (ci.Clustered) {
                 //    var ib = Create.UniqueConstraint(ci.Name).OnTable(table.Name);
                 //    foreach (var col in ci.Columns) {
@@ -95,7 +89,7 @@ namespace EasyMigrator
                 //    }
                 //}
                 //else {
-                var ib = Create.Index(ci.Name).OnTable(tableType).OnColumns(ci.Columns);
+                var ib = Create.Index(ci.Name).OnTable(tableType).OnColumns(ci.Columns.Select(c => new IndexColumn(c.ColumnName, c.Direction)).ToArray());
                 if (ci.Unique)
                     ib.WithOptions().Unique();
                 if (ci.Clustered)
@@ -135,12 +129,6 @@ namespace EasyMigrator
 
             if (col.AutoIncrement != null)
                 createColumnOptionSyntax = createColumnOptionSyntax.Identity((int)col.AutoIncrement.Seed, (int)col.AutoIncrement.Step);
-
-            if (col.Index != null && !col.Index.Clustered)
-                createColumnOptionSyntax =
-                    col.Index.Unique
-                        ? createColumnOptionSyntax.Unique(col.Index.Name)
-                        : createColumnOptionSyntax.Indexed(col.Index.Name);
         }
 
         static private TNext As<TSyntax, TNext, TNextFk>(this TSyntax s, Column col)

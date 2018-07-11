@@ -26,26 +26,6 @@ namespace EasyMigrator.Tests.Schemas
 
         static Table Model = new Table {
             Name = "Table1",
-            CompositeIndices = new List<Parsing.Model.CompositeIndex> {
-                new Parsing.Model.CompositeIndex {
-                    Name = "IX_Table1_Name_Code",
-                    Unique = false,
-                    Clustered = false,
-                    Columns = new [] {
-                        new IndexColumn("Name"),
-                        new IndexColumn("Code"),
-                    }
-                },
-                new Parsing.Model.CompositeIndex {
-                    Name = "IX_Custom_Name",
-                    Unique = true,
-                    Clustered = false,
-                    Columns = new [] {
-                        new IndexColumn("Sequence", SortOrder.Descending),
-                        new IndexColumn("Code", SortOrder.Ascending),
-                    }
-                },
-            },
             Columns = new[] {
                 new Column {
                     Name = "Id",
@@ -71,7 +51,6 @@ namespace EasyMigrator.Tests.Schemas
                     Name = "Code",
                     Type = DbType.AnsiStringFixedLength,
                     Length = 8,
-                    Index = new UniqueAttribute { Name = "idx_code" }
                 },
                 new Column {
                     Name = "Headline",
@@ -96,7 +75,33 @@ namespace EasyMigrator.Tests.Schemas
                     Type = DbType.Decimal,
                     Precision = new PrecisionAttribute(9, 3)
                 },
-            }
+            },
+            Indices = new List<Index> {
+                new Index {
+                    Name = "IX_Table1_Name_Code",
+                    Unique = false,
+                    Clustered = false,
+                    Columns = new [] {
+                        new IndexColumn("Name"),
+                        new IndexColumn("Code"),
+                    }
+                },
+                new Index {
+                    Name = "IX_Custom_Name",
+                    Unique = true,
+                    Clustered = false,
+                    Columns = new [] {
+                        new IndexColumn("Sequence", SortOrder.Descending),
+                        new IndexColumn("Code", SortOrder.Ascending),
+                    }
+                },
+                new Index {
+                    Name = "idx_code",
+                    Unique = true,
+                    Clustered = false,
+                    Columns = new [] { new IndexColumn("Code"), }
+                },
+            },
         };
     }
 }

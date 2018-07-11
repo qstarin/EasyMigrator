@@ -17,7 +17,6 @@ namespace EasyMigrator.Parsing.Model
         public IAutoIncrement AutoIncrement { get; set; }
         public int? Length { get; set; }
         public IPrecision Precision { get; set; }
-        public IIndex Index { get; set; }
         public IForeignKey ForeignKey { get; set; }
         internal bool DefinedInPoco { get; set; }
     }

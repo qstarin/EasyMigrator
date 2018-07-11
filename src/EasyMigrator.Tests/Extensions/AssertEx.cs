@@ -51,15 +51,6 @@ namespace EasyMigrator.Tests
                     Assert.AreEqual(e.Precision.Scale, a.Precision.Scale);
                 }
 
-                if (e.Index == null)
-                    Assert.IsNull(a.Index);
-                else {
-                    Assert.AreEqual(e.Index.Name, a.Index.Name);
-                    if (!isDb)
-                        Assert.AreEqual(e.Index.Unique, a.Index.Unique); // <- Schema reader doesn't pick this up
-                    Assert.AreEqual(e.Index.Clustered, a.Index.Clustered);
-                }
-
                 if (e.ForeignKey == null)
                     Assert.IsNull(a.ForeignKey);
                 else {
@@ -69,12 +60,12 @@ namespace EasyMigrator.Tests
                 }
             }
 
-            expected.CompositeIndices = expected.CompositeIndices.OrderBy(ci => ci.Name).ToList();
-            actual.CompositeIndices = actual.CompositeIndices.OrderBy(ci => ci.Name).ToList();
-            Assert.AreEqual(expected.CompositeIndices.Count, actual.CompositeIndices.Count);
-            for (var i = 0; i < expected.CompositeIndices.Count; i++) {
-                var e = expected.CompositeIndices[i];
-                var a = actual.CompositeIndices[i];
+            expected.Indices = expected.Indices.OrderBy(ci => ci.Name).ToList();
+            actual.Indices = actual.Indices.OrderBy(ci => ci.Name).ToList();
+            Assert.AreEqual(expected.Indices.Count, actual.Indices.Count);
+            for (var i = 0; i < expected.Indices.Count; i++) {
+                var e = expected.Indices[i];
+                var a = actual.Indices[i];
                 Assert.AreEqual(e.Name, a.Name);
                 if (!isDb)
                     Assert.AreEqual(e.Unique, a.Unique); // <- Schema reader doesn't pick this up

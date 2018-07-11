@@ -52,10 +52,10 @@
     <Compile Include="Extensions\ObjectExtensions.cs" />
     <Compile Include="Extensions\ReflectionExtensions.cs" />
     <Compile Include="Parsing\Model\Column.cs" />
-    <Compile Include="Parsing\Model\CompositeIndex.cs" />
+    <Compile Include="Parsing\Model\Index.cs" />
     <Compile Include="Parsing\Model\IAutoIncrement.cs" />
     <Compile Include="Parsing\Model\IForeignKey.cs" />
-    <Compile Include="Parsing\Model\IIndex.cs" />
+    <Compile Include="Parsing\Model\IIndexColumn.cs" />
     <Compile Include="Parsing\Model\IPrecision.cs" />
     <Compile Include="Parsing\Model\Table.cs" />
     <Compile Include="Parsing\Parser.cs" />

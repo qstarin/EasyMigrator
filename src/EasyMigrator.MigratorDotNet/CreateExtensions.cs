@@ -74,13 +74,8 @@ namespace EasyMigrator
                 var fk = col.ForeignKey;
                 Database.AddForeignKey(fk.Name, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), SqlReservedWords.Quote(fk.Table), SqlReservedWords.Quote(fk.Column));
             }
-            
-            foreach (var col in table.Columns.Indexed()) {
-                var idx = col.Index;
-                Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, new[] { col.Name }, parser: parser);
-            }
 
-            foreach (var idx in table.CompositeIndices)
+            foreach (var idx in table.Indices)
                 Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, idx.Columns.Select(c => c.ColumnNameWithDirection).ToArray(), idx.Includes?.Select(c => c.ColumnName).ToArray(), parser);
         }
 
@@ -140,13 +135,8 @@ namespace EasyMigrator
                 var fk = col.ForeignKey;
                 Database.AddForeignKey(fk.Name, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), SqlReservedWords.Quote(fk.Table), SqlReservedWords.Quote(fk.Column));
             }
-            
-            foreach (var col in pocoColumns.Indexed()) {
-                var idx = col.Index;
-                Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, new[] { col.Name }, parser: parser);
-            }
 
-            foreach (var idx in table.CompositeIndices)
+            foreach (var idx in table.Indices)
                 Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, idx.Columns.Select(c => c.ColumnNameWithDirection).ToArray(), idx.Includes?.Select(c => c.ColumnName).ToArray(), parser);
         }
 

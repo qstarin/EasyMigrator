@@ -59,20 +59,7 @@ namespace EasyMigrator
 
         static private void Indexes(this IDeleteExpressionRoot Delete, Table table)
         {
-            foreach (var c in table.Columns.DefinedInPoco()) {
-                var i = c.Index;
-                if (i == null)
-                    continue;
-
-                if (i.Name != null)
-                    Delete.Index(i.Name).OnTable(table.Name);
-                else
-                    Delete.Index()
-                          .OnTable(table.Name)
-                          .OnColumn(c.Name);
-            }
-
-            foreach (var ci in table.CompositeIndices) {
+            foreach (var ci in table.Indices) {
                 if (ci.Name != null)
                     Delete.Index(ci.Name).OnTable(table.Name);
                 else

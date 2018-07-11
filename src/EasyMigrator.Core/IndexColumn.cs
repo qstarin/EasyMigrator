@@ -7,7 +7,7 @@ using System.Text;
 
 namespace EasyMigrator
 {
-    public class IndexColumn
+    public class IndexColumn : Parsing.Model.IIndexColumn
     {
         public IndexColumn(string columnName) : this(columnName, SortOrder.Unspecified) { }
         public IndexColumn(string columnName, SortOrder direction)

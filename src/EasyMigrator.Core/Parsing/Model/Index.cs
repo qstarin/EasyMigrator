@@ -5,12 +5,12 @@ using System.Text;
 
 namespace EasyMigrator.Parsing.Model
 {
-    public class CompositeIndex
+    public class Index
     {
         public string Name { get; set; }
-        public IndexColumn[] Columns { get; set; }
-        public IndexColumn[] Includes { get; set; }
-        public bool Unique { get; set; }
         public bool Clustered { get; set; }
+        public bool Unique { get; set; }
+        public IIndexColumn[] Columns { get; set; }
+        public IIndexColumn[] Includes { get; set; }
     }
 }

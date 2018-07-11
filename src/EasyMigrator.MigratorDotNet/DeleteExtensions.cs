@@ -53,13 +53,7 @@ namespace EasyMigrator
 
         static private void RemoveIndexes(this ITransformationProvider db, Table table)
         {
-            foreach (var c in table.Columns.DefinedInPoco()) {
-                var i = c.Index;
-                if (i != null)
-                    db.RemoveIndex(SqlReservedWords.Quote(table.Name), i.Name);
-            }
-
-            foreach (var ci in table.CompositeIndices)
+            foreach (var ci in table.Indices)
                 db.RemoveIndex(SqlReservedWords.Quote(table.Name), ci.Name);
         }
     }
