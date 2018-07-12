@@ -11,50 +11,43 @@ namespace EasyMigrator
 {
     static public class DeleteExtensions
     {
-        static public void RemoveTable<T>(this ITransformationProvider db) => db.RemoveTable(typeof(T));
-        static public void RemoveTable(this ITransformationProvider db, Type tableType) => db.RemoveTable(tableType, Parsing.Parser.Default);
-        static public void RemoveTable<T>(this ITransformationProvider db, Parsing.Parser parser) => db.RemoveTable(typeof(T), parser);
-        static public void RemoveTable(this ITransformationProvider db, Type tableType, Parsing.Parser parser)
+        static public void RemoveTable<T>(this ITransformationProvider Database) => Database.RemoveTable(typeof(T));
+        static public void RemoveTable(this ITransformationProvider Database, Type tableType)
         {
-            var table = parser.ParseTableType(tableType).Table;
-            db.RemoveForeignKeys(table);
-            db.RemoveIndexes(table);
-            db.RemoveTable(SqlReservedWords.Quote(table.Name));
+            var table = tableType.ParseTable().Table;
+            Database.RemoveForeignKeys(table);
+            Database.RemoveIndices(table);
+            Database.RemoveTable(table.Name.SqlQuote());
         }
 
-        static public void RemoveColumns<T>(this ITransformationProvider db) => db.RemoveColumns(typeof(T));
-        static public void RemoveColumns(this ITransformationProvider db, Type tableType) => db.RemoveColumns(tableType, Parsing.Parser.Default);
-        static public void RemoveColumns<T>(this ITransformationProvider db, Parsing.Parser parser) => db.RemoveColumns(typeof(T), parser);
-        static public void RemoveColumns(this ITransformationProvider db, Type tableType, Parsing.Parser parser)
+        static public void RemoveColumns<T>(this ITransformationProvider Database) => Database.RemoveColumns(typeof(T));
+        static public void RemoveColumns(this ITransformationProvider Database, Type tableType)
         {
-            var table = parser.ParseTableType(tableType).Table;
-            db.RemoveForeignKeys(table);
-            db.RemoveIndexes(table);
-            db.RemoveColumns(table);
+            var table = tableType.ParseTable().Table;
+            Database.RemoveForeignKeys(table);
+            Database.RemoveIndices(table);
+            Database.RemoveColumns(table);
         }
 
-        static private void RemoveIndex(this ITransformationProvider db, string table, string name)
-            => db.ExecuteNonQuery($"DROP INDEX {name} ON {table}");
-
-        static private void RemoveColumns(this ITransformationProvider db, Table table)
+        static private void RemoveColumns(this ITransformationProvider Database, Table table)
         {
             foreach (var c in table.Columns.DefinedInPoco())
-                db.RemoveColumn(SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(c.Name));
+                Database.RemoveColumn(table.Name.SqlQuote(), c.Name.SqlQuote());
         }
 
-        static private void RemoveForeignKeys(this ITransformationProvider db, Table table)
+        static private void RemoveForeignKeys(this ITransformationProvider Database, Table table)
         {
             foreach (var c in table.Columns.DefinedInPoco()) {
                 var f = c.ForeignKey;
                 if (f != null)
-                    db.RemoveForeignKey(SqlReservedWords.Quote(table.Name), f.Name);
+                    Database.RemoveForeignKey(table.Name.SqlQuote(), f.Name.SqlQuote());
             }
         }
 
-        static private void RemoveIndexes(this ITransformationProvider db, Table table)
+        static private void RemoveIndices(this ITransformationProvider Database, Table table)
         {
             foreach (var ci in table.Indices)
-                db.RemoveIndex(SqlReservedWords.Quote(table.Name), ci.Name);
+                Database.RemoveIndexByName(table.Name, ci.Name);
         }
     }
 }

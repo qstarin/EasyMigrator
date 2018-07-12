@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using EasyMigrator.Extensions;
 using EasyMigrator.Parsing;
 using EasyMigrator.Tests.Schemas;
 using EasyMigrator.Tests.TableTest;
@@ -52,7 +53,7 @@ namespace EasyMigrator.Tests
         protected override void Test(ITableTestCase testCase)
         {
             foreach (var data in testCase.Datum)
-                AssertEx.AreEqual(data.Model, Parser.Default.ParseTableType(data.Poco).Table, false, false);
+                AssertEx.AreEqual(data.Model, data.Poco.ParseTable().Table, false, false);
         }
     }
 }

@@ -17,11 +17,9 @@ namespace EasyMigrator
         };
 
         static public void AddTable<T>(this ITransformationProvider Database) => Database.AddTable(typeof(T));
-        static public void AddTable(this ITransformationProvider Database, Type tableType) => Database.AddTable(tableType, Parsing.Parser.Default);
-        static public void AddTable<T>(this ITransformationProvider Database, Parsing.Parser parser) => Database.AddTable(typeof(T), parser);
-        static public void AddTable(this ITransformationProvider Database, Type tableType, Parsing.Parser parser)
+        static public void AddTable(this ITransformationProvider Database, Type tableType)
         {
-            var table = parser.ParseTableType(tableType).Table;
+            var table = tableType.ParseTable().Table;
             var columns = new List<Column>();
             var unsupportedTypeColumns = new List<EColumn>();
             foreach (var col in table.Columns.WithoutCustomAutoIncrement()) {
@@ -48,43 +46,41 @@ namespace EasyMigrator
 
             if (table.Columns.WithCustomAutoIncrement().Any()) {
                 Database.ExecuteNonQuery(
-                    $"CREATE TABLE {SqlReservedWords.Quote(table.Name)} (" + 
+                    $"CREATE TABLE {table.Name.SqlQuote()} (" + 
                     string.Join(", ", 
-                        table.Columns.WithCustomAutoIncrement().Select(c => BuildColumnWithCustomIdentitySql(SqlReservedWords.Quote(c.Name), c.Type, c.AutoIncrement.Seed, c.AutoIncrement.Step, c.IsNullable))) + 
+                        table.Columns.WithCustomAutoIncrement().Select(c => BuildColumnWithCustomIdentitySql(c.Name, c.Type, c.AutoIncrement.Seed, c.AutoIncrement.Step, c.IsNullable))) + 
                     ")");
 
                 foreach (var col in columns)
-                    Database.AddColumn(SqlReservedWords.Quote(table.Name), col);
+                    Database.AddColumn(table.Name.SqlQuote(), col);
             }
             else
-                Database.AddTable(SqlReservedWords.Quote(table.Name), columns.ToArray());
+                Database.AddTable(table.Name.SqlQuote(), columns.ToArray());
 
-            Database.AddPrimaryKey(SqlReservedWords.Quote(table.Name), table.PrimaryKeyName, table.PrimaryKeyIsClustered, table.Columns.PrimaryKey().Select(c => SqlReservedWords.Quote(c.Name)).ToArray());
+            Database.AddPrimaryKey(table.Name, table.PrimaryKeyName, table.PrimaryKeyIsClustered, table.Columns.PrimaryKey().Select(c => c.Name).ToArray());
 
             foreach (var col in table.Columns.MaxLength())
-                AlterToMaxLength(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.IsNullable);
+                AlterToMaxLength(Database, table.Name, col.Name, col.Type, col.IsNullable);
 
             foreach (var col in table.Columns.WithPrecision().Except(unsupportedTypeColumns))
-                AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable, col.IsSparse);
+                AlterForUnsupportedType(Database, table.Name, col.Name, col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable, col.IsSparse);
 
             foreach (var col in unsupportedTypeColumns)
-                AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision?.Precision, col.Precision?.Scale, col.IsNullable, col.IsSparse);
+                AlterForUnsupportedType(Database, table.Name, col.Name, col.Type, col.Precision?.Precision, col.Precision?.Scale, col.IsNullable, col.IsSparse);
 
             foreach (var col in table.Columns.ForeignKeys()) {
                 var fk = col.ForeignKey;
-                Database.AddForeignKey(fk.Name, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), SqlReservedWords.Quote(fk.Table), SqlReservedWords.Quote(fk.Column));
+                Database.AddForeignKey(fk.Name.SqlQuote(), table.Name.SqlQuote(), col.Name.SqlQuote(), fk.Table.SqlQuote(), fk.Column.SqlQuote());
             }
 
             foreach (var idx in table.Indices)
-                Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, idx.Columns.Select(c => c.ColumnNameWithDirection).ToArray(), idx.Includes?.Select(c => c.ColumnName).ToArray(), parser);
+                Database.AddIndex(table.Name, idx.Name, idx.Unique, idx.Clustered, idx.Columns.Select(c => c.ColumnNameWithDirection).ToArray(), idx.Includes?.Select(c => c.ColumnName).ToArray());
         }
 
         static public void AddColumns<T>(this ITransformationProvider Database, Action populate = null) => Database.AddColumns(typeof(T), populate);
-        static public void AddColumns(this ITransformationProvider Database, Type tableType, Action populate = null) => Database.AddColumns(tableType, Parsing.Parser.Default, populate);
-        static public void AddColumns<T>(this ITransformationProvider Database, Parsing.Parser parser, Action populate = null) => Database.AddColumns(typeof(T), parser, populate);
-        static public void AddColumns(this ITransformationProvider Database, Type tableType, Parsing.Parser parser, Action populate = null)
+        static public void AddColumns(this ITransformationProvider Database, Type tableType, Action populate = null)
         {
-            var table = parser.ParseTableType(tableType).Table;
+            var table = tableType.ParseTable().Table;
             var pocoColumns = table.Columns.DefinedInPoco();
             var nonNullables = new List<EColumn>();
             var unsupportedTypeColumns = new List<EColumn>();
@@ -106,43 +102,43 @@ namespace EasyMigrator
                 }
 
                 if (col.IsCustomAutoIncrement())
-                    AddColumnWithCustomIdentity(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.AutoIncrement.Seed, col.AutoIncrement.Step, col.IsNullable);
+                    AddColumnWithCustomIdentity(Database, table.Name, col.Name, col.Type, col.AutoIncrement.Seed, col.AutoIncrement.Step, col.IsNullable);
                 else
-                    Database.AddColumn(SqlReservedWords.Quote(table.Name), c);
+                    Database.AddColumn(table.Name.SqlQuote(), c);
             }
 
             foreach (var col in pocoColumns.MaxLength())
-                AlterToMaxLength(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.IsNullable);
+                AlterToMaxLength(Database, table.Name, col.Name, col.Type, col.IsNullable);
 
             foreach (var col in pocoColumns.WithPrecision())
-                AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable, col.IsSparse);
+                AlterForUnsupportedType(Database, table.Name, col.Name, col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable, col.IsSparse);
 
             foreach (var col in unsupportedTypeColumns)
-                AlterForUnsupportedType(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.Precision?.Precision, col.Precision?.Scale, col.IsNullable, col.IsSparse);
+                AlterForUnsupportedType(Database, table.Name, col.Name, col.Type, col.Precision?.Precision, col.Precision?.Scale, col.IsNullable, col.IsSparse);
 
             if (populate != null) {
                 populate();
                 foreach (var col in nonNullables) {
                     col.IsNullable = false;
                     if (table.Columns.MaxLength().Contains(col))
-                        AlterToMaxLength(Database, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), col.Type, col.IsNullable);
+                        AlterToMaxLength(Database, table.Name, col.Name, col.Type, col.IsNullable);
                     else
-                        Database.ChangeColumn(SqlReservedWords.Quote(table.Name), BuildColumn(col));
+                        Database.ChangeColumn(table.Name.SqlQuote(), BuildColumn(col));
                 }
             }
 
             foreach (var col in pocoColumns.ForeignKeys()) {
                 var fk = col.ForeignKey;
-                Database.AddForeignKey(fk.Name, SqlReservedWords.Quote(table.Name), SqlReservedWords.Quote(col.Name), SqlReservedWords.Quote(fk.Table), SqlReservedWords.Quote(fk.Column));
+                Database.AddForeignKey(fk.Name.SqlQuote(), table.Name.SqlQuote(), col.Name.SqlQuote(), fk.Table.SqlQuote(), fk.Column.SqlQuote());
             }
 
             foreach (var idx in table.Indices)
-                Database.AddIndex(SqlReservedWords.Quote(table.Name), idx.Name, idx.Unique, idx.Clustered, idx.Columns.Select(c => c.ColumnNameWithDirection).ToArray(), idx.Includes?.Select(c => c.ColumnName).ToArray(), parser);
+                Database.AddIndex(table.Name, idx.Name, idx.Unique, idx.Clustered, idx.Columns.Select(c => c.ColumnNameWithDirection).ToArray(), idx.Includes?.Select(c => c.ColumnName).ToArray());
         }
 
         static private Column BuildColumn(EColumn col)
         {
-            var c = new Column(SqlReservedWords.Quote(col.Name), col.Type);
+            var c = new Column(col.Name.SqlQuote(), col.Type);
             ColumnProperty cp = ColumnProperty.None;
 
             // don't set this property on the columns so we can create the primary key ourselves later to set the same and support nonclustered and composite PK's
@@ -177,11 +173,11 @@ namespace EasyMigrator
         // using this sets the column type to ntext instead of nvarchar
         // so, we work around it
         static private void AlterToMaxLength(ITransformationProvider Database, string tableName, string columnName, DbType dbType, bool isNullable)
-            => Database.ExecuteNonQuery($"ALTER TABLE {tableName} ALTER COLUMN {columnName} {(dbType == DbType.AnsiString ? "" : "N")}VARCHAR(MAX) {(isNullable ? "" : "NOT ")}NULL");
+            => Database.ExecuteNonQuery($"ALTER TABLE {tableName.SqlQuote()} ALTER COLUMN {columnName.SqlQuote()} {(dbType == DbType.AnsiString ? "" : "N")}VARCHAR(MAX) {(isNullable ? "" : "NOT ")}NULL");
 
         // Migrator.Net doesn't support some types or setting the precision so we do it manually with SQL
         static private void AlterForUnsupportedType(ITransformationProvider Database, string tableName, string columnName, DbType dbType, int? precision, int? scale, bool isNullable, bool isSparse)
-            => Database.ExecuteNonQuery($"ALTER TABLE {tableName} ALTER COLUMN {columnName} " +
+            => Database.ExecuteNonQuery($"ALTER TABLE {tableName.SqlQuote()} ALTER COLUMN {columnName.SqlQuote()} " +
                 GetSqlTypeString(dbType) + 
                 (precision.HasValue && precision > 0 && scale.HasValue && scale > 0
                     ? $"({precision}, {scale})"
@@ -193,10 +189,10 @@ namespace EasyMigrator
 
         // Migrator.Net also doesn't support identity seed and step values other than the defaults of 1
         static private void AddColumnWithCustomIdentity(ITransformationProvider Database, string tableName, string columnName, DbType dbType, long seed, long step, bool isNullable)
-            => Database.ExecuteNonQuery($"ALTER TABLE {tableName} ADD COLUMN {BuildColumnWithCustomIdentitySql(columnName, dbType, seed, step, isNullable)}");
+            => Database.ExecuteNonQuery($"ALTER TABLE {tableName.SqlQuote()} ADD COLUMN {BuildColumnWithCustomIdentitySql(columnName, dbType, seed, step, isNullable)}");
 
         static private string BuildColumnWithCustomIdentitySql(string columnName, DbType dbType, long seed, long step, bool isNullable)
-            => $"{columnName} {GetSqlTypeString(dbType)} IDENTITY({seed}, {step}) {(isNullable ? "" : "NOT ")}NULL";
+            => $"{columnName.SqlQuote()} {GetSqlTypeString(dbType)} IDENTITY({seed}, {step}) {(isNullable ? "" : "NOT ")}NULL";
 
         static private string GetSqlTypeString(DbType dbType)
         {

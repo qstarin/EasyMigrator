@@ -10,6 +10,7 @@ namespace EasyMigrator.Extensions
 {
     static public class ModelExtensions
     {
+        static public Parsing.Context ParseTable(this Type tableType) => Parsing.Parser.Current.ParseTableType(tableType);
         static public IEnumerable<Column> DefinedInPoco(this IEnumerable<Column> columns) => columns.Where(c => c.DefinedInPoco);
         static public IEnumerable<Column> PrimaryKey(this IEnumerable<Column> columns) => columns.Where(c => c.IsPrimaryKey);
         static public IEnumerable<Column> ForeignKeys(this IEnumerable<Column> columns) => columns.Where(c => c.ForeignKey != null);

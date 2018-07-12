@@ -14,36 +14,34 @@ namespace EasyMigrator
     static public class CreateIndexExtensions
     {
         static public ICreateIndexOnColumnSyntax<TTable> Index<TTable>(this ICreateExpressionRoot Create)
-            => Create.Index<TTable>(Parsing.Parser.Default);
-
-        static public ICreateIndexOnColumnSyntax<TTable> Index<TTable>(this ICreateExpressionRoot Create, Parsing.Parser parser)
-            => new NamedCreateIndexOnColumnSyntax<TTable>(Create, parser);
+            => new NamedCreateIndexOnColumnSyntax<TTable>(Create);
 
         static public ICreateIndexOnColumnSyntax Index(this ICreateExpressionRoot Create, Type tableType)
-            => Create.Index(tableType, Parsing.Parser.Default);
-
-        static public ICreateIndexOnColumnSyntax Index(this ICreateExpressionRoot Create, Type tableType, Parsing.Parser parser)
-            => new NamedCreateIndexOnColumnSyntax(Create, tableType, parser);
-
+            => new NamedCreateIndexOnColumnSyntax(Create, tableType);
 
         static public ICreateIndexOnColumnSyntax<TTable> OnTable<TTable>(this ICreateIndexForTableSyntax CreateIndex)
-            => CreateIndex.OnTable<TTable>(Parsing.Parser.Default);
-
-        static public ICreateIndexOnColumnSyntax<TTable> OnTable<TTable>(this ICreateIndexForTableSyntax CreateIndex, Parsing.Parser parser)
-        {
-            var context = parser.ParseTableType(typeof(TTable));
-            var idx = new CreateIndexOnColumnSyntax<TTable>(CreateIndex.OnTable(context.Table.Name));
-            return idx;
-        }
+            => new CreateIndexOnColumnSyntax<TTable>(CreateIndex.OnTable(typeof(TTable).ParseTable().Table.Name));
 
         static public ICreateIndexOnColumnSyntax OnTable(this ICreateIndexForTableSyntax CreateIndex, Type tableType)
-            => CreateIndex.OnTable(tableType, Parsing.Parser.Default);
+            => new CreateIndexOnColumnSyntax(CreateIndex.OnTable(tableType.ParseTable().Table.Name));
 
-        static public ICreateIndexOnColumnSyntax OnTable(this ICreateIndexForTableSyntax CreateIndex, Type tableType, Parsing.Parser parser)
+        public interface ICreateIndexOptionsSyntax
         {
-            var context = parser.ParseTableType(tableType);
-            var idx = new CreateIndexOnColumnSyntax(CreateIndex.OnTable(context.Table.Name));
-            return idx;
+            FluentMigrator.Builders.Create.Index.ICreateIndexOptionsSyntax WithOptions();
+        }
+
+        public interface ICreateIndexOnColumnSyntax
+        {
+            ICreateIndexOptionsSyntax OnColumns<TTable>(params Expression<Func<TTable, object>>[] columns);
+            ICreateIndexOptionsSyntax OnColumns<TTable>(params IndexColumn<TTable>[] columns);
+            ICreateIndexOptionsSyntax OnColumns(params IndexColumn[] columns);
+        }
+
+        public interface ICreateIndexOnColumnSyntax<TTable>
+        {
+            ICreateIndexOptionsSyntax OnColumns(params Expression<Func<TTable, object>>[] columns);
+            ICreateIndexOptionsSyntax OnColumns(params IndexColumn<TTable>[] columns);
+            ICreateIndexOptionsSyntax OnColumns(params IndexColumn[] columns);
         }
 
 
@@ -81,20 +79,18 @@ namespace EasyMigrator
         {
             private readonly ICreateExpressionRoot _create;
             private readonly Type _tableType;
-            private readonly Parsing.Parser _parser;
 
-            public NamedCreateIndexOnColumnSyntax(ICreateExpressionRoot Create, Type tableType, Parsing.Parser parser)
+            public NamedCreateIndexOnColumnSyntax(ICreateExpressionRoot Create, Type tableType)
             {
                 _create = Create;
                 _tableType = tableType;
-                _parser = parser;
             }
 
             public override ICreateIndexOptionsSyntax OnColumns(params IndexColumn[] columns)
             {
-                var context = _parser.ParseTableType(_tableType);
+                var context = _tableType.ParseTable();
                 CreateIndexOnColumnSyntax = 
-                    _create.Index(_parser.Conventions.IndexNameByTableAndColumnNames(context.Table.Name, columns.Select(c => c.ColumnName)))
+                    _create.Index(context.Conventions.IndexNameByTableAndColumnNames(context.Table.Name, columns.Select(c => c.ColumnName)))
                            .OnTable(context.Table.Name);
                 return base.OnColumns(columns);
             }
@@ -103,19 +99,17 @@ namespace EasyMigrator
         private class NamedCreateIndexOnColumnSyntax<TTable> : CreateIndexOnColumnSyntax<TTable>
         {
             private readonly ICreateExpressionRoot _create;
-            private readonly Parsing.Parser _parser;
 
-            public NamedCreateIndexOnColumnSyntax(ICreateExpressionRoot Create, Parsing.Parser parser)
+            public NamedCreateIndexOnColumnSyntax(ICreateExpressionRoot Create)
             {
                 _create = Create;
-                _parser = parser;
             }
 
             public override ICreateIndexOptionsSyntax OnColumns(params IndexColumn[] columns)
             {
-                var context = _parser.ParseTableType(typeof(TTable));
+                var context = typeof(TTable).ParseTable();
                 CreateIndexOnColumnSyntax =
-                    _create.Index(_parser.Conventions.IndexNameByTableAndColumnNames(context.Table.Name, columns.Select(c => c.ColumnName)))
+                    _create.Index(context.Conventions.IndexNameByTableAndColumnNames(context.Table.Name, columns.Select(c => c.ColumnName)))
                            .OnTable(context.Table.Name);
                 return base.OnColumns(columns);
             }
@@ -126,14 +120,12 @@ namespace EasyMigrator
             public CreateIndexOnColumnSyntax() { }
             public CreateIndexOnColumnSyntax(FluentMigrator.Builders.Create.Index.ICreateIndexOnColumnSyntax createIndexOnColumnSyntax) : base(createIndexOnColumnSyntax) { }
 
-            public ICreateIndexOptionsSyntax OnColumns<TTable>(params Expression<Func<TTable, object>>[] columns) => OnColumns(Parsing.Parser.Default, columns);
-            public ICreateIndexOptionsSyntax OnColumns<TTable>(Parsing.Parser parser, params Expression<Func<TTable, object>>[] columns) 
-                => OnColumns(Parsing.Parser.Default, columns.Select(c => new IndexColumn<TTable>(c)).ToArray());
+            public ICreateIndexOptionsSyntax OnColumns<TTable>(params Expression<Func<TTable, object>>[] columns)
+                => OnColumns(columns.Select(c => new IndexColumn<TTable>(c)).ToArray());
 
-            public ICreateIndexOptionsSyntax OnColumns<TTable>(params IndexColumn<TTable>[] columns) => OnColumns(Parsing.Parser.Default, columns);
-            public ICreateIndexOptionsSyntax OnColumns<TTable>(Parsing.Parser parser, params IndexColumn<TTable>[] columns)
+            public ICreateIndexOptionsSyntax OnColumns<TTable>(params IndexColumn<TTable>[] columns)
             {
-                var context = parser.ParseTableType(typeof(TTable));
+                var context = typeof(TTable).ParseTable();
                 var cols = columns.Select(c => new { c, fi = c.ColumnExpression.GetExpressionField() })
                                   .Select(o => new IndexColumn(context.Columns[o.fi].Name, o.c.Direction));
                 return OnColumns(cols.ToArray());
@@ -145,42 +137,17 @@ namespace EasyMigrator
             public CreateIndexOnColumnSyntax() { }
             public CreateIndexOnColumnSyntax(FluentMigrator.Builders.Create.Index.ICreateIndexOnColumnSyntax createIndexOnColumnSyntax) : base(createIndexOnColumnSyntax) { }
 
-            public ICreateIndexOptionsSyntax OnColumns(params Expression<Func<TTable, object>>[] columns) => OnColumns(Parsing.Parser.Default, columns);
-            public ICreateIndexOptionsSyntax OnColumns(Parsing.Parser parser, params Expression<Func<TTable, object>>[] columns)
-                => OnColumns(Parsing.Parser.Default, columns.Select(c => new IndexColumn<TTable>(c)).ToArray());
+            public ICreateIndexOptionsSyntax OnColumns(params Expression<Func<TTable, object>>[] columns)
+                => OnColumns(columns.Select(c => new IndexColumn<TTable>(c)).ToArray());
 
-            public ICreateIndexOptionsSyntax OnColumns(params IndexColumn<TTable>[] columns) => OnColumns(Parsing.Parser.Default, columns);
-            public ICreateIndexOptionsSyntax OnColumns(Parsing.Parser parser, params IndexColumn<TTable>[] columns)
+            public ICreateIndexOptionsSyntax OnColumns(params IndexColumn<TTable>[] columns)
             {
-                var context = parser.ParseTableType(typeof(TTable));
+                var context = typeof(TTable).ParseTable();
                 var cols = columns.Select(c => new { c, fi = c.ColumnExpression.GetExpressionField() })
                                   .Select(o => new IndexColumn(context.Columns[o.fi].Name, o.c.Direction));
                 return OnColumns(cols.ToArray());
             }
         }
-    }
-
-    public interface ICreateIndexOptionsSyntax
-    {
-        FluentMigrator.Builders.Create.Index.ICreateIndexOptionsSyntax WithOptions();
-    }
-
-    public interface ICreateIndexOnColumnSyntax
-    {
-        ICreateIndexOptionsSyntax OnColumns<TTable>(params Expression<Func<TTable, object>>[] columns);
-        ICreateIndexOptionsSyntax OnColumns<TTable>(Parsing.Parser parser, params Expression<Func<TTable, object>>[] columns);
-        ICreateIndexOptionsSyntax OnColumns<TTable>(params IndexColumn<TTable>[] columns);
-        ICreateIndexOptionsSyntax OnColumns<TTable>(Parsing.Parser parser, params IndexColumn<TTable>[] columns);
-        ICreateIndexOptionsSyntax OnColumns(params IndexColumn[] columns);
-    }
-
-    public interface ICreateIndexOnColumnSyntax<TTable>
-    {
-        ICreateIndexOptionsSyntax OnColumns(params Expression<Func<TTable, object>>[] columns);
-        ICreateIndexOptionsSyntax OnColumns(Parsing.Parser parser, params Expression<Func<TTable, object>>[] columns);
-        ICreateIndexOptionsSyntax OnColumns(params IndexColumn<TTable>[] columns);
-        ICreateIndexOptionsSyntax OnColumns(Parsing.Parser parser, params IndexColumn<TTable>[] columns);
-        ICreateIndexOptionsSyntax OnColumns(params IndexColumn[] columns);
     }
 
 }

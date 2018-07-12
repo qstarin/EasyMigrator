@@ -24,5 +24,23 @@ namespace EasyMigrator.Parsing
         public Func<Context, Lengths> PrecisionLengths { get; set; }
         public Func<Context, Column, IPrecision> DefaultPrecision { get; set; }
         public Func<Context, bool> IndexForeignKeys { get; set; }
+
+        public Conventions Clone()
+            => new Conventions {
+                TableName = TableName,
+                ColumnName = ColumnName,
+                PrimaryKey = PrimaryKey,
+                PrimaryKeyName = PrimaryKeyName,
+                PrimaryKeyNameByTableName = PrimaryKeyNameByTableName,
+                PrimaryKeyColumnName = PrimaryKeyColumnName,
+                ForeignKeyName = ForeignKeyName,
+                IndexNameByColumns = IndexNameByColumns,
+                IndexNameByTableAndColumnNames = IndexNameByTableAndColumnNames,
+                TypeMap = TypeMap,
+                StringLengths = StringLengths,
+                PrecisionLengths = PrecisionLengths,
+                DefaultPrecision = DefaultPrecision,
+                IndexForeignKeys = IndexForeignKeys,
+            };
     }
 }

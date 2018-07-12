@@ -3,8 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace EasyMigrator
+namespace EasyMigrator.Extensions
 {
+    static public class SqlExtensions
+    {
+        static public string SqlQuote(this string identifier) => SqlReservedWords.Quote(identifier);
+    }
+
     static internal class SqlReservedWords
     {
         static public string Quote(string identifier)

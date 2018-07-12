@@ -13,10 +13,45 @@ using EasyMigrator.Parsing.Model;
 
 namespace EasyMigrator.Parsing
 {
-    public class Parser
+    public interface IParser
     {
-        static public Parser Default { get; set; } = new Parser();
+        Conventions Conventions { get; set; }
+        Context ParseTableType(Type type);
+    }
+
+    public class Parser : IParser
+    {
+        static public IParser Current { get; set; } = new Parser();
+        static public IDisposable Override(IParser newParser) => new ParserScope(newParser);
+        private class ParserScope : IDisposable
+        {
+            private readonly IParser _previousParser;
+            public ParserScope(IParser newParser)
+            {
+                _previousParser = Parser.Current;
+                Parser.Current = newParser;
+            }
+            public void Dispose() { Parser.Current = _previousParser; }
+        }
+
         public Conventions Conventions { get; set; }
+        static public IDisposable Override(Conventions newConventions) => new ConventionsScope(newConventions);
+        static public IDisposable Override(Action<Conventions> newConventions)
+        {
+            var c = Parser.Current.Conventions.Clone();
+            newConventions(c);
+            return new ConventionsScope(c);
+        }
+        private class ConventionsScope : IDisposable
+        {
+            private readonly Conventions _previousConventions;
+            public ConventionsScope(Conventions newConventions)
+            {
+                _previousConventions = Parser.Current.Conventions;
+                Parser.Current.Conventions = newConventions;
+            }
+            public void Dispose() { Parser.Current.Conventions = _previousConventions; }
+        }
 
         public Parser() : this(Conventions.Default) { }
         public Parser(Conventions conventions) { Conventions = conventions; }

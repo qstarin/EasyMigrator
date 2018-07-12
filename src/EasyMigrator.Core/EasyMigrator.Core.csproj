@@ -45,6 +45,7 @@
     </Compile>
     <Compile Include="Attributes.cs" />
     <Compile Include="CompositeIndex.cs" />
+    <Compile Include="Extensions\SqlReservedWords.cs" />
     <Compile Include="IndexColumn.cs" />
     <Compile Include="Parsing\Conventions.cs" />
     <Compile Include="Extensions\ModelExtensions.cs" />
