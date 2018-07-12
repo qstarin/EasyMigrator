@@ -36,6 +36,7 @@ namespace EasyMigrator
             => Database.AddIndex(indexName, unique, clustered, columns.Select(c => new IndexColumn<TTable>(c)).ToArray(), includes?.Select(c => new IndexColumn<TTable>(c)).ToArray());
 
 
+
         static public void AddIndex<TTable>(this ITransformationProvider Database, IndexColumn<TTable>[] columns, IndexColumn<TTable>[] includes = null)
             => Database.AddIndex(null, false, false, columns, includes);
 
@@ -92,11 +93,43 @@ namespace EasyMigrator
             => Database.AddIndex(table, null, unique, clustered, columnNamesWithDirection, includes);
 
         static public void AddIndex(this ITransformationProvider Database, string table, string indexName, bool unique, bool clustered, string[] columnNamesWithDirection, string[] includes = null)
+            => Database.AddIndex(table,
+                                (Parsing.Model.IIndex)new Index(columnNamesWithDirection, includes) {
+                                    Name = indexName,
+                                    Unique = unique,
+                                    Clustered = clustered,
+                                });
+
+        static public void AddIndex<TTable>(this ITransformationProvider Database, Index<TTable> index)
+        {
+            var context = typeof(TTable).ParseTable();
+            var cols = index.Columns
+                            .Select(c => new { c, fi = c.ColumnExpression.GetExpressionField() })
+                            .Select(o => new IndexColumn(context.Columns[o.fi].Name, o.c.Direction));
+            var incl = index.Includes?
+                            .Select(c => new { c, fi = c.ColumnExpression.GetExpressionField() })
+                            .Select(o => new IndexColumn(context.Columns[o.fi].Name, o.c.Direction));
+
+            Database.AddIndex(context.Table.Name,
+                             (Parsing.Model.IIndex)new Index(cols.ToArray(), incl?.ToArray()) {
+                                 Name = index.Name,
+                                 Unique = index.Unique,
+                                 Clustered = index.Clustered,
+                                 Where = index.Where,
+                                 With = index.With,
+                             });
+        }
+
+        static public void AddIndex(this ITransformationProvider Database, string table, Index index) => Database.AddIndex(table, (Parsing.Model.IIndex)index);
+        static internal void AddIndex(this ITransformationProvider Database, string table, Parsing.Model.IIndex index)
             => Database.ExecuteNonQuery(
-                $"CREATE {(unique ? "UNIQUE " : "")}{(clustered ? "CLUSTERED" : "NONCLUSTERED")} " +
-                $"INDEX {(indexName ?? Parsing.Parser.Current.Conventions.IndexNameByTableAndColumnNames(table, RemoveDirection(columnNamesWithDirection))).SqlQuote()} " + 
-                $"ON {table.SqlQuote()} ({string.Join(", ", QuoteColumns(columnNamesWithDirection))})" +
-                (includes == null || includes.Length == 0 ? "" : $" INCLUDE ({string.Join(", ", QuoteColumns(RemoveDirection(includes)))})"));
+                $"CREATE {(index.Unique ? "UNIQUE " : "")}{(index.Clustered ? "CLUSTERED" : "NONCLUSTERED")} " +
+                $"INDEX {(index.Name ?? Parsing.Parser.Current.Conventions.IndexNameByTableAndColumnNames(table, index.Columns.Select(c => c.ColumnName))).SqlQuote()} " + 
+                $"ON {table.SqlQuote()} ({string.Join(", ", QuoteColumns(index.Columns.Select(c => c.ColumnNameWithDirection)))})" +
+                (index.Includes == null || index.Includes.Length == 0 ? "" : $" INCLUDE ({string.Join(", ", index.Includes.Select(c => c.ColumnName.SqlQuote()))})") +
+                (string.IsNullOrEmpty(index.Where) ? "" : $" WHERE {index.Where}") +
+                (string.IsNullOrEmpty(index.With) ? "" : $" WITH ({index.With})"));
+
 
         static private IEnumerable<string> RemoveDirection(IEnumerable<string> columnNamesWithDirection)
         {

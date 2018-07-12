@@ -21,7 +21,7 @@ namespace EasyMigrator.Tests.Schemas
             [Precision(Length.Short, 3)] public decimal Adjustment;
 
             Index<Poco> i1 = new Index<Poco>(x => x.Name, x => x.Code) { Unique = true, Where = $"{nameof(Name)} IS NOT NULL", With = "PAD_INDEX=ON" };
-            [Unique(With = "ONLINE=ON")] Index<Poco> i2 = new Index<Poco>(new Descending<Poco>(x => x.Sequence), new Ascending<Poco>(x => x.Code)) { Name = "IX_Custom_Name" };
+            [Unique(With = "SORT_IN_TEMPDB=OFF")] Index<Poco> i2 = new Index<Poco>(new Descending<Poco>(x => x.Sequence), new Ascending<Poco>(x => x.Code)) { Name = "IX_Custom_Name" };
         }
 
         static Table Model = new Table {
@@ -92,7 +92,7 @@ namespace EasyMigrator.Tests.Schemas
                     Name = "IX_Custom_Name",
                     Unique = true,
                     Clustered = false,
-                    With = "ONLINE=ON",
+                    With = "SORT_IN_TEMPDB=OFF",
                     Columns = new [] {
                         new IndexColumn("Sequence", SortOrder.Descending),
                         new IndexColumn("Code", SortOrder.Ascending),

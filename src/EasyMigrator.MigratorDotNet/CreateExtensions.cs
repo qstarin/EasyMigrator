@@ -74,7 +74,7 @@ namespace EasyMigrator
             }
 
             foreach (var idx in table.Indices)
-                Database.AddIndex(table.Name, idx.Name, idx.Unique, idx.Clustered, idx.Columns.Select(c => c.ColumnNameWithDirection).ToArray(), idx.Includes?.Select(c => c.ColumnName).ToArray());
+                Database.AddIndex(table.Name, idx);
         }
 
         static public void AddColumns<T>(this ITransformationProvider Database, Action populate = null) => Database.AddColumns(typeof(T), populate);
@@ -133,7 +133,7 @@ namespace EasyMigrator
             }
 
             foreach (var idx in table.Indices)
-                Database.AddIndex(table.Name, idx.Name, idx.Unique, idx.Clustered, idx.Columns.Select(c => c.ColumnNameWithDirection).ToArray(), idx.Includes?.Select(c => c.ColumnName).ToArray());
+                Database.AddIndex(table.Name, idx);
         }
 
         static private Column BuildColumn(EColumn col)

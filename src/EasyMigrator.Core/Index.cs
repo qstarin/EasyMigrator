@@ -34,7 +34,7 @@ namespace EasyMigrator
 
         static protected IEnumerable<IndexColumn> ConvertToColumns(IEnumerable<string> columnNamesWithDirection)
         {
-            foreach (var c in columnNamesWithDirection) {
+            foreach (var c in columnNamesWithDirection ?? Enumerable.Empty<string>()) {
                 if (c.EndsWith(" ASC"))
                     yield return new IndexColumn(c.Substring(0, c.Length - " ASC".Length), SortOrder.Ascending);
                 else if (c.EndsWith(" DESC"))
