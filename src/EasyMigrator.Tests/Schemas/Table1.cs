@@ -20,8 +20,8 @@ namespace EasyMigrator.Tests.Schemas
             [DbType(DbType.Currency)] public decimal? Rate;
             [Precision(Length.Short, 3)] public decimal Adjustment;
 
-            CompositeIndex<Poco> i1 = new CompositeIndex<Poco>(x => x.Name, x => x.Code);
-            [Unique(Name = "IX_Custom_Name")] CompositeIndex<Poco> i2 = new CompositeIndex<Poco>(new Descending<Poco>(x => x.Sequence), new Ascending<Poco>(x => x.Code));
+            Index<Poco> i1 = new Index<Poco>(x => x.Name, x => x.Code) { Unique = true, Where = $"{nameof(Name)} IS NOT NULL", With = "PAD_INDEX=ON" };
+            [Unique(With = "ONLINE=ON")] Index<Poco> i2 = new Index<Poco>(new Descending<Poco>(x => x.Sequence), new Ascending<Poco>(x => x.Code)) { Name = "IX_Custom_Name" };
         }
 
         static Table Model = new Table {
@@ -76,11 +76,13 @@ namespace EasyMigrator.Tests.Schemas
                     Precision = new PrecisionAttribute(9, 3)
                 },
             },
-            Indices = new List<Index> {
+            Indices = new List<IIndex> {
                 new Index {
                     Name = "IX_Table1_Name_Code",
-                    Unique = false,
+                    Unique = true,
                     Clustered = false,
+                    Where ="Name IS NOT NULL",
+                    With = "PAD_INDEX=ON",
                     Columns = new [] {
                         new IndexColumn("Name"),
                         new IndexColumn("Code"),
@@ -90,6 +92,7 @@ namespace EasyMigrator.Tests.Schemas
                     Name = "IX_Custom_Name",
                     Unique = true,
                     Clustered = false,
+                    With = "ONLINE=ON",
                     Columns = new [] {
                         new IndexColumn("Sequence", SortOrder.Descending),
                         new IndexColumn("Code", SortOrder.Ascending),

@@ -67,7 +67,7 @@ namespace EasyMigrator.Tests.Schemas
                         ForeignKey = new FkAttribute("Stuff") { Column = "Id" },
                     },
                 },
-                Indices = new List<Index> {
+                Indices = new List<IIndex> {
                     new Index {
                         Name = "IX_Assoc_StuffId",
                         Unique = false,

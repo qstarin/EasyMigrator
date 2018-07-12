@@ -94,6 +94,8 @@ namespace EasyMigrator
         public string Name { get; set; }
         public bool Unique { get; protected set; }
         public bool Clustered { get; protected set; }
+        public string Where { get; set; }
+        public string With { get; set; }
     }
 
     [AttributeUsage(AttributeTargets.Field)]

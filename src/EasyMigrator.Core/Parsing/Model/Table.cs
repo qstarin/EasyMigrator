@@ -15,6 +15,6 @@ namespace EasyMigrator.Parsing.Model
         public string PrimaryKeyName { get; set; }
         public bool PrimaryKeyIsClustered { get; set; } = true;
         public IList<Column> Columns { get; set; } = new List<Column>();
-        public IList<Index> Indices { get; set; } = new List<Index>();
+        public IList<IIndex> Indices { get; set; } = new List<IIndex>();
     }
 }

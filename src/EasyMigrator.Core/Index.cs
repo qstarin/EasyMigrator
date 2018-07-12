@@ -7,18 +7,26 @@ using System.Text;
 
 namespace EasyMigrator
 {
-    public class CompositeIndex
+    public class Index : Parsing.Model.IIndex
     {
-        public IndexColumn[] Columns { get; }
-        public IndexColumn[] Includes { get; }
+        public string Name { get; set; }
+        public bool Clustered { get; set; }
+        public bool Unique { get; set; }
+        public string Where { get; set; }
+        public string With { get; set; }
+        public IndexColumn[] Columns { get; set; }
+        public IndexColumn[] Includes { get; set; }
+        Parsing.Model.IIndexColumn[] Parsing.Model.IIndex.Columns => Columns;
+        Parsing.Model.IIndexColumn[] Parsing.Model.IIndex.Includes => Includes;
 
-        public CompositeIndex(params string[] columnNamesAndDirection) 
+        public Index() { }
+        public Index(params string[] columnNamesAndDirection) 
             : this(ConvertToColumns(columnNamesAndDirection).ToArray(), null) { }
-        public CompositeIndex(string[] columnNamesAndDirection, string[] includes) 
+        public Index(string[] columnNamesAndDirection, string[] includes) 
             : this(ConvertToColumns(columnNamesAndDirection).ToArray(), ConvertToColumns(includes).ToArray()) { }
-        public CompositeIndex(params IndexColumn[] columns) 
+        public Index(params IndexColumn[] columns) 
             : this(columns, null) { }
-        public CompositeIndex(IndexColumn[] columns, IndexColumn[] includes)
+        public Index(IndexColumn[] columns, IndexColumn[] includes)
         {
             Columns = columns;
             Includes = includes ?? new IndexColumn[0];
@@ -37,18 +45,24 @@ namespace EasyMigrator
         }
     }
 
-    public class CompositeIndex<TTable>
+    public class Index<TTable>
     {
-        public IndexColumn<TTable>[] Columns { get; }
-        public IndexColumn<TTable>[] Includes { get; }
+        public string Name { get; set; }
+        public bool Clustered { get; set; }
+        public bool Unique { get; set; }
+        public string Where { get; set; }
+        public string With { get; set; }
+        public IndexColumn<TTable>[] Columns { get; set; }
+        public IndexColumn<TTable>[] Includes { get; set; }
 
-        public CompositeIndex(params Expression<Func<TTable, object>>[] columns) 
+        public Index() { }
+        public Index(params Expression<Func<TTable, object>>[] columns) 
             : this(columns.Select(c => new IndexColumn<TTable>(c)).ToArray()) { }
-        public CompositeIndex(Expression<Func<TTable, object>>[] columns, Expression<Func<TTable, object>>[] includes) 
+        public Index(Expression<Func<TTable, object>>[] columns, Expression<Func<TTable, object>>[] includes) 
             : this(columns.Select(c => new IndexColumn<TTable>(c)).ToArray(), includes.Select(c => new IndexColumn<TTable>(c)).ToArray()) { }
-        public CompositeIndex(params IndexColumn<TTable>[] columns) 
+        public Index(params IndexColumn<TTable>[] columns) 
             : this(columns, null) { }
-        public CompositeIndex(IndexColumn<TTable>[] columns, IndexColumn<TTable>[] includes)
+        public Index(IndexColumn<TTable>[] columns, IndexColumn<TTable>[] includes)
         {
             Columns = columns;
             Includes = includes ?? new IndexColumn<TTable>[0];

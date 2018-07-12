@@ -35,7 +35,7 @@ namespace EasyMigrator.Tests.Schemas
                         ForeignKey = new FkAttribute("ParentOfSelf") { Column = "Id" },
                     },
                 },
-                Indices = new List<Index> {
+                Indices = new List<IIndex> {
                     new Index {
                         Name = "IX_ParentOfSelf_ParentId",
                         Unique = false,

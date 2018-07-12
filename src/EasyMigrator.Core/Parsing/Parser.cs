@@ -21,6 +21,12 @@ namespace EasyMigrator.Parsing
 
     public class Parser : IParser
     {
+        public Parser() : this(Conventions.Default) { }
+        public Parser(Conventions conventions) { Conventions = conventions; }
+
+
+        #region Current
+
         static public IParser Current { get; set; } = new Parser();
         static public IDisposable Override(IParser newParser) => new ParserScope(newParser);
         private class ParserScope : IDisposable
@@ -33,6 +39,11 @@ namespace EasyMigrator.Parsing
             }
             public void Dispose() { Parser.Current = _previousParser; }
         }
+
+        #endregion
+
+
+        #region Conventions
 
         public Conventions Conventions { get; set; }
         static public IDisposable Override(Conventions newConventions) => new ConventionsScope(newConventions);
@@ -53,8 +64,10 @@ namespace EasyMigrator.Parsing
             public void Dispose() { Parser.Current.Conventions = _previousConventions; }
         }
 
-        public Parser() : this(Conventions.Default) { }
-        public Parser(Conventions conventions) { Conventions = conventions; }
+        #endregion
+
+
+        #region Create Context
 
         protected virtual Context CreateContext(Type type)
         {
@@ -69,37 +82,13 @@ namespace EasyMigrator.Parsing
             return context;
         }
 
+        #endregion
+
+
+        #region Parse Table
+
         private readonly ConcurrentDictionary<Type, Context> _parsedTables = new ConcurrentDictionary<Type, Context>();
-
-        public Context ParseTableType(Type type)
-            => PostParseTable(_parsedTables.GetOrAdd(type, t => ParseTable(type)));
-
-        protected virtual Context PostParseTable(Context context)
-        {
-            foreach (var col in context.Table.Columns.Where(c => {
-                                                               var f = c.ForeignKey as FkAttribute;
-                                                               return f != null && f.Column == null && f.TableType != null;
-                                                           }))
-            {
-                var fk = col.ForeignKey as FkAttribute;
-                var fkContext = fk.TableType == context.ModelType ? context : ParseTableType(fk.TableType);
-                var fkTable = fkContext.Table;
-                if (fkTable.Columns.PrimaryKey().Count() != 1)
-                    throw new Exception($"Cannot create a foreign key from table {context.Table.Name} to table {fkTable.Name} with {(fkTable.HasPrimaryKey ? "composite" : "no")} primary key.");
-
-                var fkCol = fkTable.Columns.PrimaryKey().Single();
-                var newFk = new FkAttribute(fkTable.Name) {
-                    Name = fk.Name,
-                    Column = fkCol.Name,
-                    Indexed = fk.Indexed,
-                };
-                col.ForeignKey = newFk;
-
-                if (newFk.Name == null)
-                    newFk.Name = Conventions.ForeignKeyName(context, col);
-            }
-            return context;
-        }
+        public Context ParseTableType(Type type) => PostParseTable(_parsedTables.GetOrAdd(type, t => ParseTable(type)));
 
         protected virtual Context ParseTable(Type tableType)
         {
@@ -163,11 +152,12 @@ namespace EasyMigrator.Parsing
                 }
 
                 if (idx != null) {
-                    table.Indices.Add(new Model.Index {
+                    table.Indices.Add(new Index(new[] { new IndexColumn(column.Name) }) {
                         Name = idx.Name ?? Conventions.IndexNameByColumns(context, new[] { column }),
                         Clustered = idx.Clustered,
                         Unique = idx.Unique,
-                        Columns = new [] { new IndexColumn(column.Name) },
+                        Where = idx.Where,
+                        With = idx.With,
                     });
                 }
 
@@ -176,6 +166,7 @@ namespace EasyMigrator.Parsing
 
                 table.Columns.Add(column);
             }
+
 
             if (!table.HasPrimaryKey && !context.ModelType.HasAttribute<NoPkAttribute>() && Conventions.PrimaryKey != null) {
                 foreach (var pk in Conventions.PrimaryKey(context).Reverse()) { // Reverse so Insert(0.. puts everything in the right order (placing PK columns first)
@@ -191,61 +182,114 @@ namespace EasyMigrator.Parsing
             if (table.PrimaryKeyName == null)
                 table.PrimaryKeyName = Conventions.PrimaryKeyName(context);
 
-            var getExpressionFieldGenericMethodInfo = typeof(ReflectionExtensions).GetMethod("GetExpressionField");
-            foreach (var fi in GetCompositeIndexFields(tableType)) {
-                IIndexColumn[] columns = null;
-                IIndexColumn[] includes = null;
-
-                if (fi.FieldType == typeof(EasyMigrator.CompositeIndex)) {
-                    var ci = fi.GetValue(context.Model) as EasyMigrator.CompositeIndex;
-                    columns = ci.Columns;
-                    includes = ci.Includes;
-                }
-                else {
-                    var compositeIndexTableType = fi.FieldType.GetGenericArguments().Single();
-                    var compositeIndexParserContext = compositeIndexTableType == tableType ? context : ParseTableType(compositeIndexTableType); // if it is the same type, don't infinitely recurse
-                    var compositeIndexInstance = fi.GetValue(context.Model);
-                    var compositeIndexColumnsPropertyInfo = fi.FieldType.GetProperty("Columns");
-                    var columnsArray = compositeIndexColumnsPropertyInfo.GetGetMethod().Invoke(compositeIndexInstance, null);
-                    var compositeIndexIncludesPropertyInfo = fi.FieldType.GetProperty("Includes");
-                    var includesArray = compositeIndexIncludesPropertyInfo.GetGetMethod().Invoke(compositeIndexInstance, null);
-                    var compositeIndexConcreteType = compositeIndexColumnsPropertyInfo.PropertyType.GetElementType();
-                    var columnExpressionGetMethodInfo = compositeIndexConcreteType.GetProperty("ColumnExpression").GetGetMethod();
-                    var directionGetMethodInfo = compositeIndexConcreteType.GetProperty("Direction").GetGetMethod();
-
-                    var columnList = new List<IIndexColumn>();
-                    foreach (var c in columnsArray as IEnumerable) {
-                        var columnExpression = columnExpressionGetMethodInfo.Invoke(c, null);
-                        var getExpressionFieldConcreteMethodInfo = getExpressionFieldGenericMethodInfo.MakeGenericMethod(compositeIndexTableType, typeof(object));
-                        var columnFieldInfo = getExpressionFieldConcreteMethodInfo.Invoke(null, new[] { columnExpression }) as FieldInfo;
-                        var direction = (SortOrder)directionGetMethodInfo.Invoke(c, null);
-                        columnList.Add(new IndexColumn(compositeIndexParserContext.Columns[columnFieldInfo].Name, direction));
-                    }
-                    columns = columnList.ToArray();
-
-                    var includeList = new List<IIndexColumn>();
-                    foreach (var c in includesArray as IEnumerable) {
-                        var columnExpression = columnExpressionGetMethodInfo.Invoke(c, null);
-                        var getExpressionFieldConcreteMethodInfo = getExpressionFieldGenericMethodInfo.MakeGenericMethod(compositeIndexTableType, typeof(object));
-                        var columnFieldInfo = getExpressionFieldConcreteMethodInfo.Invoke(null, new[] { columnExpression }) as FieldInfo;
-                        var direction = (SortOrder)directionGetMethodInfo.Invoke(c, null);
-                        includeList.Add(new IndexColumn(compositeIndexParserContext.Columns[columnFieldInfo].Name, direction));
-                    }
-                    includes = includeList.ToArray();
-                }
-
-                var ciIdxAttr = fi.GetAttribute<IndexAttribute>();
-                table.Indices.Add(new Model.Index {
-                    Name = ciIdxAttr?.Name ?? Conventions.IndexNameByTableAndColumnNames(table.Name, columns.Select(c => c.ColumnName).ToArray()),
-                    Columns = columns,
-                    Includes = includes,
-                    Unique = ciIdxAttr?.Unique ?? false,
-                    Clustered = ciIdxAttr?.Clustered ?? false,
-                });
-            }
+            foreach (var fi in GetCompositeIndexFields(tableType))
+                table.Indices.Add(BuildIndex(context, table, fi));
 
             return context;
         }
+
+        static private readonly MethodInfo _getExprField = typeof(ReflectionExtensions).GetMethod("GetExpressionField");
+        static private readonly MethodInfo _getName = typeof(Index).GetProperty("Name").GetGetMethod();
+        static private readonly MethodInfo _getClustered = typeof(Index).GetProperty("Clustered").GetGetMethod();
+        static private readonly MethodInfo _getUnique = typeof(Index).GetProperty("Unique").GetGetMethod();
+        static private readonly MethodInfo _getWhere = typeof(Index).GetProperty("Where").GetGetMethod();
+        static private readonly MethodInfo _getWith = typeof(Index).GetProperty("With").GetGetMethod();
+        private IIndex BuildIndex(Context context, Table table, FieldInfo fi)
+        {
+            IndexColumn[] columns = null;
+            IndexColumn[] includes = null;
+
+            var fv = fi.GetValue(context.Model);
+            var getName = _getName;
+            var getClustered = _getClustered;
+            var getUnique = _getUnique;
+            var getWhere = _getWhere;
+            var getWith = _getWith;
+
+
+            if (fv is Index ci) {
+                columns = ci.Columns;
+                includes = ci.Includes;
+            }
+            else {
+                var idxTableType = fi.FieldType.GetGenericArguments().Single();
+                var idxContext = idxTableType == context.ModelType ? context : ParseTableType(idxTableType); // if it is the same type, don't infinitely recurse
+                
+                var columnsProp = fi.FieldType.GetProperty("Columns");
+                var columnsArray = columnsProp.GetGetMethod().Invoke(fv, null);
+
+                var colType = columnsProp.PropertyType.GetElementType();
+                var getColExpr = colType.GetProperty("ColumnExpression").GetGetMethod();
+                var getDirection = colType.GetProperty("Direction").GetGetMethod();
+
+                var includesProp = fi.FieldType.GetProperty("Includes");
+                var includesArray = includesProp.GetGetMethod().Invoke(fv, null);
+
+                var getExprField = _getExprField.MakeGenericMethod(idxTableType, typeof(object));
+                getName = fi.FieldType.GetProperty("Name").GetGetMethod();
+                getClustered = fi.FieldType.GetProperty("Clustered").GetGetMethod();
+                getUnique = fi.FieldType.GetProperty("Unique").GetGetMethod();
+                getWhere = fi.FieldType.GetProperty("Where").GetGetMethod();
+                getWith = fi.FieldType.GetProperty("With").GetGetMethod();
+
+                var columnList = new List<IndexColumn>();
+                foreach (var c in columnsArray as IEnumerable) {
+                    var columnExpression = getColExpr.Invoke(c, null);
+                    var columnFieldInfo = getExprField.Invoke(null, new[] { columnExpression }) as FieldInfo;
+                    var direction = (SortOrder)getDirection.Invoke(c, null);
+                    columnList.Add(new IndexColumn(idxContext.Columns[columnFieldInfo].Name, direction));
+                }
+                columns = columnList.ToArray();
+
+                var includeList = new List<IndexColumn>();
+                foreach (var c in includesArray as IEnumerable) {
+                    var columnExpression = getColExpr.Invoke(c, null);
+                    var columnFieldInfo = getExprField.Invoke(null, new[] { columnExpression }) as FieldInfo;
+                    var direction = (SortOrder)getDirection.Invoke(c, null);
+                    includeList.Add(new IndexColumn(idxContext.Columns[columnFieldInfo].Name, direction));
+                }
+                includes = includeList.ToArray();
+            }
+
+            var attr = fi.GetAttribute<IndexAttribute>();
+            return new Index(columns, includes) {
+                Name = attr?.Name ?? (string)getName.Invoke(fv, null) ?? Conventions.IndexNameByTableAndColumnNames(table.Name, columns.Select(c => c.ColumnName).ToArray()),
+                Unique = attr?.Unique ?? (bool)getUnique.Invoke(fv, null),
+                Clustered = attr?.Clustered ?? (bool)getClustered.Invoke(fv, null),
+                Where = attr?.Where ?? (string)getWhere.Invoke(fv, null),
+                With = attr?.With ?? (string)getWith.Invoke(fv, null),
+            };
+        }
+
+        protected virtual Context PostParseTable(Context context)
+        {
+            // second pass to create foreign keys from attributes using table type instead of strings
+            foreach (var col in context.Table.Columns.Where(c => c.ForeignKey is FkAttribute fk && fk.Column == null && fk.TableType != null))
+            {
+                var fk = col.ForeignKey as FkAttribute;
+                var fkContext = fk.TableType == context.ModelType ? context : ParseTableType(fk.TableType);
+                var fkTable = fkContext.Table;
+                if (fkTable.Columns.PrimaryKey().Count() != 1)
+                    throw new Exception($"Cannot create a foreign key from table {context.Table.Name} to table {fkTable.Name} with {(fkTable.HasPrimaryKey ? "composite" : "no")} primary key.");
+
+                var fkCol = fkTable.Columns.PrimaryKey().Single();
+                var newFk = new FkAttribute(fkTable.Name) {
+                    Name = fk.Name,
+                    Column = fkCol.Name,
+                    Indexed = fk.Indexed,
+                };
+                col.ForeignKey = newFk;
+
+                if (newFk.Name == null)
+                    newFk.Name = Conventions.ForeignKeyName(context, col);
+            }
+            return context;
+        }
+
+        #endregion
+
+
+        #region Helpers
 
         protected virtual IEnumerable<FieldInfo> GetColumnFields(Type type)
             => type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
@@ -256,9 +300,8 @@ namespace EasyMigrator.Parsing
                    .Where(IsCompositeIndexField);
 
         protected virtual bool IsCompositeIndexField(FieldInfo fi)
-            => fi.FieldType == typeof(EasyMigrator.CompositeIndex) ||
-               (fi.FieldType.IsGenericType &&
-                fi.FieldType.GetGenericTypeDefinition() == typeof(EasyMigrator.CompositeIndex<>));
+            => fi.FieldType == typeof(EasyMigrator.Index) ||
+              (fi.FieldType.IsGenericType && fi.FieldType.GetGenericTypeDefinition() == typeof(EasyMigrator.Index<>));
 
         protected virtual string GetDefaultValue(object model, FieldInfo field)
         {
@@ -318,5 +361,8 @@ namespace EasyMigrator.Parsing
 #pragma warning disable 618
             => (field.FieldType.IsNullableType() || !field.FieldType.IsValueType || field.HasAttribute<NullAttribute>()) && !field.HasAttribute<NotNullAttribute>();
 #pragma warning restore 618
+
+        #endregion
+
     }
 }

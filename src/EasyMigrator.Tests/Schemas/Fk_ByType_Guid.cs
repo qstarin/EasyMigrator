@@ -58,7 +58,7 @@ namespace EasyMigrator.Tests.Schemas
                         },
                     },
                 },
-                Indices = new List<Index> {
+                Indices = new List<IIndex> {
                     new Index {
                         Name = "IX_Slave_MasterId",
                         Unique = false,

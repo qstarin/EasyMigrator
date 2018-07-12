@@ -102,7 +102,7 @@ namespace EasyMigrator.Tests.Schemas
                         ForeignKey = new FkAttribute("Author") { Column = "Id" },
                     },
                 },
-                Indices = new List<Index> {
+                Indices = new List<IIndex> {
                     new Index {
                         Name = "IX_BookAuthor_BookId",
                         Unique = false,

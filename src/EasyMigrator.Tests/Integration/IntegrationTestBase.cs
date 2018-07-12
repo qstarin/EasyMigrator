@@ -147,11 +147,11 @@ namespace EasyMigrator.Tests.Integration
             table.PrimaryKeyName = pkIdx.Name;
 
             foreach (var idx in st.Indexes.Where(i => i.IndexType != "PRIMARY")) {
-                var ci = new Parsing.Model.Index {
+                var ci = new Index {
                     Name = idx.Name,
                     Unique = idx.IsUnique,
                     Clustered = idx.IndexType != "NONCLUSTERED",
-                    Columns = idx.Columns.Select(c => new IndexColumn(c.Name)).ToArray()
+                    Columns = idx.Columns.Select(c => new IndexColumn(c.Name)).ToArray(), 
                 };
                 table.Indices.Add(ci);
             }

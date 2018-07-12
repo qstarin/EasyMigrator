@@ -66,18 +66,23 @@ namespace EasyMigrator.Tests
             for (var i = 0; i < expected.Indices.Count; i++) {
                 var e = expected.Indices[i];
                 var a = actual.Indices[i];
+
                 Assert.AreEqual(e.Name, a.Name);
-                if (!isDb)
-                    Assert.AreEqual(e.Unique, a.Unique); // <- Schema reader doesn't pick this up
                 Assert.AreEqual(e.Clustered, a.Clustered);
+                if (!isDb) {
+                    // Schema reader doesn't pick these up
+                    Assert.AreEqual(e.Unique, a.Unique);
+                    Assert.AreEqual(e.Where, a.Where);
+                    Assert.AreEqual(e.With, a.With);
+                }
 
                 // this is bad but schema reader doesn't get the correct order of columns
-                e.Columns = e.Columns.OrderBy(ci => ci.ColumnName).ToArray();
-                a.Columns = a.Columns.OrderBy(ci => ci.ColumnName).ToArray();
-                Assert.AreEqual(e.Columns.Length, a.Columns.Length);
-                for (var j = 0; j < e.Columns.Length; j++) {
-                    var ec = e.Columns[j];
-                    var ac = a.Columns[j];
+                var eColumns = e.Columns.OrderBy(ci => ci.ColumnName).ToArray();
+                var aColumns = a.Columns.OrderBy(ci => ci.ColumnName).ToArray();
+                Assert.AreEqual(eColumns.Length, aColumns.Length);
+                for (var j = 0; j < eColumns.Length; j++) {
+                    var ec = eColumns[j];
+                    var ac = aColumns[j];
                     Assert.AreEqual(ec.ColumnName, ac.ColumnName);
                     if (!isDb)
                         Assert.AreEqual(ec.Direction, ac.Direction); // <- Schema reader doesn't pick this up
