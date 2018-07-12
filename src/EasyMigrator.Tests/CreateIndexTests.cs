@@ -102,7 +102,7 @@ namespace EasyMigrator.Tests.MigratorDotNet
             => CreateAndDropIndex(
                 migrations => migrations.AddMigrationForMigratorDotNet(
                     m => {
-                        m.Database.AddIndex<Schemas.Table1.Poco>(true, false, t => t.Name, t => t.Headline);
+                        m.Database.AddUniqueIndex<Schemas.Table1.Poco>(t => t.Name, t => t.Headline);
                     },
                     m => {
                         m.Database.RemoveIndex<Schemas.Table1.Poco>(t => t.Name, t => t.Headline);
@@ -114,7 +114,7 @@ namespace EasyMigrator.Tests.MigratorDotNet
             => CreateAndDropIndex(
                 migrations => migrations.AddMigrationForMigratorDotNet(
                     m => {
-                        m.Database.AddIndex(new IndexColumn<Schemas.Table1.Poco>[] { new Descending<Schemas.Table1.Poco>(t => t.Name), new Ascending<Schemas.Table1.Poco>(t => t.Headline) });
+                        m.Database.AddIndex(new Index<Schemas.Table1.Poco>(new Descending<Schemas.Table1.Poco>(t => t.Name), new Ascending<Schemas.Table1.Poco>(t => t.Headline)));
                     },
                     m => {
                         m.Database.RemoveIndex(new Descending<Schemas.Table1.Poco>(t => t.Name), new Ascending<Schemas.Table1.Poco>(t => t.Headline));
@@ -126,7 +126,7 @@ namespace EasyMigrator.Tests.MigratorDotNet
                 "MyNamedIndex",
                 migrations => migrations.AddMigrationForMigratorDotNet(
                     m => {
-                        m.Database.AddIndex<Schemas.Table1.Poco>("MyNamedIndex", t => t.Name, t => t.Headline);
+                        m.Database.AddIndex(new Index<Schemas.Table1.Poco>(t => t.Name, t => t.Headline) { Name = "MyNamedIndex" });
                     },
                     m => {
                         m.Database.RemoveIndexByName<Schemas.Table1.Poco>("MyNamedIndex");
