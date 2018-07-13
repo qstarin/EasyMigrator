@@ -103,7 +103,8 @@ namespace EasyMigrator.Parsing
             }
 
             foreach (var field in fields) {
-                var dbType = field.GetAttribute<DbTypeAttribute>()?.DbType ?? typemap[field];
+                var typeAttr = field.GetAttribute<DbTypeAttribute>();
+                var dbType = typeAttr?.DbType ?? typemap[field];
                 var pk = field.GetAttribute<PkAttribute>();
                 var fk = field.GetAttribute<FkAttribute>();
                 var idx = field.GetAttribute<IndexAttribute>();
@@ -111,7 +112,9 @@ namespace EasyMigrator.Parsing
                 var column = new Column {
                     Name = field.GetAttribute<NameAttribute>()?.Name ?? Conventions.ColumnName(context, field), 
                     Type = dbType,
+                    CustomType = typeAttr?.CustomType,
                     DefaultValue = GetDefaultValue(context.Model, field),
+                    IsFixedLength = field.HasAttribute<FixedAttribute>(),
                     IsNullable = IsNullable(field),
                     IsPrimaryKey = pk != null,
                     IsSparse = field.HasAttribute<SparseAttribute>(),

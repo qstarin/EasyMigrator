@@ -14,6 +14,7 @@ namespace EasyMigrator
         static private IDictionary<DbType, DbType> UnsupportedTypes = new Dictionary<DbType, DbType> {
             { DbType.DateTime2, DbType.DateTime },
             { DbType.DateTimeOffset, DbType.DateTime },
+            { DbType.Binary, DbType.Binary },
         };
 
         static public void AddTable<T>(this ITransformationProvider Database) => Database.AddTable(typeof(T));
@@ -30,10 +31,9 @@ namespace EasyMigrator
 
                 var c = BuildColumn(col);
 
-                if (col.IsSparse)
+                if (col.IsSparse || col.CustomType != null)
                     unsupportedTypeColumns.Add(col);
-
-                if (UnsupportedTypes.ContainsKey(col.Type)) {
+                else if (UnsupportedTypes.ContainsKey(col.Type)) {
                     unsupportedTypeColumns.Add(col);
                     c.Type = UnsupportedTypes[col.Type];
                 }
@@ -48,7 +48,7 @@ namespace EasyMigrator
                 Database.ExecuteNonQuery(
                     $"CREATE TABLE {table.Name.SqlQuote()} (" + 
                     string.Join(", ", 
-                        table.Columns.WithCustomAutoIncrement().Select(c => BuildColumnWithCustomIdentitySql(c.Name, c.Type, c.AutoIncrement.Seed, c.AutoIncrement.Step, c.IsNullable))) + 
+                        table.Columns.WithCustomAutoIncrement().Select(BuildColumnSpec)) + 
                     ")");
 
                 foreach (var col in columns)
@@ -60,13 +60,13 @@ namespace EasyMigrator
             Database.AddPrimaryKey(table.Name, table.PrimaryKeyName, table.PrimaryKeyIsClustered, table.Columns.PrimaryKey().Select(c => c.Name).ToArray());
 
             foreach (var col in table.Columns.MaxLength())
-                AlterToMaxLength(Database, table.Name, col.Name, col.Type, col.IsNullable);
+                AlterColumn(Database, table.Name, col);
 
             foreach (var col in table.Columns.WithPrecision().Except(unsupportedTypeColumns))
-                AlterForUnsupportedType(Database, table.Name, col.Name, col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable, col.IsSparse);
+                AlterColumn(Database, table.Name, col);
 
             foreach (var col in unsupportedTypeColumns)
-                AlterForUnsupportedType(Database, table.Name, col.Name, col.Type, col.Precision?.Precision, col.Precision?.Scale, col.IsNullable, col.IsSparse);
+                AlterColumn(Database, table.Name, col);
 
             foreach (var col in table.Columns.ForeignKeys()) {
                 var fk = col.ForeignKey;
@@ -83,47 +83,20 @@ namespace EasyMigrator
             var table = tableType.ParseTable().Table;
             var pocoColumns = table.Columns.DefinedInPoco();
             var nonNullables = new List<EColumn>();
-            var unsupportedTypeColumns = new List<EColumn>();
 
             foreach (var col in pocoColumns) {
 				if (populate != null && !col.IsNullable && col.DefaultValue == null) {
 				    col.IsNullable = true;
 					nonNullables.Add(col);
 				}
-
-                var c = BuildColumn(col);
-
-                if (col.IsSparse)
-                    unsupportedTypeColumns.Add(col);
-
-                if (UnsupportedTypes.ContainsKey(col.Type)) {
-                    unsupportedTypeColumns.Add(col);
-                    c.Type = UnsupportedTypes[col.Type];
-                }
-
-                if (col.IsCustomAutoIncrement())
-                    AddColumnWithCustomIdentity(Database, table.Name, col.Name, col.Type, col.AutoIncrement.Seed, col.AutoIncrement.Step, col.IsNullable);
-                else
-                    Database.AddColumn(table.Name.SqlQuote(), c);
+                AddColumn(Database, table.Name, col);
             }
-
-            foreach (var col in pocoColumns.MaxLength())
-                AlterToMaxLength(Database, table.Name, col.Name, col.Type, col.IsNullable);
-
-            foreach (var col in pocoColumns.WithPrecision())
-                AlterForUnsupportedType(Database, table.Name, col.Name, col.Type, col.Precision.Precision, col.Precision.Scale, col.IsNullable, col.IsSparse);
-
-            foreach (var col in unsupportedTypeColumns)
-                AlterForUnsupportedType(Database, table.Name, col.Name, col.Type, col.Precision?.Precision, col.Precision?.Scale, col.IsNullable, col.IsSparse);
 
             if (populate != null) {
                 populate();
                 foreach (var col in nonNullables) {
                     col.IsNullable = false;
-                    if (table.Columns.MaxLength().Contains(col))
-                        AlterToMaxLength(Database, table.Name, col.Name, col.Type, col.IsNullable);
-                    else
-                        Database.ChangeColumn(table.Name.SqlQuote(), BuildColumn(col));
+                    AlterColumn(Database, table.Name, col);
                 }
             }
 
@@ -172,39 +145,56 @@ namespace EasyMigrator
         // http://code.google.com/p/migratordotnet/issues/detail?id=130
         // using this sets the column type to ntext instead of nvarchar
         // so, we work around it
-        static private void AlterToMaxLength(ITransformationProvider Database, string tableName, string columnName, DbType dbType, bool isNullable)
-            => Database.ExecuteNonQuery($"ALTER TABLE {tableName.SqlQuote()} ALTER COLUMN {columnName.SqlQuote()} {(dbType == DbType.AnsiString ? "" : "N")}VARCHAR(MAX) {(isNullable ? "" : "NOT ")}NULL");
 
-        // Migrator.Net doesn't support some types or setting the precision so we do it manually with SQL
-        static private void AlterForUnsupportedType(ITransformationProvider Database, string tableName, string columnName, DbType dbType, int? precision, int? scale, bool isNullable, bool isSparse)
-            => Database.ExecuteNonQuery($"ALTER TABLE {tableName.SqlQuote()} ALTER COLUMN {columnName.SqlQuote()} " +
-                GetSqlTypeString(dbType) + 
-                (precision.HasValue && precision > 0 && scale.HasValue && scale > 0
-                    ? $"({precision}, {scale})"
-                    : (precision.HasValue && precision > 0) || (scale.HasValue && scale > 0)
-                        ? $"({Math.Max(precision ?? 0, scale ?? 0)})"
-                        : "")
-                + (isSparse  ? " SPARSE" : "")
-                + $" {(isNullable ? "" : "NOT ")}NULL");
+        static private void AddColumn(ITransformationProvider Database, string table, EColumn col)
+            => Database.ExecuteNonQuery(BuildAddColumn(table, col));
 
-        // Migrator.Net also doesn't support identity seed and step values other than the defaults of 1
-        static private void AddColumnWithCustomIdentity(ITransformationProvider Database, string tableName, string columnName, DbType dbType, long seed, long step, bool isNullable)
-            => Database.ExecuteNonQuery($"ALTER TABLE {tableName.SqlQuote()} ADD COLUMN {BuildColumnWithCustomIdentitySql(columnName, dbType, seed, step, isNullable)}");
+        static private void AlterColumn(ITransformationProvider Database, string table, EColumn col)
+            => Database.ExecuteNonQuery(BuildAlterColumn(table, col));
 
-        static private string BuildColumnWithCustomIdentitySql(string columnName, DbType dbType, long seed, long step, bool isNullable)
-            => $"{columnName.SqlQuote()} {GetSqlTypeString(dbType)} IDENTITY({seed}, {step}) {(isNullable ? "" : "NOT ")}NULL";
+        static private string BuildAddColumn(string table, EColumn col)
+            => $"ALTER TABLE {table.SqlQuote()} ADD {BuildColumnSpec(col)}";
 
-        static private string GetSqlTypeString(DbType dbType)
+        static private string BuildAlterColumn(string table, EColumn col)
+            => $"ALTER TABLE {table.SqlQuote()} ALTER COLUMN {BuildColumnSpec(col)}";
+
+        static private string BuildColumnSpec(EColumn col)
+            => $"{col.Name.SqlQuote()} " + GetSqlTypeString(col) +
+               (col.Length.HasValue ? $"({(col.Length == int.MaxValue ? "MAX" : col.Length.ToString())})" : "") +
+               (col.Precision?.Precision > 0 && col.Precision?.Scale > 0 ? $"({col.Precision.Precision}, {col.Precision.Scale})"
+               : (col.Precision?.Precision > 0) || (col.Precision?.Scale > 0) ? $"({Math.Max(col.Precision?.Precision ?? 0, col.Precision?.Scale ?? 0)})"
+               : "")
+               + (col.AutoIncrement == null ? "" : $" IDENTITY({col.AutoIncrement.Seed}, {col.AutoIncrement.Step})")
+               + (col.IsSparse ? " SPARSE" : "")
+               + (col.IsNullable ? " NULL" : " NOT NULL");
+
+        static private string GetSqlTypeString(EColumn col)
         {
-            switch (dbType) {
+            if (col.CustomType != null)
+                return col.CustomType;
+
+            switch (col.Type) {
+                case DbType.AnsiString: return "VARCHAR";
+                case DbType.AnsiStringFixedLength: return "CHAR";
+                case DbType.Binary: return col.IsFixedLength ? "BINARY" : "VARBINARY";
                 case DbType.Byte: return "TINYINT";
-                case DbType.Int16: return "SMALLINT";
-                case DbType.Int32: return "INT";
-                case DbType.Int64: return "BIGINT";
+                case DbType.Boolean: return "BIT";
+                case DbType.Date: return "DATE";
+                case DbType.DateTime: return "DATETIME";
                 case DbType.DateTime2: return "DATETIME2";
                 case DbType.DateTimeOffset: return "DATETIMEOFFSET";
                 case DbType.Decimal: return "DECIMAL";
-                default: throw new ArgumentException($"{dbType} is not a supported custom type.", nameof(dbType));
+                case DbType.Double: return "FLOAT";
+                case DbType.Guid: return "UNIQUEIDENTIFIER";
+                case DbType.Int16: return "SMALLINT";
+                case DbType.Int32: return "INT";
+                case DbType.Int64: return "BIGINT";
+                case DbType.Single: return "FLOAT";
+                case DbType.String: return "NVARCHAR";
+                case DbType.StringFixedLength: return "NCHAR";
+                case DbType.Time: return "TIME";
+                case DbType.Xml: return "XML";
+                default: throw new ArgumentException($"{col.Type} is not a supported custom type.", nameof(col.Type));
             }
         }
     }

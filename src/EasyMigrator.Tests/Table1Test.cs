@@ -13,7 +13,7 @@ namespace EasyMigrator.Tests.MigratorDotNet
     public class Table1 : IntegrationTestBase
     {
         public Table1() : base(s => new Integration.MigratorDotNet.Migrator(s)) { }
-        [Test] public void RoundTrip() => Test<Table1>();
+        [Test] public void RoundTrip() => Test<Schemas.Table1>();
     }
 }
 
@@ -25,6 +25,6 @@ namespace EasyMigrator.Tests.FluentMigrator
     public class Table1 : IntegrationTestBase
     {
         public Table1() : base(s => new Integration.FluentMigrator.Migrator(s)) { }
-        [Test] public void RoundTrip() => Test<Table1>();
+        [Test] public void RoundTrip() => Test<Schemas.Table1>();
     }
 }

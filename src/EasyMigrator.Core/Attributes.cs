@@ -21,7 +21,9 @@ namespace EasyMigrator
     [AttributeUsage(AttributeTargets.Field)]
     public class DbTypeAttribute : Attribute
     {
-        public DbType DbType { get; }
+        public string CustomType { get; }
+        public DbType? DbType { get; }
+        public DbTypeAttribute(string customType) { CustomType = customType; }
         public DbTypeAttribute(DbType dbType) { DbType = dbType; }
     }
 

@@ -19,6 +19,8 @@ namespace EasyMigrator.Tests.Schemas
             [Max] public string Desc;
             [DbType(DbType.Currency)] public decimal? Rate;
             [Precision(Length.Short, 3)] public decimal Adjustment;
+            [Sparse, Fixed(16)] public byte[] IPv6;
+            [DbType("MONEY")] public double Cost;
 
             Index<Poco> i1 = new Index<Poco>(x => x.Name, x => x.Code) { Unique = true, Where = $"{nameof(Name)} IS NOT NULL", With = "PAD_INDEX=ON" };
             [Unique(With = "SORT_IN_TEMPDB=OFF")] Index<Poco> i2 = new Index<Poco>(new Descending<Poco>(x => x.Sequence), new Ascending<Poco>(x => x.Code)) { Name = "IX_Custom_Name" };
@@ -74,6 +76,17 @@ namespace EasyMigrator.Tests.Schemas
                     Name = "Adjustment",
                     Type = DbType.Decimal,
                     Precision = new PrecisionAttribute(9, 3)
+                },
+                new Column {
+                    Name = "IPv6",
+                    Type = DbType.Binary,
+                    IsNullable = true,
+                    IsSparse = true,
+                    Length = 16,
+                },
+                new Column {
+                    Name = "Cost",
+                    Type = DbType.Currency,
                 },
             },
             Indices = new List<IIndex> {

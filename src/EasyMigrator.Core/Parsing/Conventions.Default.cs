@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
@@ -70,13 +71,14 @@ namespace EasyMigrator.Parsing
                         {typeof(byte[]), DbType.Binary},
                         //{typeof(System.Data.Linq.Binary), DbType.Binary},
                         {typeof(XDocument), DbType.Xml},
-                        {typeof(XmlDocument), DbType.Xml}
+                        {typeof(XmlDocument), DbType.Xml},
                     })
-                    .Add(typeof(string),
-                            f => f.HasAttribute<AnsiAttribute>()
-                                ? (f.HasAttribute<FixedAttribute>() ? DbType.AnsiStringFixedLength : DbType.AnsiString)
-                                : (f.HasAttribute<FixedAttribute>() ? DbType.StringFixedLength : DbType.String)
-                    )
+                    .Add(new Dictionary<Type, Func<FieldInfo, DbType>> {
+                        { typeof(string),
+                          f => f.HasAttribute<AnsiAttribute>()
+                               ? (f.HasAttribute<FixedAttribute>() ? DbType.AnsiStringFixedLength : DbType.AnsiString)
+                               : (f.HasAttribute<FixedAttribute>() ? DbType.StringFixedLength : DbType.String) },
+                    })
             };
     }
 }
