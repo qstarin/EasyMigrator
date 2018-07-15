@@ -130,6 +130,33 @@ namespace EasyMigrator
             where TNext : IColumnOptionSyntax<TNext, TNextFk>
             where TNextFk : IColumnOptionSyntax<TNext, TNextFk>, TNext
         {
+            if (col.CustomType != null) {
+                var sb = new StringBuilder();
+                sb.Append(col.CustomType);
+                if (col.Length.HasValue) {
+                    sb.Append('(');
+                    if (col.Length == int.MaxValue)
+                        sb.Append("MAX");
+                    else
+                        sb.Append(col.Length);
+                    sb.Append(')');
+                }
+                else if (col.Precision?.Precision > 0 && col.Precision?.Scale > 0) {
+                    sb.Append('(');
+                    sb.Append(col.Precision.Precision);
+                    sb.Append(',');
+                    sb.Append(col.Precision.Scale);
+                    sb.Append(')');
+                }
+                else if (col.Precision?.Precision > 0 || col.Precision?.Scale > 0) {
+                    sb.Append('(');
+                    sb.Append(Math.Max(col.Precision?.Precision ?? 0, col.Precision?.Scale ?? 0));
+                    sb.Append(')');
+                }
+
+                return s.AsCustom(sb.ToString());
+            }
+
             switch (col.Type) {
                 case DbType.AnsiString: return col.Length.IfHasValue(s.AsAnsiString, s.AsAnsiString);
                 case DbType.AnsiStringFixedLength: return s.AsFixedLengthAnsiString(col.Length.Value);
