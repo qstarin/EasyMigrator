@@ -39,8 +39,14 @@ namespace EasyMigrator
             else
                 pkCreator.NonClustered();
 
-            foreach (var col in table.Columns.Where(c => c.ForeignKey?.Table == table.Name))
-                Create.ForeignKey(col.ForeignKey.Name).FromTable(table.Name).ForeignColumn(col.Name).ToTable(col.ForeignKey.Table).PrimaryColumn(col.ForeignKey.Column);
+            foreach (var col in table.Columns.Where(c => c.ForeignKey != null))
+            {
+                var fkadd = Create.ForeignKey(col.ForeignKey.Name).FromTable(table.Name).ForeignColumn(col.Name).ToTable(col.ForeignKey.Table).PrimaryColumn(col.ForeignKey.Column);
+                if (col.ForeignKey.OnDelete.HasValue)
+                    fkadd = fkadd.OnDelete(col.ForeignKey.OnDelete.Value);
+                if (col.ForeignKey.OnUpdate.HasValue)
+                    fkadd = fkadd.OnUpdate(col.ForeignKey.OnUpdate.Value);
+            }
 
             foreach (var ci in table.Indices) {
                 var ib = Create.Index(ci.Name).OnTable(tableType).OnColumns(ci.Columns.Select(c => new IndexColumn(c.ColumnName, c.Direction)).ToArray());
@@ -70,8 +76,14 @@ namespace EasyMigrator
                                               ICreateColumnOptionOrForeignKeyCascadeSyntax>(table, col);
             }
 
-            foreach (var col in table.Columns.Where(c => c.ForeignKey?.Table == table.Name))
-                Create.ForeignKey(col.ForeignKey.Name).FromTable(table.Name).ForeignColumn(col.Name).ToTable(col.ForeignKey.Table).PrimaryColumn(col.ForeignKey.Column);
+            foreach (var col in table.Columns.Where(c => c.ForeignKey != null))
+            {
+                var fkadd = Create.ForeignKey(col.ForeignKey.Name).FromTable(table.Name).ForeignColumn(col.Name).ToTable(col.ForeignKey.Table).PrimaryColumn(col.ForeignKey.Column);
+                if (col.ForeignKey.OnDelete.HasValue)
+                    fkadd = fkadd.OnDelete(col.ForeignKey.OnDelete.Value);
+                if (col.ForeignKey.OnUpdate.HasValue)
+                    fkadd = fkadd.OnUpdate(col.ForeignKey.OnUpdate.Value);
+            }
 
             foreach (var ci in table.Indices) {
                 //if (ci.Clustered) {
@@ -114,9 +126,6 @@ namespace EasyMigrator
                 col.IsNullable
                     ? createColumnOptionSyntax.Nullable()
                     : createColumnOptionSyntax.NotNullable();
-
-            if (col.ForeignKey != null && col.ForeignKey.Table != table.Name)
-                createColumnOptionSyntax = createColumnOptionSyntax.ForeignKey(col.ForeignKey.Name, col.ForeignKey.Table, col.ForeignKey.Column);
 
             if (col.DefaultValue != null) {
                 var defVal = col.DefaultValue;

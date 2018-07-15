@@ -11,67 +11,42 @@ namespace EasyMigrator
 {
     static public class CreateExtensions
     {
-        static private IDictionary<DbType, DbType> UnsupportedTypes = new Dictionary<DbType, DbType> {
-            { DbType.DateTime2, DbType.DateTime },
-            { DbType.DateTimeOffset, DbType.DateTime },
-            { DbType.Binary, DbType.Binary },
-        };
-
         static public void AddTable<T>(this ITransformationProvider Database) => Database.AddTable(typeof(T));
         static public void AddTable(this ITransformationProvider Database, Type tableType)
         {
             var table = tableType.ParseTable().Table;
-            var columns = new List<Column>();
-            var unsupportedTypeColumns = new List<EColumn>();
-            foreach (var col in table.Columns.WithoutCustomAutoIncrement()) {
-                // do this temporarily because we want to create the PK ourselves later in order to set the name and support unclustered and composite PK's
-                var isPk = col.IsPrimaryKey;
-                if (isPk)
-                    col.IsPrimaryKey = false;
+            var sb = new StringBuilder();
+            sb.Append("CREATE TABLE ");
+            sb.Append(table.Name.SqlQuote());
+            sb.AppendLine(" (");
 
-                var c = BuildColumn(col);
+            for (var i = 0; i < table.Columns.Count; i++) {
+                BuildFullColumnSpec(sb, table, table.Columns[i]);
+                if (i < table.Columns.Count - 1)
+                    sb.Append(',');
+                sb.AppendLine();
+            }
 
-                if (col.IsSparse || col.CustomType != null)
-                    unsupportedTypeColumns.Add(col);
-                else if (UnsupportedTypes.ContainsKey(col.Type)) {
-                    unsupportedTypeColumns.Add(col);
-                    c.Type = UnsupportedTypes[col.Type];
+            if (table.HasPrimaryKey) {
+                sb.Append(" CONSTRAINT ");
+                sb.Append(table.PrimaryKeyName.SqlQuote());
+                sb.Append(" PRIMARY KEY ");
+                sb.Append(table.PrimaryKeyIsClustered ? "CLUSTERED " : "NONCLUSTERED ");
+                sb.Append('(');
+                foreach (var col in table.Columns.PrimaryKey()) {
+                    sb.Append(col.Name.SqlQuote());
+                    sb.Append(", ");
                 }
-
-                columns.Add(c);
-
-                if (isPk)
-                    col.IsPrimaryKey = true;
+                sb.Length -= 2;
+                sb.Append(')');
+                sb.AppendLine();
             }
 
-            if (table.Columns.WithCustomAutoIncrement().Any()) {
-                Database.ExecuteNonQuery(
-                    $"CREATE TABLE {table.Name.SqlQuote()} (" + 
-                    string.Join(", ", 
-                        table.Columns.WithCustomAutoIncrement().Select(BuildColumnSpec)) + 
-                    ")");
+            sb.Append(')');
+            sb.AppendLine();
 
-                foreach (var col in columns)
-                    Database.AddColumn(table.Name.SqlQuote(), col);
-            }
-            else
-                Database.AddTable(table.Name.SqlQuote(), columns.ToArray());
-
-            Database.AddPrimaryKey(table.Name, table.PrimaryKeyName, table.PrimaryKeyIsClustered, table.Columns.PrimaryKey().Select(c => c.Name).ToArray());
-
-            foreach (var col in table.Columns.MaxLength())
-                AlterColumn(Database, table.Name, col);
-
-            foreach (var col in table.Columns.WithPrecision().Except(unsupportedTypeColumns))
-                AlterColumn(Database, table.Name, col);
-
-            foreach (var col in unsupportedTypeColumns)
-                AlterColumn(Database, table.Name, col);
-
-            foreach (var col in table.Columns.ForeignKeys()) {
-                var fk = col.ForeignKey;
-                Database.AddForeignKey(fk.Name.SqlQuote(), table.Name.SqlQuote(), col.Name.SqlQuote(), fk.Table.SqlQuote(), fk.Column.SqlQuote());
-            }
+            var createTableSql = sb.ToString();
+            Database.ExecuteNonQuery(createTableSql);
 
             foreach (var idx in table.Indices)
                 Database.AddIndex(table.Name, idx);
@@ -89,84 +64,133 @@ namespace EasyMigrator
 				    col.IsNullable = true;
 					nonNullables.Add(col);
 				}
-                AddColumn(Database, table.Name, col);
+                AddColumn(Database, table, col);
             }
 
             if (populate != null) {
                 populate();
                 foreach (var col in nonNullables) {
                     col.IsNullable = false;
-                    AlterColumn(Database, table.Name, col);
+                    AlterColumn(Database, table, col);
                 }
-            }
-
-            foreach (var col in pocoColumns.ForeignKeys()) {
-                var fk = col.ForeignKey;
-                Database.AddForeignKey(fk.Name.SqlQuote(), table.Name.SqlQuote(), col.Name.SqlQuote(), fk.Table.SqlQuote(), fk.Column.SqlQuote());
             }
 
             foreach (var idx in table.Indices)
                 Database.AddIndex(table.Name, idx);
         }
 
-        static private Column BuildColumn(EColumn col)
-        {
-            var c = new Column(col.Name.SqlQuote(), col.Type);
-            ColumnProperty cp = ColumnProperty.None;
 
-            // don't set this property on the columns so we can create the primary key ourselves later to set the same and support nonclustered and composite PK's
-            //if (col.IsPrimaryKey)
-            //    cp |= ColumnProperty.PrimaryKey;
-
-            if (col.IsDefaultAutoIncrement())
-                cp |= ColumnProperty.Identity;
-
-            if (new [] { DbType.UInt16, DbType.UInt32, DbType.UInt64 }.Contains(col.Type))
-                cp |= ColumnProperty.Unsigned;
-
-            cp |= col.IsNullable ? ColumnProperty.Null : ColumnProperty.NotNull;
-            c.ColumnProperty = cp;
-
-            if (col.DefaultValue != null)
-                c.DefaultValue = col.DefaultValue;
-
-            if (col.Length.HasValue)
-                c.Size = col.Length.Value;
-
-            // Migrator.Net doesn't support setting the precision so we do it manually with SQL
-            //if (col.Type == DbType.Decimal && col.Precision != null)
-            //    c.Size = col.Precision.Scale;
-
-            return c;
-        }
-
-
-        // Migrator.Net can't create a [n]varchar(max) column
-        // http://code.google.com/p/migratordotnet/issues/detail?id=130
-        // using this sets the column type to ntext instead of nvarchar
-        // so, we work around it
-
-        static private void AddColumn(ITransformationProvider Database, string table, EColumn col)
+        static private void AddColumn(ITransformationProvider Database, Parsing.Model.Table table, EColumn col)
             => Database.ExecuteNonQuery(BuildAddColumn(table, col));
 
-        static private void AlterColumn(ITransformationProvider Database, string table, EColumn col)
+        static private string BuildAddColumn(Parsing.Model.Table table, EColumn col)
+        {
+            var sb = new StringBuilder();
+            sb.Append("ALTER TABLE ");
+            sb.Append(table.Name.SqlQuote());
+            sb.Append(" ADD ");
+            BuildFullColumnSpec(sb, table, col);
+            return sb.ToString();
+        }
+
+        static private void AlterColumn(ITransformationProvider Database, Parsing.Model.Table table, EColumn col)
             => Database.ExecuteNonQuery(BuildAlterColumn(table, col));
 
-        static private string BuildAddColumn(string table, EColumn col)
-            => $"ALTER TABLE {table.SqlQuote()} ADD {BuildColumnSpec(col)}";
+        static private string BuildAlterColumn(Parsing.Model.Table table, EColumn col)
+        {
+            var sb = new StringBuilder();
+            sb.Append("ALTER TABLE ");
+            sb.Append(table.Name.SqlQuote());
+            sb.Append(" ALTER COLUMN ");
+            BuildBasicColumnSpec(sb, table, col);
+            return sb.ToString();
+        }
 
-        static private string BuildAlterColumn(string table, EColumn col)
-            => $"ALTER TABLE {table.SqlQuote()} ALTER COLUMN {BuildColumnSpec(col)}";
+        static private void BuildFullColumnSpec(StringBuilder sb, Parsing.Model.Table table, EColumn col)
+        {
+            BuildBasicColumnSpec(sb, table, col);
+            if (col.ForeignKey != null) {
+                sb.Append(" CONSTRAINT ");
+                sb.Append(col.ForeignKey.Name.SqlQuote());
+                sb.Append(" FOREIGN KEY REFERENCES ");
+                sb.Append(col.ForeignKey.Table.SqlQuote());
+                sb.Append('(');
+                sb.Append(col.ForeignKey.Column.SqlQuote());
+                sb.Append(')');
+                if (col.ForeignKey.OnDelete.HasValue) {
+                    sb.Append(" ON DELETE ");
+                    sb.Append(FkRuleString(col.ForeignKey.OnDelete.Value));
+                }
+                if (col.ForeignKey.OnUpdate.HasValue) {
+                    sb.Append(" ON UPDATE ");
+                    sb.Append(FkRuleString(col.ForeignKey.OnUpdate.Value));
+                }
+            }
+        }
 
-        static private string BuildColumnSpec(EColumn col)
-            => $"{col.Name.SqlQuote()} " + GetSqlTypeString(col) +
-               (col.Length.HasValue ? $"({(col.Length == int.MaxValue ? "MAX" : col.Length.ToString())})" : "") +
-               (col.Precision?.Precision > 0 && col.Precision?.Scale > 0 ? $"({col.Precision.Precision}, {col.Precision.Scale})"
-               : (col.Precision?.Precision > 0) || (col.Precision?.Scale > 0) ? $"({Math.Max(col.Precision?.Precision ?? 0, col.Precision?.Scale ?? 0)})"
-               : "")
-               + (col.AutoIncrement == null ? "" : $" IDENTITY({col.AutoIncrement.Seed}, {col.AutoIncrement.Step})")
-               + (col.IsSparse ? " SPARSE" : "")
-               + (col.IsNullable ? " NULL" : " NOT NULL");
+        static private string FkRuleString(Rule rule)
+        {
+            switch (rule) {
+                case Rule.None: return "NO ACTION";
+                case Rule.Cascade: return "CASCADE";
+                case Rule.SetDefault: return "SET DEFAULT";
+                case Rule.SetNull: return "SET NULL";
+                default: throw new ArgumentException($"Unknown foreign key rule {rule}", nameof(rule));
+            }
+        }
+
+        static private void BuildBasicColumnSpec(StringBuilder sb, Parsing.Model.Table table, EColumn col)
+        {
+            sb.Append(col.Name.SqlQuote());
+            sb.Append(' ');
+            sb.Append(GetSqlTypeString(col));
+
+            if (col.Length.HasValue) {
+                sb.Append('(');
+                if (col.Length == int.MaxValue)
+                    sb.Append("MAX");
+                else
+                    sb.Append(col.Length);
+                sb.Append(')');
+            }
+            else if (col.Precision?.Precision > 0 && col.Precision?.Scale > 0) {
+                sb.Append('(');
+                sb.Append(col.Precision.Precision);
+                sb.Append(',');
+                sb.Append(col.Precision.Scale);
+                sb.Append(')');
+            }
+            else if (col.Precision?.Precision > 0 || col.Precision?.Scale > 0) {
+                sb.Append('(');
+                sb.Append(Math.Max(col.Precision?.Precision ?? 0, col.Precision?.Scale ?? 0));
+                sb.Append(')');
+            }
+
+            if (col.AutoIncrement != null) {
+                sb.Append(" IDENTITY(");
+                sb.Append(col.AutoIncrement.Seed);
+                sb.Append(',');
+                sb.Append(col.AutoIncrement.Step);
+                sb.Append(')');
+            }
+
+            if (col.IsSparse)
+                sb.Append(" SPARSE");
+
+            sb.Append(col.IsNullable ? " NULL" : " NOT NULL");
+
+            if (col.DefaultValue != null) {
+                sb.Append(" CONSTRAINT ");
+                sb.Append("DF_");
+                sb.Append(table.Name);
+                sb.Append('_');
+                sb.Append(col.Name);
+                sb.Append(" DEFAULT(");
+                sb.Append(col.DefaultValue);
+                sb.Append(')');
+            }
+        }
+
 
         static private string GetSqlTypeString(EColumn col)
         {
@@ -178,6 +202,7 @@ namespace EasyMigrator
                 case DbType.AnsiStringFixedLength: return "CHAR";
                 case DbType.Binary: return col.IsFixedLength ? "BINARY" : "VARBINARY";
                 case DbType.Byte: return "TINYINT";
+                case DbType.Currency: return "SMALLMONEY";
                 case DbType.Boolean: return "BIT";
                 case DbType.Date: return "DATE";
                 case DbType.DateTime: return "DATETIME";

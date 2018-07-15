@@ -23,11 +23,15 @@ namespace EasyMigrator.Tests
                 var a = actual.Columns.ElementAt(i);
 
                 Assert.AreEqual(e.Name, a.Name);
-                Assert.AreEqual(e.Type, a.Type);
-                Assert.AreEqual(e.DefaultValue, a.DefaultValue);
+                if (isDb || e.CustomType == null)
+                    Assert.AreEqual(e.Type, a.Type);
+                else
+                    Assert.AreEqual(e.CustomType, a.CustomType);
+                StringAssert.AreEqualIgnoringCase(e.DefaultValue, a.DefaultValue);
                 Assert.AreEqual(e.IsNullable, a.IsNullable);
                 Assert.AreEqual(e.IsPrimaryKey, a.IsPrimaryKey);
-                Assert.AreEqual(e.IsSparse, a.IsSparse);
+                if (!isFluentMigrator)
+                    Assert.AreEqual(e.IsSparse, a.IsSparse);
                 Assert.AreEqual(e.Length, a.Length);
 
                 if (e.AutoIncrement == null)
@@ -57,6 +61,10 @@ namespace EasyMigrator.Tests
                     Assert.AreEqual(e.ForeignKey.Name ?? $"FK_{expected.Name}_{e.Name}", a.ForeignKey.Name); // TODO: Remove the default name here and fill in the models
                     Assert.AreEqual(e.ForeignKey.Table, a.ForeignKey.Table);
                     Assert.AreEqual(e.ForeignKey.Column, a.ForeignKey.Column);
+                    if (!isDb) {
+                        Assert.AreEqual(e.ForeignKey.OnDelete, a.ForeignKey.OnDelete);
+                        Assert.AreEqual(e.ForeignKey.OnUpdate, a.ForeignKey.OnUpdate);
+                    }
                 }
             }
 

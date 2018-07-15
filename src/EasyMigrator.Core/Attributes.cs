@@ -75,16 +75,49 @@ namespace EasyMigrator
         public Type TableType { get; }
         public string Column { get; set; }
 
+        internal bool OnDeleteWasSet { get; set; }
+        private Rule? _onDelete;
+        public Rule OnDelete {
+            get => _onDelete ?? Rule.None;
+            set {
+                _onDelete = value;
+                OnDeleteWasSet = true;
+            }
+        }
+        Rule? Parsing.Model.IForeignKey.OnDelete {
+            get => _onDelete;
+            set {
+                _onDelete = value;
+                OnDeleteWasSet = true;
+            }
+        }
+
+        internal bool OnUpdateWasSet { get; set; }
+        private Rule? _onUpdate;
+        public Rule OnUpdate {
+            get => _onUpdate ?? Rule.None;
+            set {
+                _onUpdate = value;
+                OnUpdateWasSet = true;
+            }
+        }
+        Rule? Parsing.Model.IForeignKey.OnUpdate {
+            get => _onUpdate;
+            set {
+                _onUpdate = value;
+                OnUpdateWasSet = true;
+            }
+        }
+
+        internal bool IndexedWasSet { get; set; }
         private bool _indexed;
         public bool Indexed {
-            get { return _indexed; }
+            get => _indexed;
             set {
                 _indexed = value;
                 IndexedWasSet = true;
             }
         }
-
-        internal bool IndexedWasSet { get; set; }
 
         public FkAttribute(string table) { Table = table; }
         public FkAttribute(Type tableType) { TableType = tableType; }

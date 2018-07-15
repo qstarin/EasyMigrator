@@ -37,7 +37,7 @@ namespace EasyMigrator.Tests.Schemas
             public class Poco
             {
                 [Pk] public Guid Id;
-                [Fk(typeof(Master))] public Guid MasterId;
+                [Fk(typeof(Master), OnDelete = Rule.None)] public Guid MasterId;
             }
 
             static Table Model = new Table {
@@ -54,7 +54,8 @@ namespace EasyMigrator.Tests.Schemas
                         ForeignKey = new FkAttribute("Master") {
                             Name = "FK_Slave_MasterId",
                             Column = "Id",
-                            Indexed = true
+                            Indexed = true,
+                            OnDelete = Rule.None,
                         },
                     },
                 },

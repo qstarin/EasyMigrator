@@ -64,7 +64,7 @@ namespace EasyMigrator.Tests.Schemas
                     new Column {
                         Name = "StuffId",
                         Type = DbType.Int32,
-                        ForeignKey = new FkAttribute("Stuff") { Column = "Id" },
+                        ForeignKey = new FkAttribute("Stuff") { Column = "Id", OnDelete = Rule.Cascade, OnUpdate = Rule.Cascade },
                     },
                 },
                 Indices = new List<IIndex> {
@@ -85,7 +85,7 @@ namespace EasyMigrator.Tests.Schemas
             {
                 public class Poco
                 {
-                    [Fk("Stuff")] public int StuffId;
+                    [Fk("Stuff", OnDelete = Rule.Cascade, OnUpdate = Rule.Cascade)] public int StuffId;
                 }
             }
         }

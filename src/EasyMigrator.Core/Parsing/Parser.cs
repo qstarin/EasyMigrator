@@ -281,6 +281,13 @@ namespace EasyMigrator.Parsing
                     Column = fkCol.Name,
                     Indexed = fk.Indexed,
                 };
+
+                var ifk = (IForeignKey)fk;
+                if (ifk.OnDelete.HasValue)
+                    newFk.OnDelete = ifk.OnDelete.Value;
+                if (ifk.OnUpdate.HasValue)
+                    newFk.OnUpdate = ifk.OnUpdate.Value;
+
                 col.ForeignKey = newFk;
 
                 if (newFk.Name == null)
