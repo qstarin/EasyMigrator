@@ -11,7 +11,7 @@ namespace EasyMigrator.Parsing.Model
         public string Name { get; set; }
         public DbType Type { get; set; }
         public string CustomType { get; set; }
-        public object DefaultValue { get; set; }
+        public string DefaultValue { get; set; }
         public bool IsFixedLength { get; set; }
         public bool IsNullable { get; set; }
         public bool IsPrimaryKey { get; set; }

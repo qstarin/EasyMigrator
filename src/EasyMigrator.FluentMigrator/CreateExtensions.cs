@@ -118,8 +118,14 @@ namespace EasyMigrator
             if (col.ForeignKey != null && col.ForeignKey.Table != table.Name)
                 createColumnOptionSyntax = createColumnOptionSyntax.ForeignKey(col.ForeignKey.Name, col.ForeignKey.Table, col.ForeignKey.Column);
 
-            if (col.DefaultValue != null)
-                createColumnOptionSyntax = createColumnOptionSyntax.WithDefaultValue(col.DefaultValue);
+            if (col.DefaultValue != null) {
+                var defVal = col.DefaultValue;
+                if (defVal.StartsWith("'"))
+                    defVal = defVal.Substring(1);
+                if (defVal.EndsWith("'"))
+                    defVal = defVal.Substring(0, defVal.Length - 1);
+                createColumnOptionSyntax = createColumnOptionSyntax.WithDefaultValue(defVal);
+            }
 
             if (col.AutoIncrement != null)
                 createColumnOptionSyntax = createColumnOptionSyntax.Identity((int)col.AutoIncrement.Seed, (int)col.AutoIncrement.Step);

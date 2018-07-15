@@ -164,6 +164,35 @@ namespace EasyMigrator.Tests.Integration
 
                 var fk = st.ForeignKeys.SingleOrDefault(f => f.Columns.Count == 1 && f.Columns[0] == c.Name);
 
+                var defVal = c.DefaultValue;
+                if (defVal != null) {
+                    if (defVal.StartsWith("(") && defVal.EndsWith(")")) {
+                        defVal = defVal.Substring(1);
+                        defVal = defVal.Substring(0, defVal.Length - 1);
+                    }
+
+                    if (defVal.StartsWith("(") && defVal.EndsWith(")")) {
+                        defVal = defVal.Substring(1);
+                        defVal = defVal.Substring(0, defVal.Length - 1);
+                    }
+
+                    if (dbType != DbType.AnsiString &&
+                        dbType != DbType.AnsiStringFixedLength &&
+                        dbType != DbType.String &&
+                        dbType != DbType.StringFixedLength &&
+                        dbType != DbType.Date &&
+                        dbType != DbType.DateTime &&
+                        dbType != DbType.DateTime2 &&
+                        dbType != DbType.DateTimeOffset &&
+                        dbType != DbType.Guid &&
+                        dbType != DbType.Xml)
+                    {
+                        if (defVal.StartsWith("'"))
+                            defVal = defVal.Substring(1);
+                        if (defVal.EndsWith("'"))
+                            defVal = defVal.Substring(0, defVal.Length - 1);
+                    }
+                }
                 return new Column {
                     Name = c.Name,
                     Type = dbType,
@@ -174,7 +203,7 @@ namespace EasyMigrator.Tests.Integration
                     DefaultValue =
                         dbType == DbType.Boolean
                             ? ((c.DefaultValue?.Contains("0") ?? true) ? "0" : "1")
-                            : (object)c.DefaultValue,
+                            : defVal,
                     AutoIncrement = c.IsAutoNumber
                         ? new AutoIncAttribute(c.IdentityDefinition.IdentitySeed, c.IdentityDefinition.IdentityIncrement)
                         : null,
@@ -187,7 +216,7 @@ namespace EasyMigrator.Tests.Integration
                     ForeignKey = c.IsForeignKey
                         ? new FkAttribute(c.ForeignKeyTableName) {
                                 Name = fk.Name,
-                                Column = c.ForeignKeyTable.PrimaryKeyColumn.Name
+                                Column = c.ForeignKeyTable.PrimaryKeyColumn.Name,
                             }
                         : null
                 };
