@@ -28,7 +28,7 @@ namespace EasyMigrator
             }
 
             if (table.HasPrimaryKey) {
-                sb.Append(" CONSTRAINT ");
+                sb.Append("CONSTRAINT ");
                 sb.Append(table.PrimaryKeyName.SqlQuote());
                 sb.Append(" PRIMARY KEY ");
                 sb.Append(table.PrimaryKeyIsClustered ? "CLUSTERED " : "NONCLUSTERED ");
