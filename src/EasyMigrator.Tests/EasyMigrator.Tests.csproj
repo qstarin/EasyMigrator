@@ -88,6 +88,7 @@
     <Compile Include="PrecisionTests.cs" />
     <Compile Include="ReflectionTests.cs" />
     <Compile Include="ManyToManyTests.cs" />
+    <Compile Include="RemoveColumnsTests.cs" />
     <Compile Include="Schemas\AddColumns.cs" />
     <Compile Include="Schemas\AutoInc_Custom.cs" />
     <Compile Include="Schemas\DateTime2.cs" />
@@ -98,6 +99,7 @@
     <Compile Include="Schemas\Fk_Not_Indexed.cs" />
     <Compile Include="Schemas\Mtm_BookAuthors.cs" />
     <Compile Include="Schemas\Precisions.cs" />
+    <Compile Include="Schemas\RemoveColumns.cs" />
     <Compile Include="Schemas\SelfReferential.cs" />
     <Compile Include="Schemas\Sparse.cs" />
     <Compile Include="Schemas\StringLengths.cs" />
