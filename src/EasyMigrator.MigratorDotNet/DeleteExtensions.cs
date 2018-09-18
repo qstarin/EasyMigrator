@@ -41,7 +41,7 @@ namespace EasyMigrator
             foreach (var c in table.Columns.DefinedInPoco()) {
                 var f = c.ForeignKey;
                 if (f != null)
-                    Database.RemoveForeignKey(table.Name, f.Name);
+                    Database.RemoveForeignKey(table.Name.SqlQuote(), f.Name);
             }
         }
 

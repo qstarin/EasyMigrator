@@ -12,7 +12,7 @@ namespace EasyMigrator.Tests.Schemas
     public class Fk_AddToExisting : TableTestCase
     {
         [MigrationOrder(1)]
-        class Stuff
+        class Select
         {
             class Poco
             {
@@ -20,7 +20,7 @@ namespace EasyMigrator.Tests.Schemas
             }
 
             static Table Model = new Table {
-                Name = "Stuff",
+                Name = "Select",
                 Columns = new[] {
                     new Column {
                         Name = "Id",
@@ -39,7 +39,7 @@ namespace EasyMigrator.Tests.Schemas
         }
 
         [MigrationOrder(2)]
-        public class Assoc
+        public class Alias
         {
             class Poco
             {
@@ -47,7 +47,7 @@ namespace EasyMigrator.Tests.Schemas
             }
 
             static Table Model = new Table {
-                Name = "Assoc",
+                Name = "Alias",
                 Columns = new[] {
                     new Column {
                         Name = "Id",
@@ -62,17 +62,17 @@ namespace EasyMigrator.Tests.Schemas
                         IsNullable = true,
                     },
                     new Column {
-                        Name = "StuffId",
+                        Name = "SelectId",
                         Type = DbType.Int32,
-                        ForeignKey = new FkAttribute("Stuff") { Column = "Id", OnDelete = Rule.Cascade, OnUpdate = Rule.Cascade },
+                        ForeignKey = new FkAttribute("Select") { Column = "Id", OnDelete = Rule.Cascade, OnUpdate = Rule.Cascade },
                     },
                 },
                 Indices = new List<IIndex> {
                     new Index {
-                        Name = "IX_Assoc_StuffId",
+                        Name = "IX_Alias_SelectId",
                         Unique = false,
                         Clustered = false,
-                        Columns = new [] { new IndexColumn("StuffId") }
+                        Columns = new [] { new IndexColumn("SelectId") }
                     },
                 },
             };
@@ -81,11 +81,11 @@ namespace EasyMigrator.Tests.Schemas
         public class ColumnsToAdd
         {
             [MigrationOrder(3)]
-            public class Assoc
+            public class Alias
             {
                 public class Poco
                 {
-                    [Fk("Stuff", OnDelete = Rule.Cascade, OnUpdate = Rule.Cascade)] public int StuffId;
+                    [Fk("Select", OnDelete = Rule.Cascade, OnUpdate = Rule.Cascade)] public int SelectId;
                 }
             }
         }
