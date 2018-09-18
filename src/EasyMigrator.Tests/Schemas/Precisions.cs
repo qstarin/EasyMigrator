@@ -58,6 +58,7 @@ namespace EasyMigrator.Tests.Schemas
             public class Poco
             {
                 [Precision(Length.Default, 2)] public decimal Rate;
+                public bool From;
             }
 
             static Table Model = new Table {
@@ -73,6 +74,11 @@ namespace EasyMigrator.Tests.Schemas
                         Name = "Rate",
                         Type = DbType.Decimal,
                         Precision = new PrecisionAttribute(19, 2),
+                    },
+                    new Column {
+                        Name = "From",
+                        Type = DbType.Boolean,
+                        DefaultValue = "0",
                     },
                 }
             };
@@ -91,6 +97,7 @@ namespace EasyMigrator.Tests.Schemas
                     public class Poco
                     {
                         [Precision(Length.Default, 2)] public decimal Rate;
+                        public bool From;
                     }
                 }
             }
@@ -273,6 +280,7 @@ namespace EasyMigrator.Tests.Schemas
             public class Poco
             {
                 [Precision(13, 9)] public decimal Rate;
+                public string From;
             }
 
             static Table Model = new Table {
@@ -288,6 +296,12 @@ namespace EasyMigrator.Tests.Schemas
                         Name = "Rate",
                         Type = DbType.Decimal,
                         Precision = new PrecisionAttribute(13, 9),
+                    },
+                    new Column {
+                        Name = "From",
+                        Type = DbType.String,
+                        IsNullable = true,
+                        Length = 50,
                     },
                 }
             };
@@ -306,6 +320,7 @@ namespace EasyMigrator.Tests.Schemas
                     public class Poco
                     {
                         [Precision(13, 9)] public decimal Rate;
+                        public string From;
                     }
                 }
             }
