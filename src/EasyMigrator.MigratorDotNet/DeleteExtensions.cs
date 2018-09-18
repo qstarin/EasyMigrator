@@ -32,7 +32,7 @@ namespace EasyMigrator
         static private void RemoveColumns(this ITransformationProvider Database, Table table)
         {
             foreach (var c in table.Columns.DefinedInPoco())
-                Database.RemoveColumn(table.Name, c.Name);
+                Database.RemoveColumn(table.Name.SqlQuote(), c.Name);
         }
 
         static private void RemoveForeignKeys(this ITransformationProvider Database, Table table)
