@@ -14,7 +14,7 @@ namespace EasyMigrator.Tests.MigratorDotNet
         public RemoveColumns() : base(s => new Integration.MigratorDotNet.Migrator(s)) { }
 
         [Test]
-        public void Pulse() => Test<Schemas.RemoveColumns>(
+        public void Pulse() => Test<Schemas.RemoveColumns.Pulse>(
             (testCase, migrations) => {
                 AddMigrations(testCase, migrations);
 
@@ -39,7 +39,7 @@ namespace EasyMigrator.Tests.FluentMigrator
         public RemoveColumns() : base(s => new Integration.FluentMigrator.Migrator(s)) { }
 
         [Test]
-        public void Pulse() => Test<Schemas.RemoveColumns>(
+        public void Pulse() => Test<Schemas.RemoveColumns.Pulse>(
             (testCase, migrations) => {
                 AddMigrations(testCase, migrations);
 
