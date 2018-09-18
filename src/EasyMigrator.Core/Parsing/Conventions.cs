@@ -20,8 +20,8 @@ namespace EasyMigrator.Parsing
         public Func<Context, IEnumerable<Column>, string> IndexNameByColumns { get; set; }
         public Func<string, IEnumerable<string>, string> IndexNameByTableAndColumnNames { get; set; }
         public Func<Context, ITypeMap> TypeMap { get; set; }
-        public Func<Context, Lengths> StringLengths { get; set; }
-        public Func<Context, Lengths> PrecisionLengths { get; set; }
+        public Func<Context, Column, Lengths> ColumnLengths { get; set; }
+        public Func<Context, Column, Lengths> PrecisionLengths { get; set; }
         public Func<Context, Column, IPrecision> DefaultPrecision { get; set; }
         public Func<Context, bool> IndexForeignKeys { get; set; }
 
@@ -37,7 +37,7 @@ namespace EasyMigrator.Parsing
                 IndexNameByColumns = IndexNameByColumns,
                 IndexNameByTableAndColumnNames = IndexNameByTableAndColumnNames,
                 TypeMap = TypeMap,
-                StringLengths = StringLengths,
+                ColumnLengths = ColumnLengths,
                 PrecisionLengths = PrecisionLengths,
                 DefaultPrecision = DefaultPrecision,
                 IndexForeignKeys = IndexForeignKeys,

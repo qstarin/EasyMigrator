@@ -32,24 +32,59 @@ namespace EasyMigrator.Parsing
                 IndexNameByColumns = (c, cols) => c.Conventions.IndexNameByTableAndColumnNames(c.Table.Name, cols.Select(col => col.Name)),
                 IndexNameByTableAndColumnNames = (t, cols) => $"IX_{t}_{string.Join("_", cols)}",
                 IndexForeignKeys = c => true,
-                StringLengths = c => new Lengths {
-                    Default = 50,
-                    Short = 50,
-                    Medium = 255,
-                    Long = 4000,
-                    Max = int.MaxValue
+                ColumnLengths = (c, col) => {
+                    switch (col.Type) {
+                        case DbType.AnsiString:
+                        case DbType.AnsiStringFixedLength:
+                        case DbType.String:
+                        case DbType.StringFixedLength:
+                        case DbType.Binary:
+                            return new Lengths {
+                                Default = 50,
+                                Short = 50,
+                                Medium = 255,
+                                Long = 4000,
+                                Max = int.MaxValue
+                            };
+
+                        default: return null;
+                    }
                 },
-                PrecisionLengths = c => new Lengths {
-                    Default = 19,
-                    Short = 9,
-                    Medium = 19,
-                    Long = 28,
-                    Max = 38
+                PrecisionLengths = (c, col) => {
+                    switch (col.Type) {
+                        case DbType.Decimal:
+                            return new Lengths {
+                                Default = 19,
+                                Short = 9,
+                                Medium = 19,
+                                Long = 28,
+                                Max = 38
+                            };
+
+                        case DbType.DateTime2:
+                        case DbType.DateTimeOffset:
+                            return new Lengths {
+                                Default = 2,
+                                Short = 2,
+                                Medium = 4,
+                                Long = 7,
+                                Max = 7
+                            };
+
+                        default: return null;
+                    }
                 },
-                DefaultPrecision = (c, col) => 
-                    col.Type == DbType.Decimal
-                        ? new PrecisionAttribute(c.Conventions.PrecisionLengths(c).Default, 2)
-                        : null,
+                DefaultPrecision = (c, col) => {
+                    var pl = c.Conventions.PrecisionLengths(c, col);
+                    if (pl == null) return null;
+                    switch (col.Type) {
+                        case DbType.Decimal: return new PrecisionAttribute(pl.Default, 2);
+                        case DbType.DateTime2:
+                        case DbType.DateTimeOffset:
+                            return new PrecisionAttribute(pl.Default);
+                        default: return null;
+                    }
+                },
                 TypeMap = c => new TypeMap()
                     .Add(new Dictionary<Type, DbType> {
                         {typeof(sbyte), DbType.SByte},

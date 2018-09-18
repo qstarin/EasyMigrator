@@ -72,6 +72,7 @@ namespace EasyMigrator.Tests.Schemas
                     new Column {
                         Name = "CreatedOn",
                         Type = DbType.DateTimeOffset,
+                        Precision = new PrecisionAttribute(2),
                     },
                 }
             };

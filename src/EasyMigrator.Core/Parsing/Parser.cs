@@ -119,12 +119,12 @@ namespace EasyMigrator.Parsing
                     IsPrimaryKey = pk != null,
                     IsSparse = field.HasAttribute<SparseAttribute>(),
                     AutoIncrement = field.GetAttribute<AutoIncAttribute>(),
-                    Length = GetLength(field, dbType, Conventions.StringLengths(context)),
                     ForeignKey = fk,
                     DefinedInPoco = true
                 };
                 context.Columns.Add(field, column);
 
+                column.Length = GetLength(context, field, column);
                 column.Precision = GetPrecision(context, field, column);
 
                 if (pk != null) {
@@ -327,23 +327,13 @@ namespace EasyMigrator.Parsing
                 return val.ToString();
         }
 
-        protected virtual int? GetLength(FieldInfo field, DbType dbType, Lengths lengths)
+        protected virtual int? GetLength(Context context, FieldInfo field, Column column)
         {
-            // TODO: Possibly double lengths for ansi? -> do it by making Lengths key off of DbType?
-            var typesWithLength = new[] {
-                DbType.AnsiString,
-                DbType.AnsiStringFixedLength,
-                DbType.String,
-                DbType.StringFixedLength,
-                DbType.Binary // TODO: What about varbinary?
-            };
-
-            if (!typesWithLength.Contains(dbType))
-                return null;
+            var lengths = Conventions.ColumnLengths(context, column);
 
             var lengthAttr = field.GetAttribute<LengthAttribute>();
             if (lengthAttr == null)
-                return lengths.Default;
+                return lengths?.Default;
 
             if (lengthAttr.DefinedLength.HasValue)
                 return lengths[lengthAttr.DefinedLength.Value];
@@ -353,16 +343,12 @@ namespace EasyMigrator.Parsing
 
         protected virtual IPrecision GetPrecision(Context context, FieldInfo field, Column column)
         {
-            var typesWithPrecision = new[] { DbType.Decimal, DbType.DateTime2, DbType.DateTimeOffset };
-            if (!typesWithPrecision.Contains(column.Type))
-                return null;
-
             var precisionAttr = field.GetAttribute<PrecisionAttribute>();
             if (precisionAttr == null)
                 return Conventions.DefaultPrecision(context, column);
 
             if (precisionAttr.DefinedPrecision.HasValue)
-                return new PrecisionAttribute(Conventions.PrecisionLengths(context)[precisionAttr.DefinedPrecision.Value], precisionAttr.Scale);
+                return new PrecisionAttribute(Conventions.PrecisionLengths(context, column)[precisionAttr.DefinedPrecision.Value], precisionAttr.Scale);
 
             return precisionAttr;
         }
