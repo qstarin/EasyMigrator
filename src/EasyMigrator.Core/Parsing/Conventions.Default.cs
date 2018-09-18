@@ -64,7 +64,6 @@ namespace EasyMigrator.Parsing
                         {typeof(float), DbType.Single},
                         {typeof(double), DbType.Double},
                         {typeof(decimal), DbType.Decimal},
-                        {typeof(DateTime), DbType.DateTime},
                         {typeof(DateTimeOffset), DbType.DateTimeOffset},
                         {typeof(TimeSpan), DbType.Time},
                         {typeof(Guid), DbType.Guid},
@@ -78,6 +77,10 @@ namespace EasyMigrator.Parsing
                           f => f.HasAttribute<AnsiAttribute>()
                                ? (f.HasAttribute<FixedAttribute>() ? DbType.AnsiStringFixedLength : DbType.AnsiString)
                                : (f.HasAttribute<FixedAttribute>() ? DbType.StringFixedLength : DbType.String) },
+                        { typeof(DateTime),
+                          f => f.HasAttribute<PrecisionAttribute>()
+                               ? DbType.DateTime2
+                               : DbType.DateTime },
                     })
             };
     }

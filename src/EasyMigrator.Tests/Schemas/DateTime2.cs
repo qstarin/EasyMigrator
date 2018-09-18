@@ -14,7 +14,7 @@ namespace EasyMigrator.Tests.Schemas
         {
             public class Poco
             {
-                [DbType(DbType.DateTime2), Precision(2)] public DateTime CreatedOn;
+                [Precision(2)] public DateTime CreatedOn;
             }
 
             static Table Model = new Table {
@@ -47,7 +47,7 @@ namespace EasyMigrator.Tests.Schemas
                     [Name(nameof(WithScale))]
                     public class Poco
                     {
-                        [DbType(DbType.DateTime2), Precision(2)] public DateTime CreatedOn;
+                        [Precision(2)] public DateTime CreatedOn;
                     }
                 }
             }
