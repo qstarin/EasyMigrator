@@ -80,6 +80,31 @@ namespace EasyMigrator
         }
 
 
+        static public void ChangeColumns<T>(this ITransformationProvider Database, Action populate = null) => Database.ChangeColumns(typeof(T), populate);
+        static public void ChangeColumns(this ITransformationProvider Database, Type tableType, Action populate = null)
+        {
+            var table = tableType.ParseTable().Table;
+            var pocoColumns = table.Columns.DefinedInPoco();
+            var nonNullables = new List<EColumn>();
+
+            foreach (var col in pocoColumns) {
+				if (populate != null && !col.IsNullable && col.DefaultValue == null) {
+				    col.IsNullable = true;
+					nonNullables.Add(col);
+				}
+                AlterColumn(Database, table, col);
+            }
+
+            if (populate != null) {
+                populate();
+                foreach (var col in nonNullables) {
+                    col.IsNullable = false;
+                    AlterColumn(Database, table, col);
+                }
+            }
+        }
+
+
         static private void AddColumn(ITransformationProvider Database, Parsing.Model.Table table, EColumn col)
             => Database.ExecuteNonQuery(BuildAddColumn(table, col));
 
