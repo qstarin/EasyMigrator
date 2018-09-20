@@ -56,15 +56,21 @@ namespace EasyMigrator
     {
         internal Length? DefinedPrecision { get; }
         public int Precision { get; }
+        internal Length? DefinedScale { get; }
         public int Scale { get; }
 
         public PrecisionAttribute(int precision, int scale)
-            : this(scale) { Precision = precision; }
+            : this(precision) { Scale = scale; }
 
         public PrecisionAttribute(Length precision, int scale)
-            : this(scale) { DefinedPrecision = precision; }
+            : this(precision) { Scale = scale; }
 
-        public PrecisionAttribute(int scale) { Scale = scale; }
+        public PrecisionAttribute(Length precision, Length scale)
+            : this(precision) { DefinedScale = scale; }
+
+        public PrecisionAttribute(int precision) { Precision = precision; }
+
+        public PrecisionAttribute(Length precision) { DefinedPrecision = precision; }
     }
 
     [AttributeUsage(AttributeTargets.Field)]

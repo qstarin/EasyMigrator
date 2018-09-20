@@ -211,7 +211,7 @@ namespace EasyMigrator.Tests.Integration
                         (dbType == DbType.Decimal) && (c.Precision.HasValue || c.Scale.HasValue)
                             ? new PrecisionAttribute(c.Precision ?? 0, c.Scale ?? 0) 
                             : ((dbType == DbType.DateTime2 || dbType == DbType.DateTimeOffset) && c.DateTimePrecision != null)
-                                ? new PrecisionAttribute(0, c.DateTimePrecision.Value)
+                                ? new PrecisionAttribute(c.DateTimePrecision.Value, 0)
                                 : null,
                     ForeignKey = c.IsForeignKey
                         ? new FkAttribute(c.ForeignKeyTableName) {

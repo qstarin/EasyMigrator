@@ -74,6 +74,11 @@ namespace EasyMigrator.Parsing
                         default: return null;
                     }
                 },
+                ScaleLengths = (c, col) => {
+                    switch (col.Type) {
+                        default: return null;
+                    }
+                },
                 DefaultPrecision = (c, col) => {
                     var pl = c.Conventions.PrecisionLengths(c, col);
                     if (pl == null) return null;

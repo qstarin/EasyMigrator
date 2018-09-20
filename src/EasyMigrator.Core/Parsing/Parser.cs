@@ -347,10 +347,15 @@ namespace EasyMigrator.Parsing
             if (precisionAttr == null)
                 return Conventions.DefaultPrecision(context, column);
 
-            if (precisionAttr.DefinedPrecision.HasValue)
-                return new PrecisionAttribute(Conventions.PrecisionLengths(context, column)[precisionAttr.DefinedPrecision.Value], precisionAttr.Scale);
+            var p = precisionAttr.DefinedPrecision.HasValue
+                ? Conventions.PrecisionLengths(context, column)[precisionAttr.DefinedPrecision.Value]
+                : precisionAttr.Precision;
 
-            return precisionAttr;
+            var s = precisionAttr.DefinedScale.HasValue
+                ? Conventions.ScaleLengths(context, column)[precisionAttr.DefinedScale.Value]
+                : precisionAttr.Scale;
+
+            return new PrecisionAttribute(p, s);
         }
 
         protected virtual bool IsNullable(FieldInfo field)

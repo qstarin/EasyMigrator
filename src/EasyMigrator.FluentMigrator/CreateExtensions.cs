@@ -181,8 +181,8 @@ namespace EasyMigrator
                 case DbType.Currency: return s.AsCurrency();
                 case DbType.Date: return s.AsDate();
                 case DbType.DateTime: return s.AsDateTime();
-                case DbType.DateTime2: return col.Precision.IfNull(s.AsCustom("DATETIME2"), p => s.AsCustom($"DATETIME2({p.Scale})"));
-                case DbType.DateTimeOffset: return col.Precision.IfNull(s.AsDateTimeOffset(), p => s.AsCustom($"DATETIMEOFFSET({p.Scale})"));
+                case DbType.DateTime2: return col.Precision.IfNull(s.AsCustom("DATETIME2"), p => s.AsCustom($"DATETIME2({p.Precision})"));
+                case DbType.DateTimeOffset: return col.Precision.IfNull(s.AsDateTimeOffset(), p => s.AsCustom($"DATETIMEOFFSET({p.Precision})"));
                 case DbType.Decimal: return col.Precision.IfNotNull(p => s.AsDecimal(p.Precision, p.Scale), s.AsDecimal);
                 case DbType.Double: return s.AsDouble();
                 case DbType.Guid: return s.AsGuid();

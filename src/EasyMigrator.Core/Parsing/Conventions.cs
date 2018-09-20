@@ -22,6 +22,7 @@ namespace EasyMigrator.Parsing
         public Func<Context, ITypeMap> TypeMap { get; set; }
         public Func<Context, Column, Lengths> ColumnLengths { get; set; }
         public Func<Context, Column, Lengths> PrecisionLengths { get; set; }
+        public Func<Context, Column, Lengths> ScaleLengths { get; set; }
         public Func<Context, Column, IPrecision> DefaultPrecision { get; set; }
         public Func<Context, bool> IndexForeignKeys { get; set; }
 
@@ -39,6 +40,7 @@ namespace EasyMigrator.Parsing
                 TypeMap = TypeMap,
                 ColumnLengths = ColumnLengths,
                 PrecisionLengths = PrecisionLengths,
+                ScaleLengths = ScaleLengths,
                 DefaultPrecision = DefaultPrecision,
                 IndexForeignKeys = IndexForeignKeys,
             };
