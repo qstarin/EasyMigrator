@@ -33,7 +33,7 @@ namespace EasyMigrator
         {
             var defined = table.Columns.DefinedInPoco().ToArray();
             foreach (var c in defined)
-                Database.RemoveColumn(table.Name.SqlQuote(), c.Name.SqlQuote());
+                Database.RemoveColumn(table.Name.SqlQuote(), c.Name);
         }
 
         static private void RemoveForeignKeys(this ITransformationProvider Database, Table table)
