@@ -86,9 +86,13 @@ namespace EasyMigrator
             var table = tableType.ParseTable().Table;
             var pocoColumns = table.Columns.DefinedInPoco();
             var nonNullables = new List<EColumn>();
+            var defaults = Database.GetDefaults(table);
 
             foreach (var col in pocoColumns) {
-				if (populate != null && !col.IsNullable && col.DefaultValue == null) {
+                if (defaults.ContainsKey(col.Name))
+                    Database.RemoveConstraint(table.Name, defaults[col.Name].Item1);
+
+                if (populate != null && !col.IsNullable && col.DefaultValue == null) {
 				    col.IsNullable = true;
 					nonNullables.Add(col);
 				}
@@ -102,10 +106,14 @@ namespace EasyMigrator
                     AlterColumn(Database, table, col);
                 }
             }
+
+            foreach (var col in pocoColumns)
+                if (!string.IsNullOrEmpty(col.DefaultValue))
+                    Database.ExecuteNonQuery($"ALTER TABLE {table.Name.SqlQuote()} ADD CONSTRAINT DF_{table.Name}_{col.Name} DEFAULT({col.DefaultValue}) FOR {col.Name.SqlQuote()}");
         }
 
 
-        static private void AddColumn(ITransformationProvider Database, Parsing.Model.Table table, EColumn col)
+            static private void AddColumn(ITransformationProvider Database, Parsing.Model.Table table, EColumn col)
             => Database.ExecuteNonQuery(BuildAddColumn(table, col));
 
         static private string BuildAddColumn(Parsing.Model.Table table, EColumn col)
@@ -134,6 +142,18 @@ namespace EasyMigrator
         static private void BuildFullColumnSpec(StringBuilder sb, Parsing.Model.Table table, EColumn col)
         {
             BuildBasicColumnSpec(sb, table, col);
+
+            if (col.DefaultValue != null) {
+                sb.Append(" CONSTRAINT ");
+                sb.Append("DF_");
+                sb.Append(table.Name);
+                sb.Append('_');
+                sb.Append(col.Name);
+                sb.Append(" DEFAULT(");
+                sb.Append(col.DefaultValue);
+                sb.Append(')');
+            }
+
             if (col.ForeignKey != null) {
                 sb.Append(" CONSTRAINT ");
                 sb.Append(col.ForeignKey.Name.SqlQuote());
@@ -203,17 +223,6 @@ namespace EasyMigrator
                 sb.Append(" SPARSE");
 
             sb.Append(col.IsNullable ? " NULL" : " NOT NULL");
-
-            if (col.DefaultValue != null) {
-                sb.Append(" CONSTRAINT ");
-                sb.Append("DF_");
-                sb.Append(table.Name);
-                sb.Append('_');
-                sb.Append(col.Name);
-                sb.Append(" DEFAULT(");
-                sb.Append(col.DefaultValue);
-                sb.Append(')');
-            }
         }
 
 
@@ -247,5 +256,24 @@ namespace EasyMigrator
                 default: throw new ArgumentException($"{col.Type} is not a supported custom type.", nameof(col.Type));
             }
         }
+
+        static private IDictionary<string, Tuple<string, string>> GetDefaults(this ITransformationProvider Database, Parsing.Model.Table table)
+        {
+            var dict = new Dictionary<string, Tuple<string, string>>(StringComparer.OrdinalIgnoreCase);
+            var sql = string.Format(GetDefaultsSql, table.Name);
+            using (var reader = Database.ExecuteQuery(sql))
+                while (reader.Read())
+                    dict.Add(reader.GetString(0), new Tuple<string, string>(reader.GetString(1), reader.GetString(2)));
+
+            return dict;
+        }
+
+        private const string GetDefaultsSql =
+@"SELECT c.name, dc.name, dc.definition
+FROM sys.all_columns c
+INNER JOIN sys.tables t ON t.object_id=c.object_id
+INNER JOIN sys.default_constraints dc ON c.default_object_id=dc.object_id
+WHERE t.name='{0}'";
+
     }
 }

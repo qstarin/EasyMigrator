@@ -18,14 +18,16 @@ namespace EasyMigrator.Tests.Schemas
                 [Max] public string Title;
                 [Medium] public string ExternalId;
                 public DateTime DisplayStartDate;
-                public DateTime? DisplayEndDate;
+                [Default("GETUTCDATE()")] public DateTime? DisplayEndDate;
+                [Default("GETUTCDATE()")] public DateTime CreatedOn;
             }
 
             [Name("Content")]
             public class ColumnsToChange
             {
-                [Precision(2)] public DateTime DisplayStartDate;
+                [Precision(2), Default("GETUTCDATE()")] public DateTime DisplayStartDate;
                 [Precision(2)] public DateTime? DisplayEndDate;
+                [Precision(2), Default("GETUTCDATE()")] public DateTime CreatedOn;
             }
 
             [Name("Content")]
@@ -60,12 +62,19 @@ namespace EasyMigrator.Tests.Schemas
                         Name = "DisplayStartDate",
                         Type = DbType.DateTime2,
                         Precision = new PrecisionAttribute(2),
+                        DefaultValue = "GETUTCDATE()",
                     },
                     new Column {
                         Name = "DisplayEndDate",
                         IsNullable = true,
                         Type = DbType.DateTime2,
                         Precision = new PrecisionAttribute(2),
+                    },
+                    new Column {
+                        Name = "CreatedOn",
+                        Type = DbType.DateTime2,
+                        Precision = new PrecisionAttribute(2),
+                        DefaultValue = "GETUTCDATE()",
                     },
                 }
             };
