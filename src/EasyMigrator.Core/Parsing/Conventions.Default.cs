@@ -76,17 +76,29 @@ namespace EasyMigrator.Parsing
                 },
                 ScaleLengths = (c, col) => {
                     switch (col.Type) {
+                        case DbType.Decimal:
+                            return new Lengths {
+                                Default = 9,
+                                Short = 2,
+                                Medium = 9,
+                                Long = 14,
+                                Max = 38
+                            };
+
                         default: return null;
                     }
                 },
                 DefaultPrecision = (c, col) => {
                     var pl = c.Conventions.PrecisionLengths(c, col);
+                    var sl = c.Conventions.ScaleLengths(c, col);
                     if (pl == null) return null;
                     switch (col.Type) {
-                        case DbType.Decimal: return new PrecisionAttribute(pl.Default, 2);
+                        case DbType.Decimal:
                         case DbType.DateTime2:
                         case DbType.DateTimeOffset:
-                            return new PrecisionAttribute(pl.Default);
+                            return sl == null
+                                ? new PrecisionAttribute(pl.Default)
+                                : new PrecisionAttribute(pl.Default, sl.Default);
                         default: return null;
                     }
                 },
