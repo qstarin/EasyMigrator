@@ -11,10 +11,13 @@ namespace EasyMigrator
 {
     static public class CreateExtensions
     {
-        static public void AddTable<T>(this ITransformationProvider Database) => Database.AddTable(typeof(T));
-        static public void AddTable(this ITransformationProvider Database, Type tableType)
+        static public void AddTable<T>(this ITransformationProvider Database, string alternateTableName = null) => Database.AddTable(typeof(T), alternateTableName);
+        static public void AddTable(this ITransformationProvider Database, Type tableType, string alternateTableName = null)
         {
             var table = tableType.ParseTable().Table;
+            if (alternateTableName != null)
+                table.Name = alternateTableName;
+
             var sb = new StringBuilder();
             sb.Append("CREATE TABLE ");
             sb.Append(table.Name.SqlQuote());

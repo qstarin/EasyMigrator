@@ -11,10 +11,13 @@ namespace EasyMigrator
 {
     static public class DeleteExtensions
     {
-        static public void RemoveTable<T>(this ITransformationProvider Database) => Database.RemoveTable(typeof(T));
-        static public void RemoveTable(this ITransformationProvider Database, Type tableType)
+        static public void RemoveTable<T>(this ITransformationProvider Database, string alternateTableName = null) => Database.RemoveTable(typeof(T), alternateTableName);
+        static public void RemoveTable(this ITransformationProvider Database, Type tableType, string alternateTableName = null)
         {
             var table = tableType.ParseTable().Table;
+            if (alternateTableName != null)
+                table.Name = alternateTableName;
+
             Database.RemoveForeignKeys(table);
             Database.RemoveIndices(table);
             Database.RemoveTable(table.Name.SqlQuote());
