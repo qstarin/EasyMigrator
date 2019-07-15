@@ -19,6 +19,13 @@ namespace EasyMigrator.Parsing
         ITypeMap Add(IEnumerable<Type> underlyingTypes, Func<FieldInfo, DbType> dbTypeProvider);
         ITypeMap Add(IDictionary<Type, Func<FieldInfo, DbType>> providerMap);
         ITypeMap Add(IDictionary<IEnumerable<Type>, Func<FieldInfo, DbType>> providerMap);
+
+        ITypeMap Clone();
+
+        ITypeMap Remove(Type underlyingType);
+
+        ITypeMap Replace(Type underlyingType, DbType dbType);
+        ITypeMap Replace(Type underlyingType, Func<FieldInfo, DbType> dbTypeProvider);
     }
 
     public class TypeMap : ITypeMap
@@ -34,7 +41,11 @@ namespace EasyMigrator.Parsing
             public DbType GetDbType(FieldInfo field) { return _dbTypeProvider == null ? _dbType : _dbTypeProvider(field); }
         }
 
-        private readonly Dictionary<Type, ProviderPair> _map = new Dictionary<Type, ProviderPair>();
+        private readonly Dictionary<Type, ProviderPair> _map;
+
+        public TypeMap() : this(new Dictionary<Type, ProviderPair>()) { }
+        private TypeMap(Dictionary<Type, ProviderPair> map) { _map = map; }
+
         public DbType this[FieldInfo field]
         {
             get {
@@ -45,6 +56,8 @@ namespace EasyMigrator.Parsing
                 return _map[type].GetDbType(field);
             }
         }
+
+        public ITypeMap Clone() => new TypeMap(new Dictionary<Type, ProviderPair>(_map));
 
         public ITypeMap Add(Type underlyingType, DbType dbType) { Add(underlyingType, new ProviderPair(dbType)); return this; }
         public ITypeMap Add(IEnumerable<Type> underlyingTypes, DbType dbType) { foreach (var underlyingType in underlyingTypes) Add(underlyingType, dbType); return this; }
@@ -60,6 +73,25 @@ namespace EasyMigrator.Parsing
             if (_map.ContainsKey(underlyingType))
                 throw new Exception("Native type '" + underlyingType.Name + "' is already mapped.");
             _map.Add(underlyingType, providerPair);
+        }
+
+
+        public ITypeMap Remove(Type underlyingType)
+        {
+            if (_map.ContainsKey(underlyingType))
+                _map.Remove(underlyingType);
+            return this;
+        }
+
+        public ITypeMap Replace(Type underlyingType, DbType dbType) { Replace(underlyingType, new ProviderPair(dbType)); return this; }
+        public ITypeMap Replace(Type underlyingType, Func<FieldInfo, DbType> dbTypeProvider) { Replace(underlyingType, new ProviderPair(dbTypeProvider)); return this; }
+
+        private void Replace(Type underlyingType, ProviderPair providerPair)
+        {
+            if (_map.ContainsKey(underlyingType))
+                _map[underlyingType] = providerPair;
+            else
+                _map.Add(underlyingType, providerPair);
         }
     }
 }
