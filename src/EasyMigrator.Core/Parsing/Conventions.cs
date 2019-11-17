@@ -17,6 +17,7 @@ namespace EasyMigrator.Parsing
         public Func<string, string> PrimaryKeyNameByTableName { get; set; }
         public Func<string, string> PrimaryKeyColumnName { get; set; }
         public Func<Context, Column, string> ForeignKeyName { get; set; }
+        public Func<string, string, string> ForeignKeyNameByTableAndColumnNames { get; set; }
         public Func<Context, IEnumerable<Column>, string> IndexNameByColumns { get; set; }
         public Func<string, IEnumerable<string>, string> IndexNameByTableAndColumnNames { get; set; }
         public Func<Context, ITypeMap> TypeMap { get; set; }
@@ -35,6 +36,7 @@ namespace EasyMigrator.Parsing
                 PrimaryKeyNameByTableName = PrimaryKeyNameByTableName,
                 PrimaryKeyColumnName = PrimaryKeyColumnName,
                 ForeignKeyName = ForeignKeyName,
+                ForeignKeyNameByTableAndColumnNames = ForeignKeyNameByTableAndColumnNames,
                 IndexNameByColumns = IndexNameByColumns,
                 IndexNameByTableAndColumnNames = IndexNameByTableAndColumnNames,
                 TypeMap = TypeMap,

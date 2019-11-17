@@ -97,6 +97,7 @@
     <Compile Include="Schemas\DateTimeOffset.cs" />
     <Compile Include="Schemas\Fk_AddToExisting.cs" />
     <Compile Include="Schemas\Fk_ByType_Guid.cs" />
+    <Compile Include="Schemas\Fk_ModifyExisting.cs" />
     <Compile Include="Schemas\Fk_MultipleToSameTable.cs" />
     <Compile Include="Schemas\Fk_Not_Indexed.cs" />
     <Compile Include="Schemas\Mtm_BookAuthors.cs" />

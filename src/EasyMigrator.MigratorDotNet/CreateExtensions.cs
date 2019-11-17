@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using EasyMigrator.Extensions;
+using EasyMigrator.Parsing.Model;
 using Migrator.Framework;
 using EColumn = EasyMigrator.Parsing.Model.Column;
 
@@ -110,13 +111,20 @@ namespace EasyMigrator
                 }
             }
 
-            foreach (var col in pocoColumns)
+            foreach (var col in pocoColumns) { 
                 if (!string.IsNullOrEmpty(col.DefaultValue))
                     Database.ExecuteNonQuery($"ALTER TABLE {table.Name.SqlQuote()} ADD CONSTRAINT DF_{table.Name}_{col.Name} DEFAULT({col.DefaultValue}) FOR {col.Name.SqlQuote()}");
+
+                if (col.ForeignKey != null)
+                    Database.ExecuteNonQuery($"ALTER TABLE {table.Name.SqlQuote()} ADD{GetForeignKeySpec(col.ForeignKey, col)}");
+            }
+
+            foreach (var idx in table.Indices)
+                Database.AddIndex(table.Name, idx);
         }
 
 
-            static private void AddColumn(ITransformationProvider Database, Parsing.Model.Table table, EColumn col)
+        static private void AddColumn(ITransformationProvider Database, Parsing.Model.Table table, EColumn col)
             => Database.ExecuteNonQuery(BuildAddColumn(table, col));
 
         static private string BuildAddColumn(Parsing.Model.Table table, EColumn col)
@@ -157,34 +165,8 @@ namespace EasyMigrator
                 sb.Append(')');
             }
 
-            if (col.ForeignKey != null) {
-                sb.Append(" CONSTRAINT ");
-                sb.Append(col.ForeignKey.Name.SqlQuote());
-                sb.Append(" FOREIGN KEY REFERENCES ");
-                sb.Append(col.ForeignKey.Table.SqlQuote());
-                sb.Append('(');
-                sb.Append(col.ForeignKey.Column.SqlQuote());
-                sb.Append(')');
-                if (col.ForeignKey.OnDelete.HasValue) {
-                    sb.Append(" ON DELETE ");
-                    sb.Append(FkRuleString(col.ForeignKey.OnDelete.Value));
-                }
-                if (col.ForeignKey.OnUpdate.HasValue) {
-                    sb.Append(" ON UPDATE ");
-                    sb.Append(FkRuleString(col.ForeignKey.OnUpdate.Value));
-                }
-            }
-        }
-
-        static private string FkRuleString(Rule rule)
-        {
-            switch (rule) {
-                case Rule.None: return "NO ACTION";
-                case Rule.Cascade: return "CASCADE";
-                case Rule.SetDefault: return "SET DEFAULT";
-                case Rule.SetNull: return "SET NULL";
-                default: throw new ArgumentException($"Unknown foreign key rule {rule}", nameof(rule));
-            }
+            if (col.ForeignKey != null) 
+                BuildForeignKeySpec(sb, col.ForeignKey);
         }
 
         static private void BuildBasicColumnSpec(StringBuilder sb, Parsing.Model.Table table, EColumn col)
@@ -226,6 +208,49 @@ namespace EasyMigrator
                 sb.Append(" SPARSE");
 
             sb.Append(col.IsNullable ? " NULL" : " NOT NULL");
+        }
+
+        static private string GetForeignKeySpec(IForeignKey fk, EColumn col = null)
+        {
+            var sb = new StringBuilder();
+            BuildForeignKeySpec(sb, fk, col);
+            return sb.ToString();
+        }
+
+        static private void BuildForeignKeySpec(StringBuilder sb, IForeignKey fk, EColumn col = null)
+        {
+            sb.Append(" CONSTRAINT ");
+            sb.Append(fk.Name.SqlQuote());
+            sb.Append(" FOREIGN KEY");
+            if (col != null) {
+                sb.Append(" (");
+                sb.Append(col.Name.SqlQuote());
+                sb.Append(')');
+            }
+            sb.Append(" REFERENCES ");
+            sb.Append(fk.Table.SqlQuote());
+            sb.Append(" (");
+            sb.Append(fk.Column.SqlQuote());
+            sb.Append(')');
+            if (fk.OnDelete.HasValue) {
+                sb.Append(" ON DELETE ");
+                sb.Append(FkRuleString(fk.OnDelete.Value));
+            }
+            if (fk.OnUpdate.HasValue) {
+                sb.Append(" ON UPDATE ");
+                sb.Append(FkRuleString(fk.OnUpdate.Value));
+            }
+        }
+
+        static private string FkRuleString(Rule rule)
+        {
+            switch (rule) {
+                case Rule.None: return "NO ACTION";
+                case Rule.Cascade: return "CASCADE";
+                case Rule.SetDefault: return "SET DEFAULT";
+                case Rule.SetNull: return "SET NULL";
+                default: throw new ArgumentException($"Unknown foreign key rule {rule}", nameof(rule));
+            }
         }
 
 
