@@ -29,7 +29,7 @@ namespace EasyMigrator.Tests.Schemas
                     new Column {
                         Name = "Rate",
                         Type = DbType.Decimal,
-                        Precision = new PrecisionAttribute(19, 2),
+                        Precision = new PrecisionAttribute(19, 9),
                     },
                 }
             };

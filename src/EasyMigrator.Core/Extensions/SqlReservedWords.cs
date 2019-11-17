@@ -876,6 +876,6 @@ namespace EasyMigrator.Extensions
             "YEAR_MONTH",
             "ZEROFILL",
             "ZONE"
-        }, StringComparer.InvariantCultureIgnoreCase);
+        }, StringComparer.OrdinalIgnoreCase);
     }
 }

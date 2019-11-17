@@ -90,6 +90,7 @@ namespace EasyMigrator.Tests.MigratorDotNet
                     m => {
                         m.Database.RemoveIndex<Schemas.Table1.Poco>(t => t.Name);
                     }),
+                    null,
                     dbIndex => {
                         var nameCol = dbIndex.Columns.Find(c => c.Name == "Name");
                         Assert.NotNull(nameCol);
