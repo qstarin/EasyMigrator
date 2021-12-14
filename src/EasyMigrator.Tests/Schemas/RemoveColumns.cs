@@ -28,7 +28,8 @@ namespace EasyMigrator.Tests.Schemas
             public class ColumnsToRemove
             {
                 [Long] public string Link;
-                [Short] public string Type;
+                //[Short] public string Type;
+                public DateTime CreateDate;
             }
 
             static Table Model = new Table {
@@ -45,10 +46,10 @@ namespace EasyMigrator.Tests.Schemas
                         Type = DbType.Int32,
                         IsNullable = true,
                     },
-                    new Column {
-                        Name = "CreateDate",
-                        Type = DbType.DateTime,
-                    },
+                    //new Column {
+                    //    Name = "CreateDate",
+                    //    Type = DbType.DateTime,
+                    //},
                     new Column {
                         Name = "Category",
                         Type = DbType.String,
@@ -66,12 +67,12 @@ namespace EasyMigrator.Tests.Schemas
                         Type = DbType.Int32,
                         IsNullable = true,
                     },
-                    //new Column {
-                    //    Name = "Type",
-                    //    Type = DbType.String,
-                    //    Length = 50,
-                    //    IsNullable = true,
-                    //},
+                    new Column {
+                        Name = "Type",
+                        Type = DbType.String,
+                        Length = 50,
+                        IsNullable = true,
+                    },
                     new Column {
                         Name = "WhoPulsed",
                         Type = DbType.String,
