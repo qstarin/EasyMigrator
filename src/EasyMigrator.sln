@@ -18,7 +18,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{0E51B1
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_common", "_common", "{D4968B24-BA1F-4807-B7D2-197D742121AA}"
 	ProjectSection(SolutionItems) = preProject
+		..\.gitignore = ..\.gitignore
 		CommonAssemblyInfo.cs = CommonAssemblyInfo.cs
+		..\LICENSE = ..\LICENSE
+		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyMigrator.Tests", "EasyMigrator.Tests\EasyMigrator.Tests.csproj", "{02CABC58-8268-4D10-9DED-64A0559C8848}"
@@ -48,5 +51,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B7A82ED9-E68B-4FC2-8663-7B20445078A8}
 	EndGlobalSection
 EndGlobal
