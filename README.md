@@ -10,7 +10,7 @@ It doesn't get much easier. Simply define a class with fields. The class name wi
 
 Here is a simple example class to demonstrate many of the available features:
 
-```
+```csharp
 [Name("MyTableData")]
 class Poco
 {
@@ -131,7 +131,7 @@ Add the [EasyMigrator.MigratorDotNet](https://www.nuget.org/packages/EasyMigrato
 
 #### Creating tables and adding columns to tables
 
-```
+```csharp
 using EasyMigrator;
 using Migrator.Framework;
 
@@ -196,7 +196,7 @@ namespace MyProject.Migrations
 
 #### Creating indices
 
-```
+```csharp
 using EasyMigrator;
 using Migrator.Framework;
 
@@ -249,7 +249,7 @@ Add the [EasyMigrator.FluentMigrator](https://www.nuget.org/packages/EasyMigrato
 
 #### Creating tables and adding columns to tables
 
-```
+```csharp
 using EasyMigrator;
 using FluentMigrator;
 
@@ -314,7 +314,7 @@ namespace MyProject.Migrations
 
 #### Creating indices
 
-```
+```csharp
 using EasyMigrator;
 using FluentMigrator;
 
